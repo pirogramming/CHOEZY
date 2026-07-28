@@ -127,7 +127,7 @@ erDiagram
     }
     DECISION {
         bigint id PK
-        bigint consideration_id FK UK
+        bigint consideration_id FK "고민 1건당 1개 (UNIQUE)"
         varchar purpose_fit "구매 목적 적합도"
         varchar expected_satisfaction "예상 만족도"
         varchar recommendation "추천 의견"
@@ -137,7 +137,7 @@ erDiagram
     }
     FINAL_CHOICE {
         bigint id PK
-        bigint consideration_id FK UK
+        bigint consideration_id FK "고민 1건당 1개 (UNIQUE)"
         varchar choice_type "PRODUCT/ALTERNATIVE/POSTPONE"
         bigint alternative_id FK "대안 선택 시"
         text memo "선택 이유"
