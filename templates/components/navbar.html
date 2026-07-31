@@ -21,7 +21,7 @@
       {% if user.is_authenticated %}
         <span class="navbar__username">{{ user.name }}님</span>
       {% else %}
-        <a href="{% url 'accounts:login' %}" class="navbar__username">로그인</a>
+        <a href="#" class="navbar__username">로그인</a>
       {% endif %}
     </div>
   </div>
