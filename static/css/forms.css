@@ -1,0 +1,375 @@
+.login-page {
+
+    display:flex;
+    min-height:100vh;
+    background:#ffffff;
+
+    font-family:'Galmuri', sans-serif;
+
+}
+
+
+/* 왼쪽 */
+
+.login-section {
+
+    width:50%;
+    padding:40px 80px;
+
+}
+
+
+.login-logo {
+
+    color:#20CD8D;
+
+    font-size:32px;
+    font-weight:bold;
+
+}
+
+
+
+.login-box {
+
+    width:545px;
+
+    margin-top:70px;
+
+    margin-left:70px;
+
+}
+
+
+
+.login-box h1 {
+
+    font-size:40px;
+
+    color:#222;
+
+    margin-bottom:10px;
+
+}
+
+
+
+.login-subtitle {
+
+    color:#999;
+
+    font-size:20px;
+
+    margin-bottom:45px;
+
+}
+
+
+
+
+.input-box {
+
+    height:55px;
+
+    border:1px solid #aaa;
+
+    border-radius:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 20px;
+
+    margin-bottom:15px;
+
+}
+
+
+.input-icon {
+
+    color:#aaa;
+
+    margin-right:15px;
+
+}
+
+
+
+.input-box input {
+
+    flex:1;
+
+    border:none;
+
+    outline:none;
+
+    font-size:18px;
+
+}
+
+
+
+.eye-btn {
+
+    border:none;
+
+    background:none;
+
+    cursor:pointer;
+
+}
+
+
+
+.login-option {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin:35px 0;
+
+    color:#888;
+
+}
+
+
+
+.login-option a {
+
+    color:#888;
+
+    text-decoration:none;
+
+}
+
+
+
+.login-btn {
+
+    width:100%;
+
+    height:55px;
+
+    background:#20CD8D;
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+}
+
+
+
+.divider {
+
+    text-align:center;
+
+    margin:25px 0;
+
+    color:#999;
+
+}
+
+
+
+.social-btn {
+
+    width:100%;
+    height:55px;
+
+    background:white;
+    border:1px solid #ddd;
+    border-radius:10px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+
+    font-size:18px;
+    cursor:pointer;
+
+}
+
+
+.social-icon {
+
+    width:24px;
+    height:24px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+}
+
+
+.social-icon img {
+
+    width:24px;
+    height:24px;
+
+    object-fit:contain;
+
+}
+
+
+.social-btn:hover {
+
+    background:#f8f8f8;
+
+}
+
+
+.signup-text {
+
+    text-align:center;
+
+    margin-top:35px;
+
+    color:#999;
+
+}
+
+
+
+.signup-text a {
+
+    color:#20CD8D;
+
+    font-weight:bold;
+
+}
+
+
+/* 오른쪽 */
+
+.intro-section {
+
+    width:50%;
+
+    background:#fcfffd;
+
+    text-align:center;
+
+    padding-top:50px;
+
+}
+
+
+
+.login-character {
+
+    width:230px;
+
+}
+
+
+
+.intro-section h2 {
+
+    margin-top:30px;
+
+    color:#777;
+
+    font-size:30px;
+
+    line-height:1.5;
+
+}
+
+
+
+.intro-logo {
+
+    color:#20CD8D;
+
+    font-size:45px;
+
+    font-weight:bold;
+
+    margin:40px;
+
+}
+
+
+
+.feature-item {
+
+    display:flex;
+    width:400px;
+    margin:30px auto;
+    transform: translateX(40px);
+    text-align:left;
+    align-items:center
+
+}
+
+.feature-icon svg {
+    width: 48px;
+    height: 48px;
+    stroke: #20CD8D;
+}
+
+
+.feature-icon {
+
+    width:70px;
+
+    height:70px;
+
+    border:2px solid #20CD8D;
+
+    border-radius:15px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin-right:20px;
+
+}
+
+
+
+.feature-item h3 {
+
+    margin:0;
+
+    font-size:22px;
+
+}
+
+
+
+.feature-item p {
+
+    color:#999;
+
+}
+
+.googlelogo,
+.kakaologo {
+
+    width:24px;
+    height:24px;
+
+    object-fit:contain;
+
+}
+
+.kakaologo {
+    transform: translateX(-25px);
+}
