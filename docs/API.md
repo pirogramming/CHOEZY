@@ -208,7 +208,7 @@ def error_response(code, message, details=None, status=400):
 |---|---|---|---|
 | `unit_price_display` (§6.2) | `unit_price` | `"180,000원"` | **`null`** — 가격을 표시하지 않음 |
 | `price` / `price_display` (§6.5) | `unit_price` | `"180,000원"` | **`null`** / `"—"` |
-| `duration_display` | `duration` | `"12개월"` | `INVESTMENT`는 `"—"` |
+| `duration_display` | `duration` | `"12개월"` | `"{period_month}개월"` |
 | `display_text` | 계산 결과 | `"헬스장 약 12개월"` | `"정기적금 12개월 → 약 223만원"` |
 | `source.note` | `item` 필드 | `"2026.07 기준 · 한국소비자원"` | 뒤에 **` · 세전`** 추가 |
 
@@ -796,11 +796,11 @@ Gemini에게는 **항목 식별값만** 요구합니다. 가격·출처는 절�
 **재정 항목의 `duration`·`expected_effect`는 AI에게 요구하지 않습니다.** 프롬프트에도 해당 후보에는 `item_id`와 `ai_reason`만 쓰라고 지시하고, **AI가 보내오더라도 서버는 무시하고 덮어씁니다.**
 
 ```text
-duration        = "{term_months}개월"
-expected_effect = "{term_months}개월 뒤 약 {금액}만원"     ← 만원 단위 내림 (§7.5)
+duration        = "{period_month}개월"
+expected_effect = "{period_month}개월 뒤 약 {금액}만원"     ← 만원 단위 내림 (§7.5)
 ```
 
-> **두 값의 출처가 갈리면 화면에서 모순이 보입니다.** 재정 항목의 기간은 `calc_params.term_months`에서 오고 `display_text`도 그 값으로 만들어집니다. 여기서 AI가 `duration: "24개월"`이라고 써버리면, 비교표의 "지속 가능 기간" 열에는 `24개월`이, 바로 옆 기회비용 문구에는 `"12개월 → 약 223만원"`이 나란히 뜹니다. `expected_effect`도 마찬가지입니다 — `"12개월 뒤 약 223만원"`은 AI가 쓴 문장이 아니라 **계산 결과**입니다. (§6.5 예시)
+> **두 값의 출처가 갈리면 화면에서 모순이 보입니다.** 재정 항목의 기간은 `calc_params.period_month`에서 오고 `display_text`도 그 값으로 만들어집니다. 여기서 AI가 `duration: "24개월"`이라고 써버리면, 비교표의 "지속 가능 기간" 열에는 `24개월`이, 바로 옆 기회비용 문구에는 `"12개월 → 약 223만원"`이 나란히 뜹니다. `expected_effect`도 마찬가지입니다 — `"12개월 뒤 약 223만원"`은 AI가 쓴 문장이 아니라 **계산 결과**입니다. (§6.5 예시)
 
 > 소비형(`UNIT_PRICE`)은 반대입니다. `duration`("주 3회 12개월")과 `expected_effect`("운동 습관 형성")은 계산으로 나오지 않는 값이라 AI가 씁니다.
 
@@ -1028,7 +1028,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
 
 `source.note` 끝의 **` · 세전`** 은 `result_type = FUTURE_VALUE`일 때 서버가 자동으로 붙입니다. (§7.5)
 
-`product_price = 2,200,000` / `annual_rate = 0.03` / `term_months = 12` 기준이며, 계산 과정은 §7.5와 같습니다. **원금은 항목이 아니라 상품 가격에서 옵니다.**
+`product_price = 2,200,000` / `return_rate = 3.0` / `period_month = 12` 기준이며, 계산 과정은 §7.5와 같습니다. **원금은 항목이 아니라 상품 가격에서 옵니다.**
 
 **필드 설명**
 
@@ -1059,7 +1059,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
 
 > `AVAILABLE_BUDGET` 열이 선택되면 `user_budget`을 사용해 "월 예산 대비 몇 개월" 같은 표현을 만듭니다. `monthly_budget`은 구간 문자열이므로 **정확한 나눗셈을 하지 않고 구간 라벨을 그대로 표시**합니다.
 
-> `FINANCE` 카테고리를 `is_active=False`로 끄면 `FUTURE_VALUE` 행은 나타나지 않습니다. 그래도 **프론트는 `chart.type` 분기를 구현해 두어야 합니다** — 나중에 카테고리를 켜는 것만으로 동작해야 하기 때문입니다.
+> **`FINANCE` 카테고리는 MVP에 포함됩니다.** (§12) `chart.type` 분기는 선택이 아니라 **필수 구현**입니다. `GROWTH` 행이 실제로 화면에 나옵니다.
 
 **알려진 제약 — `FINANCE` 탭의 "가격" 열**
 
@@ -1105,7 +1105,7 @@ DB `CheckConstraint`(`valid_alternative_result`)와 동일한 규칙입니다. *
 | `unit_price` (§7.3) | `item.average_price` | `product_price` (원금) |
 | `unit_price_display` (§6.2) | `"180,000원"` | **`null`** |
 | 비교표 `price` / `price_display` (§6.5) | `unit_price` / `"180,000원"` | **`null`** / `"—"` |
-| `duration_display` | AI가 쓴 값 | `"12개월"` / `INVESTMENT`는 `"—"` |
+| `duration_display` | AI가 쓴 값 (없으면 `"—"`) | `"{period_month}개월"` |
 | `source.note` 꼬리말 | 없음 | **` · 세전`** |
 
 > 프론트는 `result_type`으로 분기하면 됩니다. **`equivalent_quantity`의 `null` 여부로 판단하지 마세요.**
@@ -1179,32 +1179,70 @@ display_text = "{item.name} 약 {수량}{unit_label}"
 
 "상품 가격만큼의 돈을 대신 운용하면 얼마가 되는가"를 계산합니다. **나눗셈이 아닙니다.**
 
-원금은 항상 **`product_price`** 이고, 기간·이율은 `calc_params`에서 옵니다.
+#### `calc_params` 스키마 (확정)
 
-| `calc_type` | 공식 | 필요한 `calc_params` |
-|---|---|---|
-| `DEPOSIT` (예금, 단리) | `FV = P × (1 + r × n/12)` | `annual_rate`, `term_months` |
-| `SAVINGS` (적금, 단리) | `m = P ÷ n`<br>`이자 = m × (r/12) × n(n+1)/2`<br>`FV = P + 이자` | `annual_rate`, `term_months` |
-| `INVESTMENT` (투자) | `FV = P × (1 + return_rate)` | `return_rate`, `base_date` (+ `ticker` 선택) |
+| 키 | 타입 | 사용하는 `calc_type` | 설명 |
+|---|---|---|---|
+| `period_month` | int | 전부 | 비교 기간 (개월). **`> 0`** |
+| `return_rate` | float | 전부 | **퍼센트 단위** — `7.0`은 `7%` |
+| `base_date` | date | `INVESTMENT` | 수익률 기준일 |
+| `ticker` | string | `INVESTMENT` (선택) | 종목 코드. 계산에 쓰지 않음 |
 
-```text
-P = product_price (원금)
-r = annual_rate   (연이율, 0.03 = 연 3%)
-n = term_months   (개월)
-m = 월 납입액
+```json
+{ "period_month": 12, "return_rate": 3.0 }
+{ "period_month": 12, "return_rate": 7.0, "base_date": "2026-07-28", "ticker": "379800" }
 ```
 
-**예시 — `SAVINGS`, 상품가 2,200,000원, 연 3%, 12개월**
+**`calc_params`에 저장하지 않는 값**
+
+| 값 | 어디서 오는가 |
+|---|---|
+| `product_price` | `Consideration.product_price` — 모든 계산의 **시작 금액** |
+| `monthly_amount` | **계산으로 구합니다** — `product_price ÷ period_month` |
+
+> **`monthly_amount`를 저장하지 않는 이유**: 항목에 `월 10만원`을 박아두면 상품 가격이 220만원이든 120만원이든 같은 금액을 모으게 되어, **원금을 `product_price`로 잡기로 한 결정과 충돌**합니다. 상품 가격에서 나누면 가격이 달라질 때 자동으로 따라갑니다.
+
+> **`return_rate`는 퍼센트 단위입니다.** `0.03`이 아니라 `3.0`으로 저장합니다. 계산에서는 `r = return_rate / 100`으로 변환해 씁니다. 시드 데이터를 사람이 채우므로 화면에 보이는 숫자와 같은 단위로 두는 편이 실수가 적습니다.
+
+#### 공식
+
+| `calc_type` | 공식 | `return_rate`의 의미 |
+|---|---|---|
+| `DEPOSIT` (예금, 단리) | `FV = P × (1 + r × n/12)` | **연이율** — 기간에 비례 |
+| `SAVINGS` (적금, 단리) | `m = P ÷ n`<br>`이자 = m × (r/12) × n(n+1)/2`<br>`FV = P + 이자` | **연이율** — 기간에 비례 |
+| `INVESTMENT` (투자) | `FV = P × (1 + r)` | **기준일까지 실현된 수익률** — 기간에 비례하지 않음 |
 
 ```text
+P = product_price          (시작 금액)
+r = return_rate ÷ 100      (3.0 → 0.03)
+n = period_month           (개월)
+m = P ÷ n                  (월 납입액, 파생값)
+```
+
+> **같은 `return_rate` 키지만 의미가 다릅니다.** 적금·예금은 **연이율**이라 기간이 길수록 이자가 늘고, 투자는 `base_date`까지 **이미 실현된 수익률**이라 기간을 곱하지 않습니다. ETF 수익률에 기간을 다시 곱하면 실제로 일어나지 않은 수익을 만들어내게 됩니다.
+
+**예시 1 — `SAVINGS`, 상품가 2,200,000원, `return_rate: 3.0`, `period_month: 12`**
+
+```text
+r    = 3.0 ÷ 100 = 0.03
 m    = 2,200,000 ÷ 12 = 183,333.333...   (버리지 않음)
-이자  = 183,333.333... × 0.0025 × (12 × 13 ÷ 2)
+이자  = 183,333.333... × (0.03 ÷ 12) × (12 × 13 ÷ 2)
      = 183,333.333... × 0.195
      = 35,750
 FV   = 2,200,000 + 35,750 = 2,235,750
 
 future_value = 2235750
 display_text = "정기적금 12개월 → 약 223만원"   ← 223.575만원 내림
+```
+
+**예시 2 — `INVESTMENT`, 상품가 2,200,000원, `return_rate: 7.0`, `base_date: 2026-07-28`**
+
+```text
+r  = 7.0 ÷ 100 = 0.07
+FV = 2,200,000 × 1.07 = 2,354,000
+
+future_value = 2354000
+display_text = "KODEX 미국S&P500 (2026-07-28 기준) → 약 235만원"   ← 235.4만원 내림
 ```
 
 **정밀도·표기 규칙**
@@ -1220,19 +1258,19 @@ display_text = "정기적금 12개월 → 약 223만원"   ← 223.575만원 내
 
 > **`display_text`도 내림입니다.** `223.575만원`을 `224만원`으로 올리면 §7.4와 마찬가지로 기회비용을 실제보다 크게 보여주게 됩니다. 두 갈래 모두 같은 규칙을 씁니다.
 
-**문구 템플릿은 `calc_type`마다 다릅니다.** `INVESTMENT`에는 `term_months`가 없습니다.
+**문구 템플릿은 `calc_type`마다 다릅니다.** `INVESTMENT`만 기준일을 함께 표기합니다.
 
 | `calc_type` | `display_text` |
 |---|---|
-| `SAVINGS` / `DEPOSIT` | `"{item.name} {term_months}개월 → 약 {금액}만원"` |
+| `SAVINGS` / `DEPOSIT` | `"{item.name} {period_month}개월 → 약 {금액}만원"` |
 | `INVESTMENT` | `"{item.name} ({base_date} 기준) → 약 {금액}만원"` |
 
 ```text
 정기적금 (연 3%) 12개월 → 약 223만원
-KODEX 미국S&P500 (2026-07-28 기준) → 약 241만원
+KODEX 미국S&P500 (2026-07-28 기준) → 약 235만원
 ```
 
-> **`INVESTMENT`에 `term_months`를 요구하지 않는 이유**: ETF는 "몇 개월 넣어두면 얼마"가 아니라 **특정 기준일까지의 실현 수익률**을 고정값으로 저장합니다. 기간을 억지로 만들면 그 값이 `return_rate`와 아무 관계가 없어 숫자가 서로를 설명하지 못합니다. 대신 **기준일을 반드시 표기**합니다.
+> **`INVESTMENT`에 기간을 쓰지 않는 이유**: ETF는 "몇 개월 넣어두면 얼마"가 아니라 **특정 기준일까지의 실현 수익률**입니다. `period_month`는 다른 대안과 기간을 맞추기 위한 값이지 수익률을 만들어내는 값이 아니므로, 문구에는 **기준일을 표기**합니다.
 
 **`duration`과 `expected_effect`도 서버가 만듭니다**
 
@@ -1240,19 +1278,25 @@ KODEX 미국S&P500 (2026-07-28 기준) → 약 241만원
 
 | `calc_type` | `duration` | `expected_effect` |
 |---|---|---|
-| `SAVINGS` / `DEPOSIT` | `"{term_months}개월"` | `"{term_months}개월 뒤 약 {금액}만원"` |
-| `INVESTMENT` | `""` (빈 문자열 → 화면에 `"—"`) | `"{base_date} 기준 약 {금액}만원"` |
+| `SAVINGS` / `DEPOSIT` | `"{period_month}개월"` | `"{period_month}개월 뒤 약 {금액}만원"` |
+| `INVESTMENT` | `"{period_month}개월"` | `"{base_date} 기준 약 {금액}만원"` |
 
 금액은 `display_text`와 **같은 만원 단위 내림**을 씁니다. 한 항목의 모든 문구가 같은 값에서 나오므로 화면에서 어긋날 수 없습니다.
 
+`SAVINGS`는 월 납입액을 함께 보여줍니다.
+
+```text
+expected_effect = "월 183,333원씩 12개월 → 약 223만원"
+```
+
 | 필드 | `QUANTITY` | `FUTURE_VALUE` |
 |---|---|---|
-| `duration` | AI | **서버** (`term_months` 또는 빈 문자열) |
+| `duration` | AI | **서버** (`period_month`) |
 | `expected_effect` | AI | **서버** (계산 결과) |
 | `ai_reason` | AI | AI |
 | `display_text` | 서버 | 서버 |
 
-> `Alternative.duration`은 `CharField(blank=True)`라 빈 문자열을 저장할 수 있습니다. 화면에 출력할 문자열은 **서버가 `duration_display`로 완성해 내려보냅니다** — 빈 값이면 `"—"`입니다. (§2.10) 프론트가 빈 값을 대시로 바꾸지 않습니다.
+> 재정형은 `duration`이 항상 채워지므로 빈 값이 나오지 않습니다. 다만 **소비형은 AI가 `duration`을 빠뜨릴 수 있습니다.** `Alternative.duration`이 `CharField(blank=True)`라 빈 문자열이 저장될 수 있으므로, 화면에 출력할 문자열은 **서버가 `duration_display`로 완성해 내려보냅니다** — 빈 값이면 `"—"`입니다. (§2.10) 프론트가 빈 값을 대시로 바꾸지 않습니다.
 
 **"세전" 표기는 서버가 붙입니다**
 
@@ -1275,7 +1319,17 @@ FUTURE_VALUE 행의 source.note
 
 > **ETF(`INVESTMENT`)는 실시간 시세를 조회하지 않습니다.** `base_date` 시점의 수익률을 `return_rate`에 고정값으로 저장하고, 화면에 기준일을 함께 표기합니다. (ERD §7)
 
-> **ERD §7과의 차이 — 확인 필요**: ERD의 `calc_params` 예시에는 `monthly_amount: 300000`, `principal: 1000000`처럼 **원금이 항목에 박혀** 있습니다. 그대로 쓰면 220만원짜리 상품이든 50만원짜리 상품이든 같은 미래가치가 나와 기회비용이 되지 않습니다. 그래서 이 명세는 **원금을 `product_price`로 고정**하고, `calc_params`에서는 `annual_rate`·`term_months`·`return_rate`만 사용합니다. `monthly_amount`·`principal`이 남아 있다면 **상품 설명용 참고값**으로만 취급하고 계산에는 쓰지 않습니다. `INVESTMENT`에는 ERD 예시에 없는 **`return_rate` 추가가 필요합니다.**
+> **ERD §7과의 차이 — 이 문서가 최신입니다.** ERD의 `calc_params` 예시에는 `monthly_amount: 300000`, `principal: 1000000`처럼 **원금이 항목에 박혀** 있고 키 이름도 `annual_rate`·`term_months`입니다. 그대로 쓰면 220만원짜리 상품이든 50만원짜리 상품이든 같은 미래가치가 나와 기회비용이 성립하지 않습니다.
+>
+> 팀 논의로 위 스키마를 확정했으므로 **[ERD.md](ERD.md) §7도 같은 내용으로 갱신해야 합니다.**
+>
+> | ERD §7 | 확정 |
+> |---|---|
+> | `annual_rate` (0.03) | `return_rate` (3.0, 퍼센트) |
+> | `term_months` | `period_month` |
+> | `monthly_amount` 저장 | `product_price ÷ period_month`로 파생 |
+> | `principal` 저장 | `Consideration.product_price` 사용 |
+> | `INVESTMENT`에 수익률 없음 | `return_rate` 필수 |
 
 ### 7.6 계산 함수 시그니처
 
@@ -1325,19 +1379,20 @@ duration = cost.duration or ai_item.get("duration")   # ✘ 빈 문자열이 fal
 > - `None` — 계산이 이 필드를 만들지 않았다. **AI 응답의 값을 쓴다.**
 > - `""` — **서버가 "값 없음"으로 채웠다.** AI 응답을 쓰면 안 된다.
 >
-> `INVESTMENT`의 `duration`이 `""`인데 `or`로 판정하면 빈 문자열이 falsy라 AI 응답으로 넘어갑니다. 그런데 재정 항목에는 애초에 `duration`을 요구하지 않으므로(§6.2) 그 키가 없고, 결과적으로 `None`이 저장되어 `CharField`에 `null`이 들어가거나 엉뚱한 값이 붙습니다.
+> 재정 항목에는 애초에 `duration`을 요구하지 않으므로(§6.2) AI 응답에 그 키가 없습니다. 계산이 채운 값이 `""`인 경우 `or`로 판정하면 빈 문자열이 falsy라 AI 응답으로 넘어가고, 없는 키를 읽어 `None`이 저장되거나 엉뚱한 값이 붙습니다. **계산 결과가 우선인지 아닌지는 값의 내용이 아니라 `None` 여부로만 판정합니다.**
 
 AI 호출 없이 순수 함수로 동작하므로 **단위 테스트를 먼저 작성합니다.** 최소 케이스는 다음과 같습니다.
 
 ```text
 UNIT_PRICE  나누어떨어짐 / 소수 발생 / 결과 < 1 / 상한 초과
-DEPOSIT     term_months=12 / 0개월 방어
-SAVINGS     term_months=12 / n(n+1)/2 공식 검증 / 중간값 버림 없음
+DEPOSIT     period_month=12 / 0개월 방어 / return_rate 퍼센트 변환
+SAVINGS     period_month=12 / n(n+1)/2 공식 검증 / 중간값 버림 없음
+            monthly_amount = product_price ÷ period_month
 INVESTMENT  return_rate 양수 / 음수(손실) / 전액 손실
 표기        만원 단위 내림 (223.575만 → 223) / 정수 내림 (12.22 → 12)
 필드 소유    FUTURE_VALUE는 duration·expected_effect를 채우고
             QUANTITY는 None으로 둔다
-            INVESTMENT의 duration은 ""이지 None이 아니다
+            INVESTMENT는 기간을 곱하지 않는다 (FV = P × (1+r))
 표시 문자열  unit_price_display가 FUTURE_VALUE에서 None
             source_note에 " · 세전"이 붙는지
 공통        result_type과 채워진 필드가 CheckConstraint를 만족하는지
@@ -1351,7 +1406,7 @@ INVESTMENT  return_rate 양수 / 음수(손실) / 전액 손실
 |---|---|
 | `equivalent_quantity > 999999.99` | `Decimal(8, 2)` 상한 초과 (§7.4) |
 | `future_value <= 0` | `PositiveIntegerField` 위반. `return_rate`가 `-1` 이하일 때 (§7.5) |
-| `term_months <= 0` | 0으로 나눔 (`SAVINGS`·`DEPOSIT`만 해당) |
+| `period_month <= 0` | 0으로 나눔 |
 | `calc_params` 필수 키 누락 | 아래 표 |
 
 **필수 키는 `calc_type`마다 다릅니다.**
@@ -1359,10 +1414,10 @@ INVESTMENT  return_rate 양수 / 음수(손실) / 전액 손실
 | `calc_type` | 필수 키 |
 |---|---|
 | `UNIT_PRICE` | 없음 (`calc_params`가 비어 있어도 됨) |
-| `SAVINGS` / `DEPOSIT` | `annual_rate`, `term_months` (`> 0`) |
-| `INVESTMENT` | `return_rate`, `base_date` |
+| `SAVINGS` / `DEPOSIT` | `period_month` (`> 0`), `return_rate` |
+| `INVESTMENT` | `period_month` (`> 0`), `return_rate`, `base_date` |
 
-> **`calc_type`을 보지 않고 한 벌로 검사하면 안 됩니다.** `annual_rate`·`term_months`·`return_rate`를 모두 요구하면 **`INVESTMENT` 항목이 `term_months`가 없다는 이유로 전부 걸러집니다.** 재정 카테고리에 ETF만 넣어둔 경우 후보가 0이 되어 `NO_CANDIDATE_ITEMS`가 나고, 원인을 찾기 어렵습니다.
+> **`calc_type`을 보지 않고 한 벌로 검사하면 안 됩니다.** `base_date`까지 모든 항목에 요구하면 **적금·예금이 전부 걸러집니다.** 후보가 0이 되어 `NO_CANDIDATE_ITEMS`가 나고, 원인을 찾기 어렵습니다.
 
 > `ticker`는 화면 표시·데이터 관리용이며 계산에 쓰이지 않으므로 **필수 키가 아닙니다.**
 
@@ -1690,7 +1745,7 @@ FUTURE_VALUE 대안의 duration·expected_effect는 AI 응답을 무시하고 �
 FUTURE_VALUE 응답의 unit_price_display / price는 항상 null (§6.2, §6.5)
 duration·expected_effect 덮어쓰기 판정은 is None (or 연산자 금지, §7.6)
 FUTURE_VALUE의 source.note에는 서버가 " · 세전"을 붙임 (§7.5)
-calc_params 필수 키는 calc_type별로 검사 (INVESTMENT에 term_months 요구 금지)
+calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date 요구 금지)
 생성 계열 요청은 select_for_update()로 Consideration을 잠근 뒤 상태 검사
 ```
 
@@ -1728,23 +1783,47 @@ NAVER_CLIENT_SECRET=
 
 ---
 
-## 12. 결정이 필요한 항목
+## 12. 확정된 결정
 
-### `calc_params` 스키마 (§7.5)
+### `calc_params` 스키마 — 확정 (§7.5)
 
-재정형 계산의 원금을 `product_price`로 고정하는 것과, `INVESTMENT`에 `return_rate`를 추가하는 것을 **ERD §7과 맞춰야 합니다.** 시드 데이터 작성 전에 확정해야 합니다.
-
-### 비회원 체험
-
-현재 명세는 **모든 고민 관련 API에 로그인을 요구**합니다. 비회원 체험을 지원하려면 다음이 함께 바뀝니다.
-
-```text
-Consideration.user        → null=True, blank=True
-Consideration.session_key → 비회원 세션 식별값 추가
-모든 조회 쿼리            → user 또는 session_key로 필터
+```json
+{ "period_month": 12, "return_rate": 3.0 }
 ```
 
-회원 전용으로 먼저 출시한다면 현재 명세를 그대로 사용합니다. (ERD §11)
+- 모든 계산의 시작 금액은 **`Consideration.product_price`**
+- `period_month` — 비교 기간 (개월)
+- `return_rate` — **퍼센트 단위** (`7.0` = `7%`). 적금·예금은 연이율, 투자는 기준일까지의 실현 수익률
+- `monthly_amount` — **저장하지 않고** `product_price ÷ period_month`로 구함
+- `base_date` — `INVESTMENT`만 사용
+
+**[ERD.md](ERD.md) §7의 `calc_params` 예시가 이 결정과 다릅니다.** 시드 데이터 작성 전에 ERD 문서를 갱신해야 합니다.
+
+### 비회원 체험 — 미지원 확정
+
+**전면 로그인 필수입니다.** `Consideration.user`는 `null=False`를 유지하고 `session_key`를 추가하지 않습니다. 고민 관련 모든 페이지·API는 로그인을 요구합니다. (§2.3)
+
+### 재정(`FINANCE`) 카테고리 — MVP 포함 확정
+
+`FINANCE.is_active = True`로 출시합니다. 따라서 다음이 **모두 구현 범위에 포함됩니다.**
+
+| 항목 | 위치 |
+|---|---|
+| `FUTURE_VALUE` 계산 (적금·예금·투자) | §7.5 |
+| `chart.type = GROWTH` 시각화 | §6.5 |
+| `unit_price_display` / `price`가 `null`인 카드·행 | §6.2, §6.5 |
+| `source.note`의 ` · 세전` 꼬리말 | §7.5 |
+| `calc_type`별 필수 키 검사 | §7.7 |
+
+### `AlternativeItem` 시드 데이터 — 분담 완료
+
+카테고리별 최소 3개(권장 10개)가 필요합니다. 조사 항목은 이름·평균 가격·출처·기준일이며, 재정 카테고리는 `calc_params`(`period_month`, `return_rate`, `base_date`)를 함께 채웁니다.
+
+> 후보가 3개 미만인 카테고리는 `NO_CANDIDATE_ITEMS`(409)로 대안 생성이 실패합니다. (§6.2) 재생성을 반복해도 새로운 대안이 나오려면 후보가 넉넉해야 하므로 **10개를 권장합니다.** (ERD §6)
+
+---
+
+## 13. 남은 논의 항목
 
 ### AI 호출 방식
 
@@ -1761,3 +1840,7 @@ GET /api/alternatives/tasks/<task_id>/
 ```
 
 **응답 스키마 자체는 그대로 재사용**할 수 있으므로, 지금은 동기로 구현하고 필요할 때 전환합니다.
+
+### `FINANCE` 탭의 "가격" 열
+
+`columns`가 탭별이 아니라 최상위에 한 벌만 있어 재정 탭은 가격 열 전체가 `—`가 됩니다. MVP에서는 유지하고, 화면이 어색하면 `columns`를 탭 안으로 옮깁니다. (§6.5 알려진 제약)
