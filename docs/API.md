@@ -24,11 +24,11 @@ CHOEZY는 화면 전환이 많지 않고 로그인 상태가 항상 필요한 �
 | 동작 후 | 처리 | 예 |
 |---|---|---|
 | **다른 페이지로 이동** | Django Form + POST + 리다이렉트 | 회원가입, 로그인, 고민 생성, 고민 삭제, 최종 선택 |
-| **같은 페이지에 머무름** | JSON API | 네이버 검색, 아이디 중복 확인, 대안 생성·재생성, 의사결정, 비교 기준 변경, 소비 기록 |
+| **같은 페이지에 머무름** | JSON API | 아이디 중복 확인, 대안 생성·재생성, 의사결정, 비교 기준 변경, 소비 기록 |
 
 폼 POST로 처리하는 동작에는 **JSON API를 만들지 않습니다.** 반대로 JSON API가 있는 동작에는 페이지 POST를 두지 않습니다. (§3의 두 표에 같은 동작이 중복되면 안 됩니다.)
 
-> **고민 생성이 폼 POST인 이유**: 네이버 검색은 비동기지만, 고른 상품은 hidden input에 담아 일반 폼으로 제출하면 됩니다. 저장 후에는 대안 생성 페이지로 이동하므로 화면에 머무를 이유가 없고, Django Form의 검증·에러 재렌더링을 그대로 쓸 수 있습니다.
+> **고민 생성이 폼 POST인 이유**: 상품 정보를 사용자가 직접 입력하므로 비동기 조회가 필요 없습니다. 저장 후에는 대안 생성 페이지로 이동하므로 화면에 머무를 이유가 없고, Django Form의 검증·에러 재렌더링을 그대로 쓸 수 있습니다.
 
 > **대안 생성이 JSON API인 이유**: 응답에 5~20초가 걸려 로딩 UI가 필요하고, 성공하면 같은 페이지에서 카드만 채웁니다.
 
@@ -174,7 +174,7 @@ def error_response(code, message, details=None, status=400):
 | `404 Not Found` | 리소스 없음 **또는 내 소유가 아님** |
 | `405 Method Not Allowed` | 지원하지 않는 메서드 |
 | `409 Conflict` | 현재 상태에서 허용되지 않는 동작 (이미 생성됨 등) |
-| `502 Bad Gateway` | 외부 API(Gemini·네이버) 호출 실패 |
+| `502 Bad Gateway` | 외부 API(Gemini) 호출 실패 |
 | `504 Gateway Timeout` | 외부 API 응답 시간 초과 |
 
 > **다른 사용자의 리소스에 403이 아니라 404를 주는 이유**: 403은 "그 ID는 존재한다"는 사실을 알려줍니다. 조회 자체를 `Consideration.objects.get(pk=pk, user=request.user)`로 작성하면 소유권 검사와 조회가 한 번에 끝나고, 자연스럽게 404가 됩니다.
@@ -192,9 +192,8 @@ def error_response(code, message, details=None, status=400):
 | `NO_CANDIDATE_ITEMS` | 409 | 후보 `AlternativeItem` 부족 |
 | `AI_REQUEST_FAILED` | 502 | Gemini 호출/파싱 실패 |
 | `AI_TIMEOUT` | 504 | Gemini 응답 시간 초과 |
-| `EXTERNAL_API_FAILED` | 502 | 네이버 쇼핑 API 실패 |
 
-**폼 페이지에서는 이 코드를 쓰지 않습니다.** 카테고리 3개 초과, 최종 선택의 대안 불일치 같은 검증은 폼 `clean()`의 에러 메시지로 처리되며, 화면에 그대로 렌더됩니다. (§5.2, §8.3)
+**폼 페이지에서는 이 코드를 쓰지 않습니다.** 카테고리 3개 초과, 최종 선택의 대안 불일치 같은 검증은 폼 `clean()`의 에러 메시지로 처리되며, 화면에 그대로 렌더됩니다. (§5.1, §8.3)
 
 ### 2.9 페이지네이션
 
@@ -297,7 +296,6 @@ MVP 규모에서는 **1번 방식(전 과정을 한 트랜잭션)으로 충분**
 | 메서드 | URL | 인증 | 설명 |
 |---|---|---|---|
 | GET | `/api/accounts/username-check/` | - | 아이디 중복 확인 |
-| GET | `/api/products/search/` | ✔ | 네이버 쇼핑 검색 |
 | PATCH | `/api/products/considerations/<int:pk>/` | ✔ | 비교 기준 변경 |
 | GET | `/api/alternatives/categories/` | - | 카테고리 목록 |
 | POST | `/api/alternatives/considerations/<int:pk>/generate/` | ✔ | **대안 생성** |
@@ -396,61 +394,13 @@ choices 필드의 한글 라벨은 템플릿에서 바로 꺼냅니다.
 labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 ```
 
-> **`GET /api/accounts/me/`를 두지 않는 이유**: §1 기준으로 이건 "화면 진입 시 필요한 데이터"이지 "화면 안에서 일어나는 동작"이 아닙니다. 마이페이지는 페이지이므로 서버가 컨텍스트로 넘기면 끝입니다. 고민 목록·상세(§5.3)와 같은 처리입니다.
+> **`GET /api/accounts/me/`를 두지 않는 이유**: §1 기준으로 이건 "화면 진입 시 필요한 데이터"이지 "화면 안에서 일어나는 동작"이 아닙니다. 마이페이지는 페이지이므로 서버가 컨텍스트로 넘기면 끝입니다. 고민 목록·상세(§5.2)와 같은 처리입니다.
 
 ---
 
 ## 5. products — 구매 고민
 
-### 5.1 `GET /api/products/search/` — 네이버 쇼핑 검색
-
-메인 페이지에서 고민 중인 상품을 검색합니다. 서버가 네이버 API를 대신 호출합니다.
-
-**쿼리 파라미터**
-
-| 이름 | 타입 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|
-| `query` | string | ✔ | | 검색어 |
-| `display` | int | | 10 | 결과 개수 (최대 20) |
-| `start` | int | | 1 | 시작 위치 |
-
-**200 OK**
-
-```json
-{
-  "query": "맥북 에어 m4",
-  "count": 10,
-  "results": [
-    {
-      "product_name": "Apple 맥북 에어 13 M4 16GB 256GB",
-      "product_price": 1590000,
-      "product_url": "https://search.shopping.naver.com/...",
-      "image_url": "https://shopping-phinf.pstatic.net/...",
-      "brand": "Apple",
-      "maker": "Apple",
-      "category": "디지털/가전"
-    }
-  ]
-}
-```
-
-**502 EXTERNAL_API_FAILED / 504** — 네이버 API 실패·타임아웃.
-
-**구현 메모**
-
-- `title` 필드에 `<b>` 태그가 섞여 오므로 **서버에서 제거**한 뒤 내려줍니다.
-- `lprice`는 문자열이므로 `int()`로 변환합니다. `0`이면 결과에서 제외합니다. (`product_price > 0` 제약 때문입니다.)
-- 클라이언트 키를 노출하지 않기 위해 **반드시 서버에서 프록시**합니다.
-
-```text
-.env 추가 필요
-NAVER_CLIENT_ID=
-NAVER_CLIENT_SECRET=
-```
-
-> 검색 결과는 **저장하지 않습니다.** 사용자가 하나를 고르면 그 값이 `Consideration` 생성 요청의 필드로 들어가고, 그 시점의 가격이 스냅샷이 됩니다. (ERD §5.2)
-
-### 5.2 `GET/POST /products/considerations/new/` — 구매 고민 입력 (폼)
+### 5.1 `GET/POST /products/considerations/new/` — 구매 고민 입력 (폼)
 
 `ConsiderationForm` (`products/forms.py`)으로 처리합니다. **JSON API가 아닙니다.**
 
@@ -458,18 +408,28 @@ NAVER_CLIENT_SECRET=
 
 | 필드 | 타입 | 필수 | 설명 |
 |---|---|---|---|
-| `product_name` | string(200) | ✔ | 상품명 |
-| `product_price` | int | ✔ | **1 이상** |
+| `product_name` | string(200) | ✔ | 상품명 — **사용자 직접 입력** |
+| `product_price` | int | ✔ | 가격 — **사용자 직접 입력**, **1 이상** |
 | `product_features` | string | | 상품 특징 |
-| `product_url` | url(500) | | 네이버 쇼핑 링크 |
-| `image_url` | url(500) | | 이미지 |
+| `product_url` | url(500) | | 상품 페이지 링크 (사용자가 붙여넣기) |
 | `purpose` | choice | ✔ | `DEVELOPMENT` / `DESIGN` / `STUDY` / `HOBBY` / `TRAVEL_RECORD` / `ETC` |
 | `purpose_detail` | string(200) | △ | `purpose=ETC`일 때 필수 |
 | `exclude_category` | int | | 상품 자체 카테고리 (대안 후보에서 제외) |
 | `categories` | int[] | ✔ | **최대 3개** (`ModelMultipleChoiceField`) |
 | `compare_criteria` | choice[] | | `PRICE` / `DURATION` / `EXPECTED_EFFECT` / `AVAILABLE_BUDGET` |
 
-앞의 5개 필드는 `GET /api/products/search/`로 고른 상품을 **hidden input**에 채워 함께 제출합니다. 직접 입력도 허용합니다.
+> **상품 정보는 전부 사용자가 직접 입력합니다.** 네이버 쇼핑 API 서비스가 종료되어 검색·자동 채우기 기능이 없습니다. `product_url`은 참고용 링크를 붙여넣는 선택 필드이며, 서버가 그 페이지를 읽어오지 않습니다.
+
+> **상품 이미지는 MVP에 없습니다.** 대안 카드와 비교표에서는 카테고리 이모지나 플레이스홀더를 사용합니다.
+
+**입력값 안내 (화면)**
+
+가격을 사용자가 직접 적으므로 오타 한 자리가 기회비용 전체를 바꿉니다. 화면에서 다음을 돕습니다.
+
+- 숫자 입력 중 **천 단위 구분 기호 표시** (`2,200,000`) — 제출 시에는 정수로 변환
+- 입력값을 **한글 금액으로 되읽어주기** (`220만원`)
+
+> 서버는 정수만 받습니다. `"2,200,000"` 같은 문자열이 오면 `product_price` 필드 에러입니다.
 
 **응답**
 
@@ -492,7 +452,7 @@ NAVER_CLIENT_SECRET=
 
 > `exclude_category`는 `categories`에 포함되어 있어도 오류로 처리하지 않고, 대안 후보 조회 단계에서 제외합니다. 다만 그 카테고리는 대안이 0개가 될 수 있으므로 화면에서 함께 선택되지 않도록 막는 편이 좋습니다.
 
-### 5.3 `GET /products/considerations/` · `GET /products/considerations/<int:pk>/` — 목록·상세 (페이지)
+### 5.2 `GET /products/considerations/` · `GET /products/considerations/<int:pk>/` — 목록·상세 (페이지)
 
 서버 사이드 렌더링입니다. 별도 JSON API를 두지 않습니다.
 
@@ -520,7 +480,7 @@ NAVER_CLIENT_SECRET=
 
 조회는 항상 `Consideration.objects.get(pk=pk, user=request.user)` — 내 고민이 아니면 **404**입니다.
 
-### 5.4 `PATCH /api/products/considerations/<int:pk>/` — 비교 기준 변경
+### 5.3 `PATCH /api/products/considerations/<int:pk>/` — 비교 기준 변경
 
 **비교표 화면에서 체크박스를 바꿀 때만** 사용합니다. 화면에 머무른 채 표를 다시 그려야 하므로 JSON API입니다.
 
@@ -559,7 +519,7 @@ NAVER_CLIENT_SECRET=
 
 > 상품 정보 수정 기능은 MVP에 없습니다. 오타를 고치고 싶다면 삭제 후 새로 만듭니다.
 
-### 5.5 `POST /products/considerations/<int:pk>/delete/` — 고민 삭제 (폼)
+### 5.4 `POST /products/considerations/<int:pk>/delete/` — 고민 삭제 (폼)
 
 목록·상세 화면의 삭제 버튼입니다. `{% csrf_token %}`이 포함된 폼으로 제출합니다.
 
@@ -948,7 +908,6 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
   "product": {
     "name": "Apple 맥북 에어 13 M4",
     "price": 2200000,
-    "image_url": "https://...",
     "features": "M4 칩, 16GB 통합 메모리, 512GB SSD"
   },
   "user_budget": { "code": "300K_500K", "display": "30~50만원" },
@@ -1073,7 +1032,7 @@ MVP에서는 그대로 둡니다. 없애려면 `columns`를 탭 안으로 옮겨
 ]
 ```
 
-> 지금 고치지 않는 이유는 응답 구조가 바뀌면 §5.4의 `PATCH` 응답(`columns`를 함께 내려주는 부분)까지 같이 흔들리기 때문입니다. **빈 열 하나가 보이는 것은 잘못된 숫자가 보이는 것보다 낫습니다.** 재정 카테고리를 켠 뒤 화면이 어색하면 그때 옮깁니다.
+> 지금 고치지 않는 이유는 응답 구조가 바뀌면 §5.3의 `PATCH` 응답(`columns`를 함께 내려주는 부분)까지 같이 흔들리기 때문입니다. **빈 열 하나가 보이는 것은 잘못된 숫자가 보이는 것보다 낫습니다.** 재정 카테고리를 켠 뒤 화면이 어색하면 그때 옮깁니다.
 
 ---
 
@@ -1646,7 +1605,7 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
 
 폼 페이지(최종 선택)는 409 대신 **리다이렉트 + `messages.error`** 로 안내합니다. (§8.3)
 
-> **삭제만 상태와 무관하게 허용됩니다.** 이 표의 나머지는 "고민을 어떻게 진행하는가"에 대한 워크플로 규칙이지만, 삭제는 소유자가 자기 데이터를 없애는 동작입니다. `DECIDED`에서 삭제를 막으면 사용자가 자기 기록을 영영 지울 수 없게 됩니다. 삭제가 거부되는 유일한 경우는 `SpendingRecord`가 연결됐을 때이며, 이는 상태가 아니라 참조 무결성 문제입니다. (§5.5)
+> **삭제만 상태와 무관하게 허용됩니다.** 이 표의 나머지는 "고민을 어떻게 진행하는가"에 대한 워크플로 규칙이지만, 삭제는 소유자가 자기 데이터를 없애는 동작입니다. `DECIDED`에서 삭제를 막으면 사용자가 자기 기록을 영영 지울 수 없게 됩니다. 삭제가 거부되는 유일한 경우는 `SpendingRecord`가 연결됐을 때이며, 이는 상태가 아니라 참조 무결성 문제입니다. (§5.4)
 
 > **`DECIDED`에서 비교 기준(`PATCH`)도 막습니다.** 최종 선택이 끝난 뒤 비교표의 열 구성이 바뀌면 "무엇을 보고 결정했는지"가 달라집니다.
 
@@ -1661,7 +1620,7 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
 | 회원가입 | `/accounts/signup/` | 같은 URL | `GET /api/accounts/username-check/` |
 | 로그인 | `/accounts/login/` | 같은 URL | - |
 | 마이페이지 | `/accounts/mypage/` | - | - |
-| 구매 고민 입력 | `/products/considerations/new/` | 같은 URL | `GET /api/products/search/`<br>`GET /api/alternatives/categories/` |
+| 구매 고민 입력 | `/products/considerations/new/` | 같은 URL | `GET /api/alternatives/categories/` |
 | 고민 목록·상세 | `/products/considerations/`<br>`/products/considerations/<id>/` | `.../<id>/delete/` | - |
 | 대안 생성 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
 | 비교표·기회비용 | `/alternatives/considerations/<id>/comparison/` | - | `GET .../comparison/`<br>`PATCH /api/products/considerations/<id>/` |
@@ -1714,8 +1673,7 @@ accounts/
 
 products/
   urls.py  views.py  forms.py      고민 생성·목록·상세·삭제 (폼)
-  api_urls.py  api_views.py        search, PATCH 비교 기준
-  naver.py         네이버 쇼핑 API 클라이언트
+  api_urls.py  api_views.py        PATCH 비교 기준
 
 alternatives/
   urls.py  views.py                대안·비교표 페이지
@@ -1756,19 +1714,18 @@ calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date �
 2. accounts 회원가입/로그인 (폼)                     세션 확보
 3. analyses/calculator.py + 단위 테스트              calculate() + is_calculable() (§7)
 4. GET /api/alternatives/categories/                 조회만, AI 없음
-5. GET /api/products/search/                         외부 API 연동
-6. 고민 생성 폼 + 목록·상세 페이지                    카테고리 3개 검증
-7. analyses/ai_service.py                            Gemini 연동
-8. POST .../generate/                                핵심 플로우
-9. POST /api/alternatives/<id>/regenerate/           version + is_current
-10. GET .../comparison/                              비교표 + chart 계약
-11. POST .../decision/                               AI 의사결정
-12. 최종 선택 폼 + 결과 페이지                        FinalChoice 검증
-13. 고민 삭제                                        SpendingRecord 연결 확인
-14. spending/*                                       후순위
+5. 고민 생성 폼 + 목록·상세 페이지                    카테고리 3개 검증
+6. analyses/ai_service.py                            Gemini 연동
+7. POST .../generate/                                핵심 플로우
+8. POST /api/alternatives/<id>/regenerate/           version + is_current
+9. GET .../comparison/                              비교표 + chart 계약
+10. POST .../decision/                               AI 의사결정
+11. 최종 선택 폼 + 결과 페이지                        FinalChoice 검증
+12. 고민 삭제                                        SpendingRecord 연결 확인
+13. spending/*                                       후순위
 ```
 
-> **`calculator.py`를 3번으로 올렸습니다.** 기회비용 계산은 순수 함수라 DB·AI 없이 단위 테스트를 쓸 수 있고, 이 서비스에서 숫자가 틀리면 안 되는 유일한 부분입니다. 여기가 확정돼야 8·10번의 응답 필드가 고정됩니다.
+> **`calculator.py`를 3번으로 올렸습니다.** 기회비용 계산은 순수 함수라 DB·AI 없이 단위 테스트를 쓸 수 있고, 이 서비스에서 숫자가 틀리면 안 되는 유일한 부분입니다. 여기가 확정돼야 7·9번의 응답 필드가 고정됩니다.
 
 ### `.env` 추가 항목
 
@@ -1776,9 +1733,6 @@ calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date �
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
 GEMINI_TIMEOUT=25
-
-NAVER_CLIENT_ID=
-NAVER_CLIENT_SECRET=
 ```
 
 ---
