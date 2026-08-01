@@ -64,12 +64,13 @@ erDiagram
     USER {
         bigint id PK
         varchar username UK "아이디"
+        varchar email UK "로그인 이메일"
         varchar password "해시"
         varchar name "이름"
         date birth_date "생년월일"
         varchar gender "성별"
-        varchar spending_type "소비 성향"
-        array value_criteria "중요 가치 기준 (복수)"
+        array spending_type "소비 성향 (최대 2개)"
+        array value_criteria "중요 가치 기준 (최대 3개)"
         varchar monthly_budget "월 소비 가능 예산"
         timestamptz created_at
         timestamptz updated_at
@@ -195,7 +196,7 @@ erDiagram
 ### 4.1 회원가입
 
 **필요한 데이터**
-- 아이디 / 이름 / 생년월일 / 성별 / 비밀번호
+- 아이디 / 이메일 / 이름 / 생년월일 / 성별 / 비밀번호
 - 소비 성향, 중요 가치 기준, 월 소비 가능 예산
 
 **사용하는 테이블**
@@ -274,12 +275,13 @@ erDiagram
 
 | 필드 | 설명 |
 |---|---|
-| `username` | 아이디 (로그인) |
+| `username` | 서비스 아이디 |
+| `email` | 로그인 이메일 (중복 불가) |
 | `name` | 이름 |
 | `birth_date` | 생년월일 |
 | `gender` | 성별 |
-| `spending_type` | 소비 성향 — 경험/만족, 가성비, 성장/자기개발, 자산 형성 |
-| `value_criteria` | 중요 가치 기준 (복수) — 가격, 만족도, 품질, 활용도, 장기 가치 |
+| `spending_type` | 소비 성향 (최대 2개) — 가성비, 품질, 경험/만족, 자기계발, 자산 형성, 신중한 소비 |
+| `value_criteria` | 중요 가치 기준 (최대 3개) — 가격, 활용도, 품질/성능, 지속/유지 기간, 만족감, 효율성 |
 | `monthly_budget` | 월 소비 가능 예산 — 10만원 이하 ~ 200만원 이상 6구간 |
 
 > 예산을 구간으로 저장하는 이유: 회원가입 UI가 6개 라디오 버튼이고, 비교표의 "가용 예산" 열에서도 이 값을 그대로 씁니다.
