@@ -1,0 +1,108 @@
+/* 구매 고민 입력 화면 (docs/API.md §5.1) */
+
+.consideration-page {
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+}
+
+.consideration-box {
+    width: 100%;
+    max-width: 560px;
+}
+
+.consideration-box h1 {
+    margin-bottom: 8px;
+    font-size: 24px;
+}
+
+.consideration-subtitle {
+    margin-bottom: 32px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.field {
+    margin-bottom: 24px;
+}
+
+.field > label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.field .required {
+    color: #ef4444;
+}
+
+.field input[type="text"],
+.field input[type="url"],
+.field select,
+.field textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.field ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.field ul label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 16px;
+    font-size: 14px;
+}
+
+.price-readback {
+    margin-top: 6px;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 18px;
+}
+
+.field-help {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.field-error,
+.form-errors {
+    color: #ef4444;
+    font-size: 13px;
+}
+
+.field-error {
+    margin-top: 6px;
+}
+
+.form-errors {
+    margin-bottom: 24px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fef2f2;
+    list-style: none;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 14px;
+    border: 0;
+    border-radius: 8px;
+    background: #111827;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}

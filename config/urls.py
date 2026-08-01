@@ -7,10 +7,11 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    path("api/accounts/", include("accounts.urls")),
-    path("api/products/", include("products.urls")),
-    path("api/alternatives/", include("alternatives.urls")),
-    path("api/analyses/", include("analyses.urls")),
+    # 페이지 (HTML)
+    path("products/", include("products.urls")),
+
+    # JSON API
+    path("api/", include("config.api_urls")),
 
     path("", include("core.urls")),
 ]
