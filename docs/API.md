@@ -1797,7 +1797,6 @@ NAVER_CLIENT_SECRET=
 - `monthly_amount` — **저장하지 않고** `product_price ÷ period_month`로 구함
 - `base_date` — `INVESTMENT`만 사용
 
-**[ERD.md](ERD.md) §7의 `calc_params` 예시가 이 결정과 다릅니다.** 시드 데이터 작성 전에 ERD 문서를 갱신해야 합니다.
 
 ### 비회원 체험 — 미지원 확정
 
