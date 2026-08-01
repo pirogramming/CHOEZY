@@ -1,0 +1,1326 @@
+/* =========================
+    LOGIN
+========================= */
+
+
+.login-page {
+
+    display:flex;
+    min-height:100vh;
+    background:#ffffff;
+
+    font-family:'Galmuri', sans-serif;
+
+}
+
+
+/* 왼쪽 */
+
+.login-section {
+
+    width:50%;
+    padding:40px 80px;
+
+}
+
+
+.login-logo {
+
+    color:#20CD8D;
+
+    font-size:32px;
+    font-weight:bold;
+
+}
+
+
+
+.login-box {
+
+    width:545px;
+
+    margin-top:70px;
+
+    margin-left:70px;
+
+}
+
+
+
+.login-box h1 {
+
+    font-size:35px;
+
+    color:#222;
+
+    margin-bottom:10px;
+
+}
+
+
+
+.login-subtitle {
+
+    color:#999;
+
+    font-size:20px;
+
+    margin-bottom:45px;
+
+}
+
+
+
+
+.input-box {
+
+    height:55px;
+
+    border:1px solid #aaa;
+
+    border-radius:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 20px;
+
+    margin-bottom:15px;
+
+}
+
+
+.input-icon {
+
+    color:#aaa;
+
+    margin-right:15px;
+
+}
+
+
+
+.input-box input {
+
+    flex:1;
+
+    border:none;
+
+    outline:none;
+
+    font-size:18px;
+
+}
+
+
+
+.eye-btn {
+
+    border:none;
+
+    background:none;
+
+    cursor:pointer;
+
+}
+
+
+
+.login-option {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin:35px 0;
+
+    color:#888;
+
+}
+
+
+
+.login-option a {
+
+    color:#888;
+
+    text-decoration:none;
+
+}
+
+
+
+.login-btn {
+
+    width:100%;
+
+    height:55px;
+
+    background:#20CD8D;
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+}
+
+
+
+.divider {
+
+    text-align:center;
+
+    margin:25px 0;
+
+    color:#999;
+
+}
+
+
+
+.social-btn {
+
+    width:100%;
+    height:55px;
+
+    background:white;
+    border:1px solid #ddd;
+    border-radius:10px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+
+    font-size:18px;
+    cursor:pointer;
+
+}
+
+
+.social-icon {
+
+    width:24px;
+    height:24px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+}
+
+
+.social-icon img {
+
+    width:24px;
+    height:24px;
+
+    object-fit:contain;
+
+}
+
+
+.social-btn:hover {
+
+    background:#f8f8f8;
+
+}
+
+
+.signup-text {
+
+    text-align:center;
+
+    margin-top:35px;
+
+    color:#999;
+
+}
+
+
+
+.signup-text a {
+
+    color:#20CD8D;
+
+    font-weight:bold;
+
+}
+
+
+/* 오른쪽 */
+
+.intro-section {
+
+    width:50%;
+
+    background:#fcfffd;
+
+    text-align:center;
+
+    padding-top:50px;
+
+}
+
+
+
+.login-character {
+
+    width:220px;
+
+}
+
+
+
+.intro-section h2 {
+
+    margin-top:30px;
+
+    color:#777;
+
+    font-size:30px;
+
+    line-height:1.5;
+
+}
+
+
+
+.intro-logo {
+
+    color:#20CD8D;
+
+    font-size:45px;
+
+    font-weight:bold;
+
+    margin:40px;
+
+}
+
+
+
+.feature-item {
+
+    display:flex;
+    width:400px;
+    margin:30px auto;
+    transform: translateX(40px);
+    text-align:left;
+    align-items:center
+
+}
+
+.feature-icon svg {
+    width: 48px;
+    height: 48px;
+    stroke: #20CD8D;
+}
+
+
+.feature-icon {
+
+    width:70px;
+
+    height:70px;
+
+    border:2px solid #20CD8D;
+
+    border-radius:15px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    margin-right:20px;
+
+}
+
+
+
+.feature-item h3 {
+
+    margin:0;
+
+    font-size:22px;
+
+}
+
+
+
+.feature-item p {
+
+    color:#999;
+
+}
+
+.googlelogo,
+.kakaologo {
+
+    width:24px;
+    height:24px;
+
+    object-fit:contain;
+
+}
+
+.kakaologo {
+    transform: translateX(-25px);
+}
+
+
+/* =========================
+    SIGNUP STEP1
+========================= */
+.signup-page {
+
+    min-height:100vh;
+
+    padding:40px 60px;
+
+    background:white;
+
+    font-family:'Pretendard', sans-serif;
+
+}
+
+
+
+/* =====================
+   로고
+===================== */
+
+
+.signup-logo {
+
+    font-size:36px;
+
+    font-weight:800;
+
+    color:#20CD8D;
+
+}
+
+
+
+
+
+/* =====================
+   상단 영역
+===================== */
+
+
+.signup-top {
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    width:1000px;
+
+    margin:25px auto 40px;
+
+    align-items:center;
+
+}
+
+
+
+
+
+/* 왼쪽 영역 */
+
+.signup-top-left {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+}
+
+
+
+
+
+.signup-title-area h1 {
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#17202A;
+
+    margin:0 0 10px;
+
+}
+
+
+
+.signup-title-area p {
+
+    font-size:16px;
+
+    color:#888;
+
+    margin:0;
+
+}
+
+
+
+
+
+.signup-character {
+
+    width:130px;
+
+}
+
+
+
+
+
+
+
+/* =====================
+   STEP 영역
+===================== */
+
+
+.signup-top-right {
+
+    display:flex;
+
+    justify-content:center;
+
+}
+
+
+
+
+
+.signup-step {
+
+    display:flex;
+
+    align-items:flex-start;
+
+}
+
+
+
+
+
+/* STEP 아이템 */
+
+.step-item {
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+}
+
+
+
+
+
+.step-circle {
+    width:40px;
+    height:40px;
+
+    border-radius:50%;
+
+    background:#E5E5E5; 
+    color:#999;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-weight:600;
+}
+
+
+
+
+
+.step-item.active > .step-circle {
+    background:#20CD8D;
+    color:white;
+}
+
+
+.step-item:not(.active) > .step-circle {
+    background:#E5E5E5;
+    color:#999;
+}
+
+
+.step-text {
+
+    margin-top:12px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#B8B8B8;
+
+    white-space:nowrap;
+
+}
+
+
+
+
+
+.step-item.active .step-text {
+
+    color:#20CD8D;
+
+}
+
+
+/* 원 사이 연결선 */
+
+
+.step-item-line {
+
+    display:flex;
+
+    align-items:center;
+
+    margin-top:21px;
+
+    margin-left:-3px;
+    margin-right:-3px;
+
+}
+
+
+.step-line {
+
+    width:180px;
+
+    height:3px;
+
+    background:#D9D9D9;
+
+}
+
+
+
+/* =====================
+   입력 폼
+===================== */
+
+
+.signup-form {
+
+    width:1000px;
+
+    margin:0 auto;
+
+    display:flex;
+
+    gap:100px;
+
+}
+
+
+
+.signup-form-left,
+.signup-form-right {
+
+    width:50%;
+
+}
+
+
+.signup-form label {
+
+    display:block;
+
+    margin:20px 0 10px;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    color:#17202A;
+
+}
+
+
+
+.signup-input-box {
+
+    height:48px;
+
+    border:1px solid #ddd;
+
+    border-radius:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:0 15px;
+
+}
+
+
+.signup-input-box input {
+
+    border:none;
+
+    outline:none;
+
+    width:100%;
+
+    font-size:16px;
+
+    font-family:'Pretendard', sans-serif;
+
+}
+
+
+
+/* 아이디 + 중복확인 */
+
+
+.signup-inline {
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+
+.signup-inline .signup-input-box {
+
+    flex:1;
+
+}
+
+
+
+.signup-check-btn {
+
+    width:110px;
+
+    background:white;
+
+    color:#20CD8D;
+
+    border:2px solid #20CD8D;
+
+    border-radius:10px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+
+
+
+
+
+
+/* 성별 */
+
+
+.signup-gender {
+
+    display:flex;
+
+    gap:40px;
+
+}
+
+
+
+
+
+.signup-gender label {
+
+    margin:0;
+
+    font-weight:500;
+
+}
+
+
+
+
+
+
+
+/* =====================
+   다음 버튼
+===================== */
+
+
+.signup-next-btn {
+
+    display:flex;
+
+    justify-content: center;
+
+    text-decoration: none;
+
+    align-items: center;
+    
+    width:300px;
+
+    height:50px;
+
+    margin:50px 140px 0 auto;
+
+    background:#20CD8D;
+
+    color:white;
+
+    border:none;
+
+    border-radius:12px;
+
+    font-size:18px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+}
+
+/* =========================
+    SIGNUP STEP2
+========================= */
+/* signup profile */
+
+
+/* ================= 전체 ================= */
+
+.signup-page{
+
+    min-height:100vh;
+    padding:40px 60px;
+    background:white;
+
+}
+
+
+.signup-logo{
+
+    font-size:36px;
+    font-weight:800;
+    color:#20CD8D;
+
+}
+
+
+/* ================= 상단 ================= */
+
+.signup-top{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+.signup-top-left{
+
+    display:flex;
+    align-items:center;
+    gap:30px;
+
+}
+
+
+.signup-title-area h1{
+
+    font-size:40px;
+    color:#172126;
+
+}
+
+
+.signup-title-area p{
+
+    font-size:20px;
+    color:#888;
+
+}
+
+
+.signup-character{
+
+    width:170px;
+
+}
+
+
+
+/* ================= step ================= */
+
+.signup-step{
+
+    display:flex;
+    align-items:flex-start;
+    gap:0;
+
+}
+
+
+
+.step-item{
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+}
+
+
+
+.step-circle{
+
+    width:55px;
+    height:55px;
+
+    border-radius:50%;
+
+    background:#20CD8D;
+
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:25px;
+
+}
+
+
+
+
+.step-line{
+
+    width:150px;
+
+    height:3px;
+
+    background:#9bdac5;
+
+}
+
+
+
+.step-text{
+
+    margin-top:10px;
+
+    font-size:14px;
+
+    white-space:nowrap;
+
+}
+
+
+
+/* ================= 프로필 영역 ================= */
+
+
+.profile-form-container{
+
+    display:flex;
+
+    gap:30px;
+
+    margin-top:50px;
+
+    align-items:stretch;
+
+}
+
+
+
+
+.profile-section{
+
+    flex:1;
+
+    min-width:0;
+
+    border:1px solid #eee;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,0.05);
+
+}
+
+
+
+
+
+/* 제목 */
+
+.profile-section-title{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:25px;
+
+}
+
+
+
+.profile-section-title > span{
+
+    width:32px;
+    height:32px;
+
+    background:#20CD8D;
+
+    color:white;
+
+    border-radius:8px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+
+.profile-section-title h2{
+
+    font-size:22px;
+
+    margin:0;
+
+}
+
+
+
+.profile-section-title small{
+
+    font-size:14px;
+
+    color:#999;
+
+}
+
+
+
+
+
+/* ================= 선택 카드 ================= */
+
+
+.profile-option-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:15px;
+
+}
+
+
+
+
+.profile-option input,
+.profile-money-option input{
+
+    display:none;
+
+}
+
+
+
+
+.profile-option-content{
+
+    height:90px;
+
+    border:1px solid #ddd;
+
+    border-radius:15px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+
+
+
+
+.profile-icon{
+
+    width:28px;
+
+    height:28px;
+
+    color:#20CD8D;
+
+}
+
+
+
+
+
+.profile-option span{
+
+    font-size:15px;
+
+}
+
+
+
+
+
+.profile-option input:checked + .profile-option-content{
+
+    background:#20CD8D;
+
+    border-color:#20CD8D;
+
+    color:white;
+
+}
+
+
+
+.profile-option input:checked + .profile-option-content .profile-icon{
+
+    color:white;
+
+}
+
+
+
+
+
+/* ================= 예산 ================= */
+
+
+.profile-money-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:15px;
+
+}
+
+
+
+.profile-money-option span{
+
+
+    display:flex;
+
+    height:55px;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border:1px solid #ddd;
+
+    border-radius:15px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+
+}
+
+
+
+
+.profile-money-option input:checked + span{
+
+
+    background:#20CD8D;
+
+    color:white;
+
+    border-color:#20CD8D;
+
+
+}
+
+
+
+
+
+/* ================= 버튼 ================= */
+
+
+.profile-submit-area{
+
+    width:100%;
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    margin-top:30px;
+
+}
+
+
+
+.profile-submit{
+
+
+    width:220px;
+
+    height:60px;
+
+
+    border:none;
+
+    border-radius:15px;
+
+
+    background:#20CD8D;
+
+
+    color:white;
+
+
+    font-size:22px;
+
+
+    cursor:pointer;
+
+
+}
+
+
+
+.profile-submit:hover {
+
+
+    opacity:0.9;
+
+
+}
+
+
+
+/* =========================
+   반응형
+========================= */
+
+
+@media(max-width:1000px){
+
+
+    .profile-option-grid,
+    .profile-money-grid {
+
+
+        grid-template-columns:repeat(2,220px);
+
+
+    }
+
+
+}
+
+
+
+@media(max-width:700px){
+
+
+    .signup-page {
+
+
+        padding:30px;
+
+
+    }
+
+
+    .signup-top {
+
+
+        flex-direction:column;
+
+
+        align-items:flex-start;
+
+
+    }
+
+
+    .profile-option-grid,
+    .profile-money-grid {
+
+
+        grid-template-columns:1fr;
+
+
+    }
+
+
+    .profile-submit {
+
+
+        width:100%;
+
+    }
+
+
+}

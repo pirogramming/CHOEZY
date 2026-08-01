@@ -7,6 +7,8 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+def login(request):
+    return render(request, "accounts/login.html")
 from .serializers import (
     LoginSerializer,
     SignupSerializer,
