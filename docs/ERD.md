@@ -319,7 +319,7 @@ erDiagram
 | `DIGITAL` | 디지털 전자기기 |
 | `FINANCE` | 재정 |
 
-`is_active`로 노출을 끌 수 있습니다. 재정 카테고리를 MVP에서 뺄 경우 사용할 수 있습니다.
+`is_active`로 노출을 끌 수 있습니다. **재정 카테고리는 MVP에 포함하기로 결정했으므로 6개 모두 `is_active=True`로 시작합니다.** (§7)
 
 카테고리 6건은 구조적으로 고정된 마스터 데이터이므로 **data migration의 `RunPython`으로 생성합니다.**
 
@@ -330,10 +330,10 @@ erDiagram
 | `category_id` | 어떤 카테고리의 항목인지 |
 | `name` | `제주도 2박 3일 여행`, `PT 1회`, `서울역-부산역 KTX 왕복` |
 | `unit_label` | `회` `박` `개월` `잔` `마리` — 기회비용 문구를 조립할 때 씀 |
-| `average_price` | 평균 비용 (원) |
+| `average_price` | 평균 비용 (원). **재정 항목은 계산에 쓰지 않음** (§7) |
 | `spec_note` | `엽떡 기본맛 기준`, `브랜드 명시`처럼 가격 산정 기준 |
 | `calc_type` | 계산 방식 (§7) |
-| `calc_params` | 재정 항목의 이율·기간 |
+| `calc_params` | 재정 항목의 기간·수익률 (§7). 소비형은 비워 둠 |
 | `source_name` / `source_url` | **출처** |
 | `effective_date` | **가격 기준일** |
 | `is_active` | 현재 AI 후보로 사용할 수 있는 데이터인지 |
@@ -385,9 +385,9 @@ AI가 `AlternativeItem` 중에서 고른 결과 + 기회비용 계산 결과입�
 | `slot` | 1 / 2 / 3 — 카테고리 안에서의 자리 |
 | `version` | 재생성 차수 (최초 1, 재생성할 때마다 +1) |
 | `is_current` | 현재 화면에 보이는 행만 `True` |
-| `unit_price` | 생성 시점 가격 스냅샷 |
-| `duration` | 지속 가능 기간 (비교표 열) |
-| `expected_effect` | 기대 효과 (비교표 열) |
+| `unit_price` | 계산에 사용한 기준 금액 스냅샷 — 소비형은 `item.average_price`, **재정형은 `product_price`(원금)** |
+| `duration` | 지속 가능 기간 (비교표 열). 소비형은 AI, **재정형은 서버가 `period_month`로 채움** |
+| `expected_effect` | 기대 효과 (비교표 열). 소비형은 AI, **재정형은 서버가 계산 결과로 채움** |
 | `ai_reason` | 왜 이걸 골랐는지 |
 | `result_type` | `QUANTITY` 또는 `FUTURE_VALUE` |
 | `equivalent_quantity` | 소비형 기회비용 환산 수량 |
@@ -428,6 +428,10 @@ result_type = FUTURE_VALUE
 > **`item_id`와 `unit_price`를 둘 다 두는 이유**: `item_id`는 생성 당시 사용한 대안 항목의 이름·출처·기준일을 보존하고, `unit_price`는 계산 시점의 가격을 직접 스냅샷으로 저장합니다. 가격이 바뀌면 기존 `AlternativeItem`을 수정하지 않고 새 행을 생성하므로, 과거 `Alternative.item_id`가 참조하는 가격 기준 데이터도 그대로 유지됩니다.
 
 > **기회비용을 별도 테이블로 빼지 않은 이유**: 대안 1개당 기회비용 1개로 정확히 1:1이고 항상 같이 계산됩니다. 나누면 조인만 늘어납니다.
+
+> **재정형의 `unit_price`는 단가가 아니라 원금입니다.** `unit_price`는 `PositiveIntegerField` + `> 0` 제약이라 비워둘 수 없고, 재정형에는 "단가"라는 개념이 없습니다. 그래서 계산에 실제로 사용한 금액인 `product_price`를 넣습니다. 두 경우 모두 **"그 대안을 계산할 때 사용한 기준 금액"** 이라는 의미는 같습니다.
+>
+> 재정 항목의 `item.average_price`(예: 적금 상품의 최소 납입액)는 계산에 쓰이지 않으므로 `unit_price`에 넣지 않습니다. 화면에서도 가격을 표시하지 않습니다. ([API.md](API.md) §7.3)
 
 #### 카테고리 일치 규칙
 
@@ -642,28 +646,45 @@ display_text
 
 재정형 항목은 단순 나눗셈으로 계산하지 않습니다.
 
-예를 들어 `정기적금 30만원, 연 3%`는 "220만원으로 적금을 몇 개 살 수 있는가"가 아니라 **"220만원을 운용하면 얼마가 되는가"**를 계산해야 합니다.
+예를 들어 `정기적금 연 3%`는 "220만원으로 적금을 몇 개 살 수 있는가"가 아니라 **"220만원을 운용하면 얼마가 되는가"**를 계산해야 합니다.
 
 ```text
 future_value = 원금 + 이자 또는 투자 수익
-display_text = "{item.name} 12개월 → 약 226만원"
+display_text = "{item.name} {period_month}개월 → 약 {금액}만원"
 ```
+
+#### `calc_params` 스키마
+
+**원금은 항목이 아니라 `Consideration.product_price`에서 옵니다.**
+
+| 키 | 사용하는 calc_type | 설명 |
+|---|---|---|
+| `period_month` | 전부 | 비교 기간 (개월), `> 0` |
+| `return_rate` | 전부 | **퍼센트 단위** — `3.0`은 연 3% |
+| `base_date` | `INVESTMENT` | 수익률 기준일 |
+| `ticker` | `INVESTMENT` (선택) | 종목 코드, 계산에 쓰지 않음 |
 
 | calc_type | 예시 | `calc_params` |
 |---|---|---|
-| `SAVINGS` | 정기적금 (월 30만원, 연 3%) | `{"monthly_amount": 300000, "annual_rate": 0.03, "term_months": 12}` |
-| `DEPOSIT` | 예금 (원금 100만원, 연 3%) | `{"principal": 1000000, "annual_rate": 0.03, "term_months": 12}` |
-| `INVESTMENT` | ETF 투자 | `{"ticker": "379800", "base_date": "2026-07-28"}` |
+| `SAVINGS` | 정기적금 (연 3%) | `{"period_month": 12, "return_rate": 3.0}` |
+| `DEPOSIT` | 예금 (연 3%) | `{"period_month": 12, "return_rate": 3.0}` |
+| `INVESTMENT` | ETF 투자 | `{"period_month": 12, "return_rate": 7.0, "base_date": "2026-07-28", "ticker": "379800"}` |
+
+`monthly_amount`(월 납입액)는 **저장하지 않습니다.** `product_price ÷ period_month`로 계산합니다.
+
+> **원금을 항목에 저장하지 않는 이유**: `monthly_amount: 300000`처럼 금액을 박아두면 220만원짜리 상품이든 120만원짜리 상품이든 같은 미래가치가 나옵니다. 그러면 **기회비용이 성립하지 않습니다.** 상품 가격에서 시작해야 "이 돈을 대신 굴리면"이라는 질문에 답이 됩니다.
+
+> **`return_rate`는 같은 키지만 의미가 갈립니다.** 적금·예금은 **연이율**이라 기간에 비례해 이자가 붙고, 투자는 `base_date`까지 **이미 실현된 수익률**이라 기간을 곱하지 않습니다.
 
 > **ETF 주의:** 특정 기준일의 수익률을 고정값으로 저장하고 화면에 기준일을 명시합니다. 실시간 시세 API는 MVP 범위를 넘으므로 초기 버전에서는 사용하지 않습니다.
 
-재정 카테고리는 계산 방식이 복잡하므로 일정이 빠듯할 경우 다음과 같이 비활성화할 수 있습니다.
+> 계산식·정밀도·표기 규칙은 [API.md](API.md) §7에 정의되어 있습니다.
 
-```text
-FINANCE.is_active = False
-```
+#### 재정 카테고리는 MVP에 포함합니다
 
-나머지 구조는 그대로 유지됩니다.
+`FINANCE.is_active = True`로 출시하기로 결정했습니다. 따라서 `FUTURE_VALUE` 계산과 그 시각화가 **초기 구현 범위에 들어갑니다.**
+
+일정 문제로 되돌려야 한다면 `FINANCE.is_active = False`로 끌 수 있고, 나머지 구조는 그대로 유지됩니다.
 
 ---
 
@@ -930,21 +951,30 @@ AI 소비 습관 조언
 
 ---
 
-## 11. 확인이 필요한 항목
+## 11. 확정된 결정
 
-### 비회원 체험 플로우
+### 비회원 체험 — 미지원
 
-비회원 체험을 지원하려면 현재 구조를 일부 변경해야 합니다.
+**회원 전용 서비스로 출시합니다.** 따라서 현재 구조를 그대로 유지합니다.
 
 ```text
-Consideration.user
-→ null=True, blank=True
-
-Consideration.session_key
-→ 비회원 세션 식별값
+Consideration.user        → null=False (변경 없음)
+Consideration.session_key → 추가하지 않음
 ```
 
-회원 전용 서비스로 먼저 출시한다면 현재 구조를 유지합니다.
+나중에 비회원 체험을 지원하게 되면 `user`를 nullable로 바꾸고 `session_key`를 추가해야 하며, 모든 조회 쿼리도 함께 수정해야 합니다.
+
+### 재정(`FINANCE`) 카테고리 — MVP 포함
+
+`is_active=True`로 출시합니다. `FUTURE_VALUE` 계산이 초기 구현 범위에 들어갑니다. (§7)
+
+### `calc_params` 스키마 — 확정
+
+```json
+{ "period_month": 12, "return_rate": 3.0 }
+```
+
+원금은 `Consideration.product_price`, `monthly_amount`는 파생값입니다. 자세한 내용은 §7과 [API.md](API.md) §7.5를 참고합니다.
 
 ---
 
