@@ -82,8 +82,7 @@ erDiagram
         varchar product_name "상품명"
         int product_price "가격, 1원 이상"
         text product_features "상품 특징"
-        varchar product_url "네이버 쇼핑 링크"
-        varchar image_url
+        varchar product_url "참고 링크 (선택)"
         varchar purpose "구매 목적"
         varchar purpose_detail "기타 직접 입력"
         bigint exclude_category_id FK "상품 자체 카테고리"
@@ -205,7 +204,7 @@ erDiagram
 ### 4.2 메인페이지 (구매 고민 입력)
 
 **필요한 데이터**
-- 구매 고민 중인 상품 (네이버 쇼핑 검색 또는 직접 입력)
+- 구매 고민 중인 상품 (상품명·가격 **직접 입력**)
 - 구매 목적
 - 카테고리 선택 (최대 3개)
 
@@ -294,7 +293,7 @@ erDiagram
 |---|---|
 | `user_id` | 누구의 고민인지 |
 | `product_name` / `product_price` / `product_features` | 고민 중인 상품 정보 |
-| `product_url` / `image_url` | 네이버 쇼핑 API 결과 |
+| `product_url` | 참고용 상품 페이지 링크 (선택). 서버가 읽어오지 않음 |
 | `purpose` | 구매 목적 — 개발/업무, 디자인/창작, 공부, 취미, 여행 기록, 기타 |
 | `purpose_detail` | 기타 선택 시 직접 입력 |
 | `exclude_category_id` | 고민 상품이 속한 카테고리. **대안 후보에서 제외**하는 데 씀 |
@@ -303,6 +302,10 @@ erDiagram
 | (M2M) | 선택한 `Category` 최대 3개 |
 
 `product_price`는 기회비용 계산의 기준 금액이므로 **1원 이상만 저장할 수 있도록 DB 제약을 둡니다.**
+
+> **상품 정보는 사용자가 직접 입력합니다.** 네이버 쇼핑 API 서비스가 종료되어 검색·자동 채우기가 없습니다. 따라서 `product_price`는 외부 API가 아니라 **사용자가 적어 넣은 값의 스냅샷**입니다. 오타 한 자리가 기회비용 전체를 바꾸므로 입력 화면에서 천 단위 구분 기호와 한글 금액 되읽기로 보조합니다. ([API.md](API.md) §5.1)
+
+> **`image_url`을 두지 않는 이유**: 검색 결과 이미지를 받을 곳이 없어졌고, 사용자에게 이미지 URL을 붙여넣게 하거나 파일 업로드를 받는 것은 MVP 범위를 넘습니다. 카드·비교표에서는 카테고리 이모지를 씁니다. 나중에 추가한다면 `ImageField` + `Pillow`로 붙이면 됩니다.
 
 > **`exclude_category_id`가 필요한 이유**: "디지털 전자기기" 카테고리 때문입니다. 맥북을 고민하는데 대안으로 "노트북 구매"가 뜨면 의미가 없습니다.
 
