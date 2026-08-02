@@ -376,7 +376,21 @@
     color:#344054;
 
     transition:0.2s;
+}
 
+
+/* RadioSelect·CheckboxSelectMultiple은 항목마다 <div>를 감쌉니다. */
+.field > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.field > div label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
 }
 
 

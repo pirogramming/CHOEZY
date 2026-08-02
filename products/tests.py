@@ -1,3 +1,4 @@
+from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -64,6 +65,39 @@ class ConsiderationCreateViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "products/consideration_form.html")
+
+    def test_구매_목적은_빈_선택지_없는_라디오로_렌더된다(self):
+        self.login()
+
+        response = self.client.get(self.url)
+        purpose = response.context["form"].fields["purpose"]
+
+        self.assertIsInstance(purpose.widget, forms.RadioSelect)
+        self.assertEqual(purpose.label, "구매 목적")
+        self.assertEqual(
+            [value for value, _ in purpose.choices],
+            [value for value, _ in Consideration.Purpose.choices],
+        )
+
+    def test_폼_필드_순서는_문서와_같다(self):
+        self.login()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(
+            list(response.context["form"].fields),
+            [
+                "product_name",
+                "product_price",
+                "product_features",
+                "product_url",
+                "purpose",
+                "purpose_detail",
+                "exclude_category",
+                "categories",
+                "compare_criteria",
+            ],
+        )
 
     def test_유효한_입력이면_고민을_생성하고_대안_페이지로_이동한다(self):
         self.login()
