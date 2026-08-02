@@ -49,17 +49,17 @@
     box-sizing: border-box;
 }
 
-.field ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+/* RadioSelect·CheckboxSelectMultiple은 항목마다 <div>를 감쌉니다. */
+.field > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
 }
 
-.field ul label {
+.field > div label {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-right: 16px;
     font-size: 14px;
 }
 
