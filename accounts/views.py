@@ -1,14 +1,15 @@
+from django.shortcuts import render
 from django.contrib.auth import get_user_model
+
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-def login(request):
-    return render(request, "accounts/login.html")
 from .serializers import (
     LoginSerializer,
     SignupSerializer,
@@ -16,9 +17,28 @@ from .serializers import (
     UsernameAvailabilitySerializer,
 )
 
-
 User = get_user_model()
 
+
+# ==========================
+# Template Views (Frontend)
+# ==========================
+
+def login_view(request):
+    return render(request, "accounts/login.html")
+
+
+def signup_view(request):
+    return render(request, "accounts/signup.html")
+
+
+def signup_profile_view(request):
+    return render(request, "accounts/signup_profile.html")
+
+
+# ==========================
+# API Views
+# ==========================
 
 class SignupView(generics.CreateAPIView):
     serializer_class = SignupSerializer
@@ -38,6 +58,7 @@ class UsernameAvailabilityView(APIView):
             data=request.query_params,
         )
         serializer.is_valid(raise_exception=True)
+
         username = serializer.validated_data["username"]
 
         return Response(
@@ -77,6 +98,7 @@ class LogoutView(APIView):
                 )
 
             token.blacklist()
+
         except TokenError:
             return Response(
                 {
