@@ -10,12 +10,12 @@ User = get_user_model()
 
 class AuthenticationAPITests(APITestCase):
     def setUp(self):
-        self.signup_url = reverse("accounts:signup")
-        self.check_username_url = reverse("accounts:check-username")
-        self.login_url = reverse("accounts:login")
-        self.refresh_url = reverse("accounts:token-refresh")
-        self.logout_url = reverse("accounts:logout")
-        self.me_url = reverse("accounts:me")
+        self.signup_url = reverse("accounts_api:signup")
+        self.check_username_url = reverse("accounts_api:check-username")
+        self.login_url = reverse("accounts_api:login")
+        self.refresh_url = reverse("accounts_api:token-refresh")
+        self.logout_url = reverse("accounts_api:logout")
+        self.me_url = reverse("accounts_api:me")
         self.password = "StrongPass!2468"
         self.signup_data = {
             "username": "choezy_user",

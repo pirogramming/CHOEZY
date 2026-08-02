@@ -55,8 +55,12 @@ class ConsiderationCreateViewTests(TestCase):
     def test_미로그인이면_로그인_페이지로_리다이렉트한다(self):
         response = self.client.get(self.url)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertIn(settings.LOGIN_URL, response["Location"])
+        # 로그인 페이지를 실제로 열어봅니다. LOGIN_URL이 없는 경로를 가리키면
+        # 여기서 잡힙니다.
+        self.assertRedirects(
+            response,
+            f"{settings.LOGIN_URL}?next={self.url}",
+        )
 
     def test_로그인하면_입력_화면이_렌더된다(self):
         self.login()

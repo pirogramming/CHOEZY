@@ -8,6 +8,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # 페이지 (HTML)
+    path("accounts/", include("accounts.urls")),
     path("products/", include("products.urls")),
 
     # JSON API
