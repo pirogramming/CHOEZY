@@ -30,6 +30,14 @@ class ConsiderationForm(forms.ModelForm):
         ),
     )
 
+    # ModelForm이 자동 생성하면 빈 선택지("---------")가 라디오에 하나 더
+    # 붙으므로 직접 선언합니다.
+    purpose = forms.ChoiceField(
+        label="구매 목적",
+        choices=Consideration.Purpose.choices,
+        widget=forms.RadioSelect,
+    )
+
     exclude_category = forms.ModelChoiceField(
         label="상품 자체 카테고리",
         queryset=Category.objects.filter(is_active=True),
@@ -73,7 +81,6 @@ class ConsiderationForm(forms.ModelForm):
             "product_name": "상품명",
             "product_features": "상품 특징",
             "product_url": "상품 페이지 링크",
-            "purpose": "구매 목적",
             "purpose_detail": "목적 직접 입력",
         }
 
