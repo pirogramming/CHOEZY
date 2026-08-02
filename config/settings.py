@@ -35,6 +35,14 @@ ALLOWED_HOSTS = [
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 
+# 고민 1건이 비교할 수 있는 카테고리 수 (docs/ERD.md §6)
+MAX_CATEGORY_SELECTION = 3
+
+
+# 로그인이 필요한 페이지의 리다이렉트 대상 (docs/API.md §2.3)
+LOGIN_URL = "/accounts/login/"
+
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
