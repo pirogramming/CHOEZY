@@ -35,6 +35,8 @@
   height: 40px;
   width: auto;
   display: block;
+  position: relative;
+  top: 8px;
 }
 
 .alt-mascot-img {
@@ -51,7 +53,7 @@
 
 .alt-card {
   background: #ffffff;
-  border: 1.5px solid #7FE0BE;
+  border: 3px solid #7FE0BE;
   border-radius: 20px;
   padding: 40px;
 }
@@ -115,6 +117,11 @@
   white-space: nowrap;
 }
 
+.alt-item__info {
+  flex: 1;
+  text-align: center;
+}
+
 .alt-item__name {
   font-size: 20px;
   font-weight: 700;
@@ -124,6 +131,7 @@
 .alt-item__price {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 16px;
   color: #777;
