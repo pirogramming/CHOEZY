@@ -1,11 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.validators import UniqueValidator
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 User = get_user_model()
@@ -134,39 +131,6 @@ class SignupSerializer(serializers.ModelSerializer):
             password=password,
             **validated_data,
         )
-
-
-class LoginSerializer(TokenObtainPairSerializer):
-    username_field = "email"
-    email = serializers.EmailField()
-
-    def validate(self, attrs):
-        email = attrs.get("email", "").strip()
-        password = attrs.get("password", "")
-        user = User.objects.filter(email__iexact=email).first()
-
-        if user is None:
-            raise AuthenticationFailed(
-                "이메일 또는 비밀번호가 올바르지 않습니다."
-            )
-
-        authenticated_user = authenticate(
-            request=self.context.get("request"),
-            username=user.username,
-            password=password,
-        )
-
-        if authenticated_user is None or not authenticated_user.is_active:
-            raise AuthenticationFailed(
-                "이메일 또는 비밀번호가 올바르지 않습니다."
-            )
-
-        refresh = self.get_token(authenticated_user)
-
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
 
 
 class UsernameAvailabilitySerializer(serializers.Serializer):
