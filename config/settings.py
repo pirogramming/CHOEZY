@@ -33,6 +33,8 @@ ALLOWED_HOSTS = [
 
 # Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+GEMINI_TIMEOUT_MS = 25_000
 
 
 # 고민 1건이 비교할 수 있는 카테고리 수 (docs/ERD.md §6)
