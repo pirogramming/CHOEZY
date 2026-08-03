@@ -137,12 +137,8 @@ http://127.0.0.1:8000/admin/
 
 ---
 
-## 📂 프로젝트 구조
+## 프로젝트 구조
 
-```text
-## 📂 Project Structure
-
-```text
 CHOEZY/
 ├── accounts/        # 회원 관리
 ├── alternatives/    # AI 대안 생성
