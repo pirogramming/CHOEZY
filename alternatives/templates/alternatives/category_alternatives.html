@@ -1,0 +1,158 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/alternatives.css' %}">
+
+<div class="alt-page">
+  <div class="alt-header-row">
+    <div class="alt-header-left">
+      <h1 class="alt-title">카테고리별 대안 생성</h1>
+      <img src="{% static 'images/Component4.png' %}" alt="단계 이동 버튼" class="alt-step-img">
+    </div>
+
+    <div class="alt-header-right">
+      <img src="{% static 'images/alt-mascot.png' %}" alt="" class="alt-mascot-img">
+    </div>
+  </div>
+
+  <div class="alt-cards">
+
+    <div class="alt-card">
+      <div class="alt-card__header">
+        <span class="alt-card__icon-wrap">
+          <img src="{% static 'images/trip.png' %}" alt="" class="icon-category">
+        </span>
+        <span class="alt-card__title">여행</span>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">국내 당일치기</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            20만원
+          </div>
+        </div>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">일본 3박 4일</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            180만원
+          </div>
+        </div>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">제주도 2박 3일</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            60만원
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alt-card">
+      <div class="alt-card__header">
+        <span class="alt-card__icon-wrap">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#20CD8D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="9" width="3" height="6" rx="1"/>
+            <rect x="19" y="9" width="3" height="6" rx="1"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <rect x="6" y="7" width="2" height="10" rx="1"/>
+            <rect x="16" y="7" width="2" height="10" rx="1"/>
+          </svg>
+        </span>
+        <span class="alt-card__title">운동</span>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">헬스장 1개월</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            8만원
+          </div>
+        </div>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">PT 10회</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            70만원
+          </div>
+        </div>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">필라테스 6개월</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            90만원
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alt-card">
+      <div class="alt-card__header">
+        <span class="alt-card__icon-wrap">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#20CD8D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 6C10.5 4.5 8 4 4 4V18C8 18 10.5 18.5 12 20C13.5 18.5 16 18 20 18V4C16 4 13.5 4.5 12 6Z"/>
+            <line x1="12" y1="6" x2="12" y2="20"/>
+          </svg>
+        </span>
+        <span class="alt-card__title">문화</span>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">영화 관람 1회</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            2만원
+          </div>
+        </div>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">OTT 1개월 구독</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            4만원
+          </div>
+        </div>
+      </div>
+
+      <div class="alt-item">
+        <button type="button" class="regen-btn">재생성</button>
+        <div class="alt-item__info">
+          <div class="alt-item__name">전시회 관람 1회</div>
+          <div class="alt-item__price">
+            <img src="{% static 'images/pig.png' %}" alt="" class="icon-pig">
+            3만원
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
