@@ -31,6 +31,86 @@ COMPARISON_COLUMNS = {
     },
 }
 
+BUDGET_RANGES = {
+    "UNDER_100K": (0, 100_000),
+    "100K_300K": (100_000, 300_000),
+    "300K_500K": (300_000, 500_000),
+    "500K_1M": (500_000, 1_000_000),
+    "1M_2M": (1_000_000, 2_000_000),
+    "OVER_2M": (2_000_000, None),
+}
+
+
+def format_budget_amount(amount):
+    if amount % 10_000 == 0:
+        return f"{amount // 10_000}만원"
+    return f"{amount:,}원"
+
+
+def compare_with_budget(price, budget_code, budget_display):
+    minimum, maximum = BUDGET_RANGES[budget_code]
+    base = {
+        "budget_code": budget_code,
+        "budget_display": budget_display,
+        "budget_min": minimum,
+        "budget_max": maximum,
+        "difference_min": None,
+        "difference_max": None,
+    }
+    if price is None:
+        return {
+            **base,
+            "status": "NOT_APPLICABLE",
+            "display": "해당 없음",
+        }
+    if price < minimum:
+        difference_min = minimum - price
+        difference_max = maximum - price if maximum is not None else None
+        if difference_max is None:
+            display = f"월 예산 대비 최소 {format_budget_amount(difference_min)} 여유"
+        else:
+            display = (
+                "월 예산 대비 "
+                f"{format_budget_amount(difference_min)}~"
+                f"{format_budget_amount(difference_max)} 여유"
+            )
+        return {
+            **base,
+            "status": "UNDER",
+            "difference_min": difference_min,
+            "difference_max": difference_max,
+            "display": display,
+        }
+    if maximum is not None and price > maximum:
+        difference_min = price - maximum
+        difference_max = price - minimum if minimum else None
+        if difference_max is None:
+            display = f"월 예산 대비 최소 {format_budget_amount(difference_min)} 초과"
+        else:
+            display = (
+                "월 예산 대비 "
+                f"{format_budget_amount(difference_min)}~"
+                f"{format_budget_amount(difference_max)} 초과"
+            )
+        return {
+            **base,
+            "status": "OVER",
+            "difference_min": difference_min,
+            "difference_max": difference_max,
+            "display": display,
+        }
+    if maximum is None:
+        return {
+            **base,
+            "status": "UNKNOWN",
+            "display": "정확한 월 예산 확인 필요",
+        }
+    return {
+        **base,
+        "status": "WITHIN",
+        "display": "월 예산 범위 내",
+    }
+
 
 def serialize_alternative(alternative, history=None):
     item = alternative.item
@@ -280,8 +360,10 @@ def serialize_comparison_row(alternative, consideration):
         "price_display": price_display,
         "duration_display": alternative.duration or "—",
         "expected_effect": alternative.expected_effect,
-        "available_budget": (
-            f"월 {consideration.user.get_monthly_budget_display()}"
+        "available_budget": compare_with_budget(
+            price,
+            consideration.user.monthly_budget,
+            consideration.user.get_monthly_budget_display(),
         ),
         "opportunity_cost": {
             "result_type": alternative.result_type,

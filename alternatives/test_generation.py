@@ -8,6 +8,7 @@ from analyses.calculator import calculate_opportunity_cost
 from products.models import Consideration
 
 from .ai_service import GeminiRequestError
+from .api_views import compare_with_budget
 from .models import Alternative, AlternativeItem, Category, LLMRequestLog
 
 
@@ -338,6 +339,11 @@ class AlternativeGenerationAPITests(TestCase):
         self.assertEqual(row["price_display"], "10,000원")
         self.assertEqual(row["chart"]["type"], "COUNT")
         self.assertEqual(row["source"]["note"], "2026.08 기준 · 테스트 출처")
+        self.assertEqual(row["available_budget"]["status"], "UNDER")
+        self.assertEqual(
+            row["available_budget"]["display"],
+            "월 예산 대비 29만원~49만원 여유",
+        )
         select.assert_not_called()
 
     def test_comparison_returns_growth_row_for_finance(self):
@@ -394,6 +400,9 @@ class AlternativeGenerationAPITests(TestCase):
         self.assertEqual(row["chart"]["type"], "GROWTH")
         self.assertEqual(row["chart"]["principal"], 1_200_000)
         self.assertTrue(row["source"]["note"].endswith(" · 세전"))
+        self.assertEqual(
+            row["available_budget"]["status"], "NOT_APPLICABLE"
+        )
 
     def test_comparison_requires_generated_status(self):
         response = self.client.get(
@@ -403,3 +412,27 @@ class AlternativeGenerationAPITests(TestCase):
 
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.json()["error"]["code"], "INVALID_STATUS")
+
+
+class BudgetComparisonTests(TestCase):
+    def test_returns_over_range(self):
+        result = compare_with_budget(700_000, "300K_500K", "30~50만원")
+
+        self.assertEqual(result["status"], "OVER")
+        self.assertEqual(result["difference_min"], 200_000)
+        self.assertEqual(result["difference_max"], 400_000)
+        self.assertEqual(
+            result["display"], "월 예산 대비 20만원~40만원 초과"
+        )
+
+    def test_returns_within_range(self):
+        result = compare_with_budget(400_000, "300K_500K", "30~50만원")
+
+        self.assertEqual(result["status"], "WITHIN")
+        self.assertEqual(result["display"], "월 예산 범위 내")
+
+    def test_over_two_million_requires_exact_budget(self):
+        result = compare_with_budget(2_500_000, "OVER_2M", "200만원 이상")
+
+        self.assertEqual(result["status"], "UNKNOWN")
+        self.assertEqual(result["display"], "정확한 월 예산 확인 필요")
