@@ -125,10 +125,10 @@ def _validate_response(response, candidates):
     return validated
 
 
-def _log(consideration, prompt, response, status):
+def _log(consideration, purpose, prompt, response, status):
     LLMRequestLog.objects.create(
         consideration=consideration,
-        purpose=LLMRequestLog.Purpose.GENERATE,
+        purpose=purpose,
         model=settings.GEMINI_MODEL,
         prompt=prompt,
         response=response,
@@ -242,16 +242,237 @@ def generate_alternatives(consideration_id, user, selector=None):
         raise
     except GeminiTimeoutError as exc:
         if consideration and prompt:
-            _log(consideration, prompt, {"error": str(exc)}, LLMRequestLog.Status.FAILED)
+            _log(
+                consideration,
+                LLMRequestLog.Purpose.GENERATE,
+                prompt,
+                {"error": str(exc)},
+                LLMRequestLog.Status.FAILED,
+            )
         raise AlternativeServiceError(
             "AI_TIMEOUT", "AI 응답 시간이 초과되었습니다.", 504
         ) from exc
     except GeminiRequestError as exc:
         if consideration and prompt:
-            _log(consideration, prompt, {"error": str(exc)}, LLMRequestLog.Status.FAILED)
+            _log(
+                consideration,
+                LLMRequestLog.Purpose.GENERATE,
+                prompt,
+                {"error": str(exc)},
+                LLMRequestLog.Status.FAILED,
+            )
         raise AlternativeServiceError(
             "AI_REQUEST_FAILED", "AI 대안 생성에 실패했습니다.", 502
         ) from exc
 
-    _log(consideration, prompt, response, LLMRequestLog.Status.SUCCESS)
+    _log(
+        consideration,
+        LLMRequestLog.Purpose.GENERATE,
+        prompt,
+        response,
+        LLMRequestLog.Status.SUCCESS,
+    )
     return consideration, created
+
+
+def _build_regenerate_prompt(consideration, alternative, candidates):
+    payload = {
+        "product": {
+            "name": consideration.product_name,
+            "price": consideration.product_price,
+            "purpose": consideration.get_purpose_display(),
+        },
+        "consumer_profile": {
+            "spending_types": consideration.user.spending_type,
+            "value_criteria": consideration.user.value_criteria,
+            "monthly_budget": consideration.user.get_monthly_budget_display(),
+        },
+        "category": {
+            "code": alternative.category.code,
+            "name": alternative.category.name,
+        },
+        "slot": alternative.slot,
+        "previous_item": alternative.item.name,
+        "candidates": [
+            {
+                "item_id": item.id,
+                "name": item.name,
+                "calc_type": item.calc_type,
+                "spec_note": item.spec_note,
+            }
+            for item in candidates
+        ],
+    }
+    return (
+        "기존 추천과 겹치지 않는 새 대안 1개를 후보에서 선택하세요. "
+        "응답은 selections 배열에 해당 카테고리 1개, items 배열에 항목 "
+        "1개만 넣으세요. slot은 제공된 값을 사용하세요. UNIT_PRICE이면 "
+        "duration, expected_effect, ai_reason을 한국어로 작성하고, 재정형이면 "
+        "item_id, slot, ai_reason만 작성하세요. 가격과 출처는 만들지 마세요.\n"
+        + json.dumps(payload, ensure_ascii=False)
+    )
+
+
+def _validate_regeneration_response(response, alternative, candidates):
+    if not isinstance(response, dict):
+        raise GeminiRequestError("Gemini 응답 형식이 올바르지 않습니다.")
+    selections = response.get("selections")
+    if not isinstance(selections, list) or len(selections) != 1:
+        raise GeminiRequestError("재생성 대안은 정확히 1개여야 합니다.")
+    category_selection = selections[0]
+    if (
+        not isinstance(category_selection, dict)
+        or category_selection.get("category_code") != alternative.category.code
+    ):
+        raise GeminiRequestError("Gemini가 다른 카테고리를 반환했습니다.")
+    items = category_selection.get("items")
+    if (
+        not isinstance(items, list)
+        or len(items) != 1
+        or not isinstance(items[0], dict)
+    ):
+        raise GeminiRequestError("재생성 대안은 정확히 1개여야 합니다.")
+
+    selection = items[0]
+    candidate_map = {item.id: item for item in candidates}
+    item_id = selection.get("item_id")
+    if type(item_id) is not int or item_id not in candidate_map:
+        raise GeminiRequestError("유효하지 않은 대안 항목이 선택됐습니다.")
+    if selection.get("slot") != alternative.slot:
+        raise GeminiRequestError("Gemini가 잘못된 슬롯을 반환했습니다.")
+    reason = selection.get("ai_reason")
+    if not isinstance(reason, str) or not reason.strip():
+        raise GeminiRequestError("ai_reason이 필요합니다.")
+
+    item = candidate_map[item_id]
+    if item.calc_type == AlternativeItem.CalcType.UNIT_PRICE:
+        for field in ("duration", "expected_effect"):
+            value = selection.get(field)
+            if not isinstance(value, str) or not value.strip():
+                raise GeminiRequestError(f"{field}이 필요합니다.")
+    return item, selection
+
+
+def regenerate_alternative(alternative_id, user, selector=None):
+    selector = selector or GeminiAlternativeSelector()
+    prompt = ""
+    response = None
+    consideration = None
+    previous = None
+    try:
+        with transaction.atomic():
+            try:
+                target = Alternative.objects.select_related(
+                    "consideration", "category", "item"
+                ).get(pk=alternative_id, consideration__user=user)
+            except Alternative.DoesNotExist as exc:
+                raise AlternativeServiceError(
+                    "NOT_FOUND", "대안을 찾을 수 없습니다.", 404
+                ) from exc
+
+            consideration = (
+                Consideration.objects.select_for_update(of=("self",))
+                .select_related("user")
+                .get(pk=target.consideration_id)
+            )
+            previous = Alternative.objects.select_related(
+                "category", "item"
+            ).get(pk=target.pk)
+            if not previous.is_current:
+                raise AlternativeServiceError(
+                    "INVALID_STATUS", "현재 대안만 재생성할 수 있습니다.", 409
+                )
+            if consideration.status != Consideration.Status.GENERATED:
+                raise AlternativeServiceError(
+                    "INVALID_STATUS", "대안을 재생성할 수 없는 상태입니다.", 409
+                )
+
+            current_item_ids = Alternative.objects.filter(
+                consideration=consideration,
+                is_current=True,
+            ).values_list("item_id", flat=True)
+            candidates = [
+                item
+                for item in AlternativeItem.objects.filter(
+                    category=previous.category,
+                    is_active=True,
+                ).exclude(id__in=current_item_ids).order_by("id")
+                if is_calculable(item, consideration.product_price)
+            ]
+            if not candidates:
+                raise AlternativeServiceError(
+                    "NO_CANDIDATE_ITEMS",
+                    "재생성에 사용할 대안 데이터가 부족합니다.",
+                    409,
+                    {"category": [previous.category.code]},
+                )
+
+            prompt = _build_regenerate_prompt(
+                consideration, previous, candidates
+            )
+            response = selector.select(prompt)
+            item, selection = _validate_regeneration_response(
+                response, previous, candidates
+            )
+            calculation = calculate_opportunity_cost(
+                item, consideration.product_price
+            )
+            duration = calculation.duration or selection["duration"].strip()
+            expected_effect = (
+                calculation.expected_effect
+                or selection["expected_effect"].strip()
+            )
+
+            previous.is_current = False
+            previous.save(update_fields=["is_current", "updated_at"])
+            created = Alternative.objects.create(
+                consideration=consideration,
+                category=previous.category,
+                item=item,
+                slot=previous.slot,
+                version=previous.version + 1,
+                is_current=True,
+                unit_price=calculation.unit_price,
+                duration=duration,
+                expected_effect=expected_effect,
+                ai_reason=selection["ai_reason"].strip(),
+                result_type=calculation.result_type,
+                equivalent_quantity=calculation.equivalent_quantity,
+                future_value=calculation.future_value,
+                display_text=calculation.display_text,
+            )
+    except AlternativeServiceError:
+        raise
+    except GeminiTimeoutError as exc:
+        if consideration and prompt:
+            _log(
+                consideration,
+                LLMRequestLog.Purpose.REGENERATE,
+                prompt,
+                {"error": str(exc)},
+                LLMRequestLog.Status.FAILED,
+            )
+        raise AlternativeServiceError(
+            "AI_TIMEOUT", "AI 응답 시간이 초과되었습니다.", 504
+        ) from exc
+    except GeminiRequestError as exc:
+        if consideration and prompt:
+            _log(
+                consideration,
+                LLMRequestLog.Purpose.REGENERATE,
+                prompt,
+                {"error": str(exc)},
+                LLMRequestLog.Status.FAILED,
+            )
+        raise AlternativeServiceError(
+            "AI_REQUEST_FAILED", "AI 대안 재생성에 실패했습니다.", 502
+        ) from exc
+
+    _log(
+        consideration,
+        LLMRequestLog.Purpose.REGENERATE,
+        prompt,
+        response,
+        LLMRequestLog.Status.SUCCESS,
+    )
+    return previous, created
