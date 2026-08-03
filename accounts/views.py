@@ -6,6 +6,8 @@ from django.contrib.auth import (
     logout as auth_logout,
 )
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password
+from django.db import IntegrityError, transaction
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
@@ -19,9 +21,10 @@ from .serializers import (
     UserSerializer,
     UsernameAvailabilitySerializer,
 )
-from .forms import SignupForm
+from .forms import SignupBasicForm, SignupProfileForm
 
 User = get_user_model()
+PENDING_SIGNUP_SESSION_KEY = "pending_signup"
 
 
 # ==========================
@@ -83,17 +86,23 @@ def logout_view(request):
 
 @require_http_methods(["GET", "POST"])
 def signup_view(request):
-    """회원 정보를 검증하고 생성한 뒤 Django 세션으로 로그인합니다."""
+    """회원가입 1단계 기본 정보를 검증하여 세션에 임시 저장합니다."""
     if request.user.is_authenticated:
         return redirect("core:home")
 
-    form = SignupForm(request.POST or None)
+    form = SignupBasicForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
-        user = form.save()
-        auth_login(request, user)
-        messages.success(request, "회원가입이 완료되었습니다.")
-        return redirect("products:consideration_create")
+        data = form.cleaned_data
+        request.session[PENDING_SIGNUP_SESSION_KEY] = {
+            "name": data["name"],
+            "username": data["username"],
+            "email": data["email"],
+            "gender": data["gender"],
+            "birth_date": data["birth_date"].isoformat(),
+            "password_hash": make_password(data["password"]),
+        }
+        return redirect("accounts:signup_profile")
 
     return render(
         request,
@@ -102,8 +111,53 @@ def signup_view(request):
     )
 
 
+@require_http_methods(["GET", "POST"])
 def signup_profile_view(request):
-    return render(request, "accounts/signup_profile.html")
+    """회원가입 2단계 프로필을 검증한 뒤 사용자와 로그인 세션을 생성합니다."""
+    if request.user.is_authenticated:
+        return redirect("core:home")
+
+    pending = request.session.get(PENDING_SIGNUP_SESSION_KEY)
+    if not pending:
+        messages.error(request, "기본 정보를 먼저 입력해주세요.")
+        return redirect("accounts:signup")
+
+    form = SignupProfileForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        if User.objects.filter(username__iexact=pending["username"]).exists():
+            form.add_error(None, "이미 사용 중인 아이디입니다. 다시 확인해주세요.")
+        elif User.objects.filter(email__iexact=pending["email"]).exists():
+            form.add_error(None, "이미 사용 중인 이메일입니다. 다시 확인해주세요.")
+        else:
+            try:
+                with transaction.atomic():
+                    user = User.objects.create(
+                        name=pending["name"],
+                        username=pending["username"],
+                        email=pending["email"],
+                        gender=pending["gender"],
+                        birth_date=pending["birth_date"],
+                        password=pending["password_hash"],
+                        spending_type=form.cleaned_data["spending_type"],
+                        value_criteria=form.cleaned_data["value_criteria"],
+                        monthly_budget=form.cleaned_data["monthly_budget"],
+                    )
+            except IntegrityError:
+                form.add_error(
+                    None,
+                    "회원 정보가 이미 사용 중입니다. 기본 정보를 다시 확인해주세요.",
+                )
+            else:
+                request.session.pop(PENDING_SIGNUP_SESSION_KEY, None)
+                auth_login(request, user)
+                messages.success(request, "회원가입이 완료되었습니다.")
+                return redirect("products:consideration_create")
+
+    return render(
+        request,
+        "accounts/signup_profile.html",
+        {"form": form},
+    )
 
 
 # ==========================

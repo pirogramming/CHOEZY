@@ -80,13 +80,18 @@ class SessionAuthenticationPageTests(TestCase):
 class SignupPageTests(TestCase):
     def setUp(self):
         self.signup_url = reverse("accounts:signup")
+        self.profile_url = reverse("accounts:signup_profile")
         self.password = "StrongPass!2468"
-        self.signup_data = {
+        self.basic_data = {
             "username": "choezy_user",
             "email": "User@Example.com",
             "name": "최지",
             "birth_date": "2000-01-01",
-            "gender": User.Gender.OTHER,
+            "gender": User.Gender.MALE,
+            "password": self.password,
+            "password_confirm": self.password,
+        }
+        self.profile_data = {
             "spending_type": [
                 User.SpendingType.VALUE,
                 User.SpendingType.CAUTIOUS,
@@ -96,12 +101,17 @@ class SignupPageTests(TestCase):
                 User.ValueCriterion.QUALITY,
             ],
             "monthly_budget": User.MonthlyBudget.FROM_300K_TO_500K,
-            "password": self.password,
-            "password_confirm": self.password,
         }
 
-    def test_signup_creates_user_and_session(self):
-        response = self.client.post(self.signup_url, self.signup_data)
+    def submit_basic_data(self):
+        return self.client.post(self.signup_url, self.basic_data)
+
+    def test_two_step_signup_creates_user_and_session(self):
+        first_response = self.submit_basic_data()
+        self.assertRedirects(first_response, self.profile_url)
+        self.assertFalse(User.objects.filter(username="choezy_user").exists())
+
+        response = self.client.post(self.profile_url, self.profile_data)
 
         user = User.objects.get(username="choezy_user")
         self.assertRedirects(
@@ -110,28 +120,24 @@ class SignupPageTests(TestCase):
         )
         self.assertEqual(user.email, "user@example.com")
         self.assertTrue(user.check_password(self.password))
-        self.assertEqual(user.spending_type, self.signup_data["spending_type"])
+        self.assertEqual(user.spending_type, self.profile_data["spending_type"])
         self.assertEqual(
             user.value_criteria,
-            self.signup_data["value_criteria"],
+            self.profile_data["value_criteria"],
         )
         self.assertEqual(
             int(self.client.session["_auth_user_id"]),
             user.pk,
         )
 
-    def test_signup_requires_profile_fields(self):
-        required_fields = [
-            "birth_date",
-            "gender",
-            "spending_type",
-            "value_criteria",
-            "monthly_budget",
-        ]
+        self.assertNotIn("pending_signup", self.client.session)
+
+    def test_basic_step_requires_all_fields(self):
+        required_fields = ["name", "username", "email", "birth_date", "gender"]
 
         for field in required_fields:
             with self.subTest(field=field):
-                data = self.signup_data.copy()
+                data = self.basic_data.copy()
                 data.pop(field)
                 response = self.client.post(self.signup_url, data)
 
@@ -140,7 +146,7 @@ class SignupPageTests(TestCase):
 
     def test_signup_rejects_password_mismatch(self):
         data = {
-            **self.signup_data,
+            **self.basic_data,
             "password_confirm": "DifferentPass!2468",
         }
 
@@ -156,15 +162,16 @@ class SignupPageTests(TestCase):
             email="USER@example.com",
         )
 
-        response = self.client.post(self.signup_url, self.signup_data)
+        response = self.client.post(self.signup_url, self.basic_data)
         errors = response.context["form"].errors
 
         self.assertIn("username", errors)
         self.assertIn("email", errors)
 
     def test_signup_rejects_more_than_two_spending_types(self):
+        self.submit_basic_data()
         data = {
-            **self.signup_data,
+            **self.profile_data,
             "spending_type": [
                 User.SpendingType.VALUE,
                 User.SpendingType.QUALITY,
@@ -172,13 +179,14 @@ class SignupPageTests(TestCase):
             ],
         }
 
-        response = self.client.post(self.signup_url, data)
+        response = self.client.post(self.profile_url, data)
 
         self.assertIn("spending_type", response.context["form"].errors)
 
     def test_signup_rejects_more_than_three_value_criteria(self):
+        self.submit_basic_data()
         data = {
-            **self.signup_data,
+            **self.profile_data,
             "value_criteria": [
                 User.ValueCriterion.PRICE,
                 User.ValueCriterion.QUALITY,
@@ -187,9 +195,24 @@ class SignupPageTests(TestCase):
             ],
         }
 
-        response = self.client.post(self.signup_url, data)
+        response = self.client.post(self.profile_url, data)
 
         self.assertIn("value_criteria", response.context["form"].errors)
+
+    def test_profile_step_requires_basic_step(self):
+        response = self.client.get(self.profile_url)
+
+        self.assertRedirects(response, self.signup_url)
+
+    def test_profile_step_rechecks_duplicate_username(self):
+        self.submit_basic_data()
+        create_user(username="CHOEZY_USER", email="other@example.com")
+
+        response = self.client.post(self.profile_url, self.profile_data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].non_field_errors())
+        self.assertEqual(User.objects.filter(username__iexact="choezy_user").count(), 1)
 
 
 class AccountAPITests(TestCase):
