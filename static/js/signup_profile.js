@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 const consumption =
 document.querySelectorAll(
-'input[name="consumption_type"]'
+'input[name="spending_type"]'
 );
 
 
@@ -15,7 +15,7 @@ input.addEventListener(
 
 let checked =
 document.querySelectorAll(
-'input[name="consumption_type"]:checked'
+'input[name="spending_type"]:checked'
 );
 
 
@@ -37,7 +37,7 @@ alert("최대 2개까지 선택 가능합니다.");
 
 const values =
 document.querySelectorAll(
-'input[name="value_type"]'
+'input[name="value_criteria"]'
 );
 
 
@@ -50,7 +50,7 @@ input.addEventListener(
 
 let checked =
 document.querySelectorAll(
-'input[name="value_type"]:checked'
+'input[name="value_criteria"]:checked'
 );
 
 

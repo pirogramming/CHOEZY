@@ -100,6 +100,15 @@
 
         {% csrf_token %}
 
+        {% if form.errors %}
+        <div class="form-errors">
+            {% for field in form %}
+                {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
 
 
         <div class="profile-form-container">
@@ -138,7 +147,7 @@
                     <label class="profile-option">
 
 
-                        <input type="checkbox" name="consumption_type" value="value">
+                        <input type="checkbox" name="spending_type" value="VALUE" {% if "VALUE" in form.spending_type.value %}checked{% endif %}>
 
 
 
@@ -175,7 +184,7 @@
                     <label class="profile-option">
 
 
-                        <input type="checkbox" name="consumption_type" value="quality">
+                        <input type="checkbox" name="spending_type" value="QUALITY" {% if "QUALITY" in form.spending_type.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -213,7 +222,7 @@
                     <label class="profile-option">
 
 
-                        <input type="checkbox" name="consumption_type" value="experience">
+                        <input type="checkbox" name="spending_type" value="EXPERIENCE" {% if "EXPERIENCE" in form.spending_type.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -242,7 +251,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="consumption_type" value="growth">
+                        <input type="checkbox" name="spending_type" value="GROWTH" {% if "GROWTH" in form.spending_type.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -273,7 +282,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="consumption_type" value="asset">
+                        <input type="checkbox" name="spending_type" value="ASSET" {% if "ASSET" in form.spending_type.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -305,7 +314,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="consumption_type" value="careful">
+                        <input type="checkbox" name="spending_type" value="CAUTIOUS" {% if "CAUTIOUS" in form.spending_type.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -372,7 +381,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="value_type" value="price">
+                        <input type="checkbox" name="value_criteria" value="PRICE" {% if "PRICE" in form.value_criteria.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -405,7 +414,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="value_type" value="usage">
+                        <input type="checkbox" name="value_criteria" value="UTILIZATION" {% if "UTILIZATION" in form.value_criteria.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -435,7 +444,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="value_type" value="quality">
+                        <input type="checkbox" name="value_criteria" value="QUALITY" {% if "QUALITY" in form.value_criteria.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -469,7 +478,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="value_type" value="period">
+                        <input type="checkbox" name="value_criteria" value="DURATION" {% if "DURATION" in form.value_criteria.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -499,7 +508,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="value_type" value="satisfaction">
+                        <input type="checkbox" name="value_criteria" value="SATISFACTION" {% if "SATISFACTION" in form.value_criteria.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -533,7 +542,7 @@
 
                     <label class="profile-option">
 
-                        <input type="checkbox" name="value_type" value="efficiency">
+                        <input type="checkbox" name="value_criteria" value="EFFICIENCY" {% if "EFFICIENCY" in form.value_criteria.value %}checked{% endif %}>
 
 
                         <div class="profile-option-content">
@@ -599,7 +608,7 @@
 
                     <label class="profile-money-option">
 
-                        <input type="radio" name="budget" value="under10">
+                        <input type="radio" name="monthly_budget" value="UNDER_100K" {% if form.monthly_budget.value == "UNDER_100K" %}checked{% endif %} required>
 
                         <span>
                             10만원 이하
@@ -612,7 +621,7 @@
 
                     <label class="profile-money-option">
 
-                        <input type="radio" name="budget" value="10-30">
+                        <input type="radio" name="monthly_budget" value="100K_300K" {% if form.monthly_budget.value == "100K_300K" %}checked{% endif %} required>
 
                         <span>
                             10~30만원
@@ -625,7 +634,7 @@
 
                     <label class="profile-money-option">
 
-                        <input type="radio" name="budget" value="30-50">
+                        <input type="radio" name="monthly_budget" value="300K_500K" {% if form.monthly_budget.value == "300K_500K" %}checked{% endif %} required>
 
                         <span>
                             30~50만원
@@ -638,7 +647,7 @@
 
                     <label class="profile-money-option">
 
-                        <input type="radio" name="budget" value="50-100">
+                        <input type="radio" name="monthly_budget" value="500K_1M" {% if form.monthly_budget.value == "500K_1M" %}checked{% endif %} required>
 
                         <span>
                             50~100만원
@@ -651,7 +660,7 @@
 
                     <label class="profile-money-option">
 
-                        <input type="radio" name="budget" value="100-200">
+                        <input type="radio" name="monthly_budget" value="1M_2M" {% if form.monthly_budget.value == "1M_2M" %}checked{% endif %} required>
 
                         <span>
                             100~200만원
@@ -664,7 +673,7 @@
 
                     <label class="profile-money-option">
 
-                        <input type="radio" name="budget" value="over200">
+                        <input type="radio" name="monthly_budget" value="OVER_2M" {% if form.monthly_budget.value == "OVER_2M" %}checked{% endif %} required>
 
                         <span>
                             200만원 이상

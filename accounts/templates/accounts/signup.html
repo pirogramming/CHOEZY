@@ -117,6 +117,15 @@
 
         {% csrf_token %}
 
+        {% if form.errors %}
+        <div class="form-errors">
+            {% for field in form %}
+                {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
 
 
         <!-- 입력 폼 -->
@@ -139,6 +148,8 @@
                     <input 
                         type="text"
                         name="name"
+                        value="{{ form.name.value|default:'' }}"
+                        required
                     >
 
                 </div>
@@ -161,6 +172,9 @@
                         <input 
                             type="text"
                             name="username"
+                            value="{{ form.username.value|default:'' }}"
+                            maxlength="150"
+                            required
                         >
 
                     </div>
@@ -188,6 +202,8 @@
                     <input 
                         type="email"
                         name="email"
+                        value="{{ form.email.value|default:'' }}"
+                        required
                     >
 
                 </div>
@@ -203,7 +219,9 @@
                         <input 
                             type="radio"
                             name="gender"
-                            value="M"
+                            value="MALE"
+                            {% if form.gender.value == "MALE" %}checked{% endif %}
+                            required
                         >
 
                         남성
@@ -215,7 +233,9 @@
                         <input 
                             type="radio"
                             name="gender"
-                            value="F"
+                            value="FEMALE"
+                            {% if form.gender.value == "FEMALE" %}checked{% endif %}
+                            required
                         >
 
                         여성
@@ -240,6 +260,7 @@
                     <input 
                         type="password"
                         name="password"
+                        required
                     >
 
                 </div>
@@ -253,6 +274,7 @@
                     <input 
                         type="password"
                         name="password_confirm"
+                        required
                     >
 
                 </div>
@@ -267,7 +289,9 @@
 
                     <input 
                         type="date"
-                        name="birth"
+                        name="birth_date"
+                        value="{{ form.birth_date.value|default:'' }}"
+                        required
                     >
 
                 </div>
@@ -281,9 +305,9 @@
 
 
         <!-- 다음 단계 버튼 -->
-        <a href="{% url 'accounts:signup_profile' %}" class="signup-next-btn">
+        <button type="submit" class="signup-next-btn">
             다음 단계
-        </a>
+        </button>
 
 
     </form>

@@ -33,6 +33,8 @@ ALLOWED_HOSTS = [
 
 # Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+GEMINI_TIMEOUT_MS = 25_000
 
 
 # 고민 1건이 비교할 수 있는 카테고리 수 (docs/ERD.md §6)
@@ -54,7 +56,6 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
 
     "rest_framework",
-    "rest_framework_simplejwt.token_blacklist",
 
     "accounts",
     "products",
@@ -173,16 +174,9 @@ AUTH_USER_MODEL = "accounts.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-}
-
-
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
 }
