@@ -27,7 +27,7 @@
 ### 1. 프로젝트 클론
 
 ```bash
-git clone https://github.com/your-org/CHOEZY.git
+git clone https://github.com/pirogramming/CHOEZY.git
 cd CHOEZY
 ```
 
