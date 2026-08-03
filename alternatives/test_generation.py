@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from analyses.calculator import calculate_opportunity_cost
 from products.models import Consideration
 
 from .ai_service import GeminiRequestError
@@ -305,3 +306,100 @@ class AlternativeGenerationAPITests(TestCase):
             response.json()["error"]["code"], "NO_CANDIDATE_ITEMS"
         )
         select.assert_not_called()
+
+    @patch("alternatives.services.GeminiAlternativeSelector.select")
+    def test_comparison_returns_selected_columns_and_quantity_rows(
+        self, select
+    ):
+        self.consideration.compare_criteria = [
+            Consideration.CompareCriterion.AVAILABLE_BUDGET,
+            Consideration.CompareCriterion.EXPECTED_EFFECT,
+            Consideration.CompareCriterion.PRICE,
+        ]
+        self.consideration.save(update_fields=["compare_criteria"])
+        select.return_value = self.ai_response()
+        self.client.post(self.url, data={}, content_type="application/json")
+        select.reset_mock()
+
+        response = self.client.get(
+            f"/api/alternatives/considerations/"
+            f"{self.consideration.pk}/comparison/"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(
+            [column["key"] for column in payload["columns"]],
+            ["price", "expected_effect", "available_budget"],
+        )
+        self.assertEqual(payload["user_budget"]["code"], "300K_500K")
+        row = payload["tabs"][0]["rows"][0]
+        self.assertEqual(row["price"], 10_000)
+        self.assertEqual(row["price_display"], "10,000원")
+        self.assertEqual(row["chart"]["type"], "COUNT")
+        self.assertEqual(row["source"]["note"], "2026.08 기준 · 테스트 출처")
+        select.assert_not_called()
+
+    def test_comparison_returns_growth_row_for_finance(self):
+        finance = Category.objects.get(code=Category.Code.FINANCE)
+        item = AlternativeItem.objects.create(
+            category=finance,
+            name="정기적금 (연 3%)",
+            unit_label="",
+            average_price=1,
+            calc_type=AlternativeItem.CalcType.SAVINGS,
+            calc_params={"period_month": 12, "return_rate": 3.0},
+            spec_note="12개월 세전 기준",
+            source_name="은행연합회",
+            source_url="https://example.com/finance",
+            effective_date=date(2026, 8, 3),
+        )
+        calculation = calculate_opportunity_cost(
+            item, self.consideration.product_price
+        )
+        Alternative.objects.create(
+            consideration=self.consideration,
+            category=finance,
+            item=item,
+            slot=1,
+            version=1,
+            is_current=True,
+            unit_price=calculation.unit_price,
+            duration=calculation.duration,
+            expected_effect=calculation.expected_effect,
+            ai_reason="자산 형성을 위한 추천",
+            result_type=calculation.result_type,
+            equivalent_quantity=calculation.equivalent_quantity,
+            future_value=calculation.future_value,
+            display_text=calculation.display_text,
+        )
+        self.consideration.status = Consideration.Status.GENERATED
+        self.consideration.compare_criteria = [
+            Consideration.CompareCriterion.PRICE,
+            Consideration.CompareCriterion.DURATION,
+        ]
+        self.consideration.save(
+            update_fields=["status", "compare_criteria"]
+        )
+
+        response = self.client.get(
+            f"/api/alternatives/considerations/"
+            f"{self.consideration.pk}/comparison/"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["tabs"][0]["rows"][0]
+        self.assertIsNone(row["price"])
+        self.assertEqual(row["price_display"], "—")
+        self.assertEqual(row["chart"]["type"], "GROWTH")
+        self.assertEqual(row["chart"]["principal"], 1_200_000)
+        self.assertTrue(row["source"]["note"].endswith(" · 세전"))
+
+    def test_comparison_requires_generated_status(self):
+        response = self.client.get(
+            f"/api/alternatives/considerations/"
+            f"{self.consideration.pk}/comparison/"
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()["error"]["code"], "INVALID_STATUS")

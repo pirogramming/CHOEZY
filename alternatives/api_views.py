@@ -12,6 +12,26 @@ from .services import (
 )
 
 
+COMPARISON_COLUMNS = {
+    Consideration.CompareCriterion.PRICE: {
+        "key": "price",
+        "label": "가격",
+    },
+    Consideration.CompareCriterion.DURATION: {
+        "key": "duration",
+        "label": "지속 가능 기간",
+    },
+    Consideration.CompareCriterion.EXPECTED_EFFECT: {
+        "key": "expected_effect",
+        "label": "기대 효과",
+    },
+    Consideration.CompareCriterion.AVAILABLE_BUDGET: {
+        "key": "available_budget",
+        "label": "가용 예산",
+    },
+}
+
+
 def serialize_alternative(alternative, history=None):
     item = alternative.item
     is_quantity = alternative.result_type == "QUANTITY"
@@ -220,3 +240,149 @@ class AlternativeRegenerateAPIView(APIView):
         }
         result["previous_alternative_id"] = previous.id
         return Response(result, status=201)
+
+
+def serialize_comparison_row(alternative, consideration):
+    item = alternative.item
+    is_quantity = alternative.result_type == "QUANTITY"
+    if is_quantity:
+        price = alternative.unit_price
+        price_display = f"{price:,}원"
+        chart = {
+            "type": "COUNT",
+            "value": float(alternative.equivalent_quantity),
+            "unit_label": item.unit_label,
+            "caption": (
+                f"{consideration.product_name} = {alternative.display_text}"
+            ),
+        }
+    else:
+        price = None
+        price_display = "—"
+        chart = {
+            "type": "GROWTH",
+            "principal": alternative.unit_price,
+            "future_value": alternative.future_value,
+            "gain_amount": alternative.future_value - alternative.unit_price,
+            "caption": alternative.display_text,
+        }
+
+    source_note = (
+        f"{item.effective_date:%Y.%m} 기준 · {item.source_name}"
+    )
+    if not is_quantity:
+        source_note += " · 세전"
+    return {
+        "alternative_id": alternative.id,
+        "slot": alternative.slot,
+        "name": item.name,
+        "price": price,
+        "price_display": price_display,
+        "duration_display": alternative.duration or "—",
+        "expected_effect": alternative.expected_effect,
+        "available_budget": (
+            f"월 {consideration.user.get_monthly_budget_display()}"
+        ),
+        "opportunity_cost": {
+            "result_type": alternative.result_type,
+            "equivalent_quantity": (
+                str(alternative.equivalent_quantity)
+                if is_quantity
+                else None
+            ),
+            "future_value": alternative.future_value,
+            "display_text": alternative.display_text,
+        },
+        "chart": chart,
+        "source": {
+            "name": item.source_name,
+            "url": item.source_url,
+            "effective_date": str(item.effective_date),
+            "note": source_note,
+        },
+    }
+
+
+class AlternativeComparisonAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            consideration = Consideration.objects.select_related("user").get(
+                pk=pk, user=request.user
+            )
+        except Consideration.DoesNotExist:
+            return error_response(
+                AlternativeServiceError(
+                    "NOT_FOUND", "구매 고민을 찾을 수 없습니다.", 404
+                )
+            )
+        if consideration.status == Consideration.Status.DRAFT:
+            return error_response(
+                AlternativeServiceError(
+                    "INVALID_STATUS",
+                    "대안 생성 후 비교표를 조회할 수 있습니다.",
+                    409,
+                )
+            )
+
+        alternatives = list(
+            Alternative.objects.filter(
+                consideration=consideration,
+                is_current=True,
+            )
+            .select_related("category", "item")
+            .order_by("category__display_order", "category_id", "slot")
+        )
+        if not alternatives:
+            return error_response(
+                AlternativeServiceError(
+                    "INVALID_STATUS",
+                    "현재 비교할 대안이 없습니다.",
+                    409,
+                )
+            )
+
+        columns = [
+            COMPARISON_COLUMNS[criterion]
+            for criterion in COMPARISON_COLUMNS
+            if criterion in consideration.compare_criteria
+        ]
+        tabs = []
+        category_ids = []
+        for alternative in alternatives:
+            if alternative.category_id not in category_ids:
+                category_ids.append(alternative.category_id)
+                category = alternative.category
+                tabs.append(
+                    {
+                        "category": {
+                            "id": category.id,
+                            "code": category.code,
+                            "name": category.name,
+                            "emoji": category.emoji,
+                        },
+                        "rows": [
+                            serialize_comparison_row(item, consideration)
+                            for item in alternatives
+                            if item.category_id == category.id
+                        ],
+                    }
+                )
+
+        return Response(
+            {
+                "consideration_id": consideration.id,
+                "product": {
+                    "name": consideration.product_name,
+                    "price": consideration.product_price,
+                    "features": consideration.product_features,
+                },
+                "user_budget": {
+                    "code": consideration.user.monthly_budget,
+                    "display": consideration.user.get_monthly_budget_display(),
+                },
+                "columns": columns,
+                "tabs": tabs,
+            }
+        )
