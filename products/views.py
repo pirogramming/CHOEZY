@@ -18,6 +18,9 @@ class ConsiderationCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        form.instance.compare_criteria = list(
+            Consideration.CompareCriterion.values
+        )
 
         return super().form_valid(form)
 

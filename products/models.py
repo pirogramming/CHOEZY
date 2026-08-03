@@ -8,11 +8,13 @@ from core.models import TimeStampedModel
 
 class Consideration(TimeStampedModel):
     class Purpose(models.TextChoices):
-        DEVELOPMENT = "DEVELOPMENT", "개발/업무"
-        DESIGN = "DESIGN", "디자인/창작"
-        STUDY = "STUDY", "공부"
-        HOBBY = "HOBBY", "취미"
-        TRAVEL_RECORD = "TRAVEL_RECORD", "여행 기록"
+        SELF_DEVELOPMENT = "SELF_DEVELOPMENT", "자기계발"
+        TRAVEL = "TRAVEL", "여행"
+        DESIGN = "DESIGN", "디자인"
+        GIFT = "GIFT", "선물"
+        WORK = "WORK", "업무"
+        HOBBY = "HOBBY", "취미·여가"
+        CONVENIENCE = "CONVENIENCE", "일상 편의"
         ETC = "ETC", "기타"
 
     class CompareCriterion(models.TextChoices):
