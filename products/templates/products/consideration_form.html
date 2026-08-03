@@ -1,63 +1,295 @@
+{% extends "core/base.html" %}
 {% load static %}
+
+
+{% block content %}
 
 <link rel="stylesheet" href="{% static 'css/consideration_form.css' %}">
 
+
 <div class="consideration-page">
 
-    <div class="consideration-box">
 
-        <h1>구매 고민 입력</h1>
-        <p class="consideration-subtitle">
-            사고 싶은 상품 정보를 직접 입력해 주세요.
-        </p>
+    <!-- 상단 영역 -->
 
-        <form method="POST" novalidate>
+    <div class="consideration-top">
 
-            {% csrf_token %}
 
-            {% if form.non_field_errors %}
-                <ul class="form-errors">
-                    {% for error in form.non_field_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
+        <div class="consideration-title">
 
-            {% for field in form %}
-                <div class="field">
+            <h1>
+                상품 정보 입력
+            </h1>
 
-                    <label for="{{ field.id_for_label }}">
-                        {{ field.label }}
-                        {% if field.field.required %}
-                            <span class="required">*</span>
-                        {% endif %}
-                    </label>
+            <p>
+                url을 입력하면 자동으로 상품명과 가격이 등록돼요!
+            </p>
 
-                    {{ field }}
+        </div>
 
-                    {% if field.name == "product_price" %}
-                        <p class="price-readback" data-price-readback></p>
-                    {% endif %}
 
-                    {% if field.help_text %}
-                        <p class="field-help">{{ field.help_text }}</p>
-                    {% endif %}
 
-                    {% for error in field.errors %}
-                        <p class="field-error">{{ error }}</p>
-                    {% endfor %}
+        <div class="consideration-character">
 
-                </div>
-            {% endfor %}
+            <img src="{% static 'images/consideration_character.png' %}">
 
-            <button type="submit" class="submit-button">
-                대안 보러 가기
+        </div>
+
+
+
+        <div class="step-button-area">
+
+            <button class="prev-step">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                    <path d="m15 18-6-6 6-6" />
+
+                </svg>
+
+                <span>
+                    이전 단계
+                </span>
+
             </button>
 
-        </form>
+
+
+            <button class="next-step">
+
+                <span>
+                    다음 단계 1/4
+                </span>
+
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                    <path d="m9 18 6-6-6-6" />
+
+                </svg>
+
+            </button>
+
+        </div>
+
 
     </div>
 
+
+
+
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+
+        <div class="product-card">
+
+
+            <div class="url-row">
+
+                {{ form.product_url }}
+
+                <button type="button">
+                    입력
+                </button>
+
+            </div>
+
+
+
+            <div class="product-row">
+
+                {{ form.product_name }}
+
+                {{ form.product_price }}
+
+                <button type="submit">
+                    확인
+                </button>
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+        <div class="bottom-container">
+
+
+            <!-- 구매 목적 -->
+
+            <div class="choice-card">
+
+
+                <h2>
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+
+                        <rect width="20" height="12" x="2" y="6" rx="2" />
+                        <circle cx="12" cy="12" r="2" />
+
+                    </svg>
+
+
+                    <span>
+                        구매 목적
+                    </span>
+
+                </h2>
+
+
+
+                <p>
+                    구매 목적과 가장 가까운 항목을 하나 선택해주세요.
+                </p>
+
+
+
+                <div class="choice-list">
+
+
+                    {% for radio in form.purpose %}
+
+                    <label class="choice-item">
+
+                        {{ radio.tag }}
+
+                        <span>
+                            {{ radio.choice_label }}
+                        </span>
+
+                    </label>
+
+                    {% endfor %}
+
+
+                </div>
+
+
+
+
+                <label class="etc-label">
+                    직접 입력 (기타)
+                </label>
+
+
+                <div class="etc-input-row">
+
+                    {{ form.purpose_detail }}
+
+                    <button class="small-confirm">
+                        확인
+                    </button>
+
+                </div>
+
+
+            </div>
+
+
+
+
+
+
+
+            <!-- 비교 분야 -->
+
+            <div class="choice-card">
+
+
+                <h2>
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.34-4.34" />
+
+                    </svg>
+
+
+                    <span>
+                        비교 분야
+                    </span>
+
+
+                </h2>
+
+
+
+                <p>
+                    비교하고 싶은 분야를 최대 3개까지 선택해주세요.
+                </p>
+
+
+
+                <div class="choice-list category">
+
+
+                    {% for checkbox in form.categories %}
+
+
+                    <label class="choice-item">
+
+
+                        {{ checkbox.tag }}
+
+
+                        <span>
+                            {{ checkbox.choice_label }}
+                        </span>
+
+
+                    </label>
+
+
+                    {% endfor %}
+
+
+                </div>
+
+
+
+
+                <label class="etc-label">
+                    직접 입력 (기타)
+                    </label>
+
+
+                    <div class="etc-input-row">
+
+                        <input type="text" placeholder="직접 입력해주세요.">
+
+                        <button class="small-confirm">
+                            확인
+                        </button>
+
+                    </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </form>
+
+
 </div>
 
+
+
+<script src="{% static 'js/consideration_form.js' %}"></script>
 <script src="{% static 'js/price_input.js' %}"></script>
+
+
+{% endblock %}
