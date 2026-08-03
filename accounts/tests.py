@@ -2,26 +2,31 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 
 
 User = get_user_model()
 
 
+def create_user(**overrides):
+    data = {
+        "username": "session_user",
+        "email": "session@example.com",
+        "name": "세션 사용자",
+        "birth_date": "2000-01-01",
+        "gender": User.Gender.OTHER,
+        "spending_type": [User.SpendingType.VALUE],
+        "value_criteria": [User.ValueCriterion.PRICE],
+        "monthly_budget": User.MonthlyBudget.FROM_300K_TO_500K,
+        "password": "StrongPass!2468",
+    }
+    data.update(overrides)
+    return User.objects.create_user(**data)
+
+
 class SessionAuthenticationPageTests(TestCase):
     def setUp(self):
         self.password = "StrongPass!2468"
-        self.user = User.objects.create_user(
-            username="session_user",
-            email="session@example.com",
-            name="세션 사용자",
-            birth_date="2000-01-01",
-            gender=User.Gender.OTHER,
-            spending_type=[User.SpendingType.VALUE],
-            value_criteria=[User.ValueCriterion.PRICE],
-            monthly_budget=User.MonthlyBudget.FROM_300K_TO_500K,
-            password=self.password,
-        )
+        self.user = create_user(password=self.password)
         self.login_url = reverse("accounts:login")
         self.logout_url = reverse("accounts:logout")
 
@@ -72,11 +77,9 @@ class SessionAuthenticationPageTests(TestCase):
         self.assertEqual(response.status_code, 405)
 
 
-class AuthenticationAPITests(APITestCase):
+class SignupPageTests(TestCase):
     def setUp(self):
-        self.signup_url = reverse("accounts_api:signup")
-        self.check_username_url = reverse("accounts_api:check-username")
-        self.me_url = reverse("accounts_api:me")
+        self.signup_url = reverse("accounts:signup")
         self.password = "StrongPass!2468"
         self.signup_data = {
             "username": "choezy_user",
@@ -97,27 +100,27 @@ class AuthenticationAPITests(APITestCase):
             "password_confirm": self.password,
         }
 
-    def create_user(self):
-        response = self.client.post(
-            self.signup_url,
-            self.signup_data,
-            format="json",
+    def test_signup_creates_user_and_session(self):
+        response = self.client.post(self.signup_url, self.signup_data)
+
+        user = User.objects.get(username="choezy_user")
+        self.assertRedirects(
+            response,
+            reverse("products:consideration_create"),
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        return User.objects.get(username=self.signup_data["username"])
-
-    def test_signup_creates_user_with_profile(self):
-        user = self.create_user()
-
         self.assertEqual(user.email, "user@example.com")
-        self.assertEqual(user.name, self.signup_data["name"])
+        self.assertTrue(user.check_password(self.password))
+        self.assertEqual(user.spending_type, self.signup_data["spending_type"])
         self.assertEqual(
             user.value_criteria,
             self.signup_data["value_criteria"],
         )
-        self.assertTrue(user.check_password(self.password))
+        self.assertEqual(
+            int(self.client.session["_auth_user_id"]),
+            user.pk,
+        )
 
-    def test_signup_requires_erd_profile_fields(self):
+    def test_signup_requires_profile_fields(self):
         required_fields = [
             "birth_date",
             "gender",
@@ -130,16 +133,10 @@ class AuthenticationAPITests(APITestCase):
             with self.subTest(field=field):
                 data = self.signup_data.copy()
                 data.pop(field)
-                response = self.client.post(
-                    self.signup_url,
-                    data,
-                    format="json",
-                )
-                self.assertEqual(
-                    response.status_code,
-                    status.HTTP_400_BAD_REQUEST,
-                )
-                self.assertIn(field, response.data)
+                response = self.client.post(self.signup_url, data)
+
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(field, response.context["form"].errors)
 
     def test_signup_rejects_password_mismatch(self):
         data = {
@@ -147,48 +144,23 @@ class AuthenticationAPITests(APITestCase):
             "password_confirm": "DifferentPass!2468",
         }
 
-        response = self.client.post(
-            self.signup_url,
-            data,
-            format="json",
+        response = self.client.post(self.signup_url, data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("password_confirm", response.context["form"].errors)
+        self.assertFalse(User.objects.filter(username="choezy_user").exists())
+
+    def test_signup_rejects_case_insensitive_duplicate_username_and_email(self):
+        create_user(
+            username="CHOEZY_USER",
+            email="USER@example.com",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("password_confirm", response.data)
+        response = self.client.post(self.signup_url, self.signup_data)
+        errors = response.context["form"].errors
 
-    def test_signup_rejects_password_similar_to_user_information(self):
-        data = {
-            **self.signup_data,
-            "password": "choezy_user123!",
-            "password_confirm": "choezy_user123!",
-        }
-
-        response = self.client.post(
-            self.signup_url,
-            data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("password", response.data)
-
-    def test_signup_rejects_duplicate_value_criteria(self):
-        data = {
-            **self.signup_data,
-            "value_criteria": [
-                User.ValueCriterion.PRICE,
-                User.ValueCriterion.PRICE,
-            ],
-        }
-
-        response = self.client.post(
-            self.signup_url,
-            data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("value_criteria", response.data)
+        self.assertIn("username", errors)
+        self.assertIn("email", errors)
 
     def test_signup_rejects_more_than_two_spending_types(self):
         data = {
@@ -200,14 +172,9 @@ class AuthenticationAPITests(APITestCase):
             ],
         }
 
-        response = self.client.post(
-            self.signup_url,
-            data,
-            format="json",
-        )
+        response = self.client.post(self.signup_url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("spending_type", response.data)
+        self.assertIn("spending_type", response.context["form"].errors)
 
     def test_signup_rejects_more_than_three_value_criteria(self):
         data = {
@@ -220,57 +187,42 @@ class AuthenticationAPITests(APITestCase):
             ],
         }
 
-        response = self.client.post(
-            self.signup_url,
-            data,
-            format="json",
-        )
+        response = self.client.post(self.signup_url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("value_criteria", response.data)
+        self.assertIn("value_criteria", response.context["form"].errors)
 
-    def test_signup_rejects_case_insensitive_duplicate_email(self):
-        self.create_user()
-        data = {
-            **self.signup_data,
-            "username": "another_user",
-            "email": "USER@example.com",
-        }
 
-        response = self.client.post(
-            self.signup_url,
-            data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", response.data)
+class AccountAPITests(TestCase):
+    def setUp(self):
+        self.check_username_url = reverse("accounts_api:check-username")
+        self.me_url = reverse("accounts_api:me")
 
     def test_username_availability(self):
-        available_response = self.client.get(
+        response = self.client.get(
             self.check_username_url,
-            {"username": self.signup_data["username"]},
+            {"username": "available_user"},
         )
-        self.assertEqual(available_response.status_code, status.HTTP_200_OK)
-        self.assertTrue(available_response.data["available"])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.json()["available"])
 
-        self.create_user()
-        unavailable_response = self.client.get(
+        create_user(username="available_user")
+        response = self.client.get(
             self.check_username_url,
-            {"username": self.signup_data["username"]},
+            {"username": "available_user"},
         )
-        self.assertEqual(
-            unavailable_response.status_code,
-            status.HTTP_200_OK,
-        )
-        self.assertFalse(unavailable_response.data["available"])
+        self.assertFalse(response.json()["available"])
 
-    def test_authenticated_user_can_retrieve_my_info(self):
-        user = self.create_user()
+    def test_session_user_can_retrieve_my_info(self):
+        user = create_user()
         self.client.force_login(user)
 
         response = self.client.get(self.me_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["username"], "choezy_user")
-        self.assertNotIn("password", response.data)
+        self.assertEqual(response.json()["username"], user.username)
+        self.assertNotIn("password", response.json())
+
+    def test_anonymous_user_cannot_retrieve_my_info(self):
+        response = self.client.get(self.me_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

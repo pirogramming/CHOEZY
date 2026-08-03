@@ -16,10 +16,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import (
-    SignupSerializer,
     UserSerializer,
     UsernameAvailabilitySerializer,
 )
+from .forms import SignupForm
 
 User = get_user_model()
 
@@ -81,8 +81,25 @@ def logout_view(request):
     return redirect("core:home")
 
 
+@require_http_methods(["GET", "POST"])
 def signup_view(request):
-    return render(request, "accounts/signup.html")
+    """회원 정보를 검증하고 생성한 뒤 Django 세션으로 로그인합니다."""
+    if request.user.is_authenticated:
+        return redirect("core:home")
+
+    form = SignupForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        user = form.save()
+        auth_login(request, user)
+        messages.success(request, "회원가입이 완료되었습니다.")
+        return redirect("products:consideration_create")
+
+    return render(
+        request,
+        "accounts/signup.html",
+        {"form": form},
+    )
 
 
 def signup_profile_view(request):
@@ -92,11 +109,6 @@ def signup_profile_view(request):
 # ==========================
 # API Views
 # ==========================
-
-class SignupView(generics.CreateAPIView):
-    serializer_class = SignupSerializer
-    permission_classes = [AllowAny]
-
 
 class UsernameAvailabilityView(APIView):
     permission_classes = [AllowAny]
