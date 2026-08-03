@@ -31,8 +31,6 @@ git clone https://github.com/pirogramming/CHOEZY.git
 cd CHOEZY
 ```
 
----
-
 ### 2. 가상환경 생성 및 실행
 
 #### Windows
@@ -49,15 +47,12 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
----
-
 ### 3. 필요한 라이브러리 설치
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
 
 ### 4. 환경 변수(.env) 설정
 
@@ -77,7 +72,6 @@ DB_PORT=5432
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
----
 
 ### 5. 데이터베이스 마이그레이션
 
@@ -86,7 +80,6 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
----
 
 ### 6. 개발 서버 실행
 
@@ -94,15 +87,12 @@ python manage.py migrate
 python manage.py runserver
 ```
 
----
 
 ### 7. 브라우저 접속
 
 ```
 http://127.0.0.1:8000/
 ```
-
----
 
 ### 8. 관리자 계정 생성 (선택)
 
