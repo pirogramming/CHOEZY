@@ -1,0 +1,590 @@
+/* ===========================
+   전체
+=========================== */
+
+
+.comparison-page {
+
+    width:100%;
+
+    min-height:calc(100vh - 90px);
+
+    padding:30px 70px;
+
+    box-sizing:border-box;
+
+    background:white;
+
+}
+
+
+
+/* ===========================
+   상단 영역
+=========================== */
+
+
+.comparison-header {
+
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    margin-bottom:5px;
+
+
+}
+
+
+
+.comparison-title-area {
+
+
+    transform:translateX(17px);
+
+
+}
+
+
+
+.comparison-title-area h1 {
+
+
+    font-size:40px;
+
+    font-weight:700;
+
+    color:#222;
+
+    margin-bottom:12px;
+
+
+}
+
+
+
+.comparison-title-area p {
+
+
+    font-size:18px;
+
+    color:#7d7d7d;
+
+
+}
+
+
+
+/* ===========================
+   오른쪽 영역
+=========================== */
+
+
+.comparison-header-right {
+
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:5px;
+
+
+}
+
+
+
+/* 단계 버튼 위치 */
+
+
+.comparison-step-button-area {
+
+
+    display:flex;
+
+    gap:15px;
+
+    transform:translateX(-320px);
+
+    margin-top:80px;
+
+
+}
+
+
+
+/* 캐릭터 */
+
+
+.comparison-character {
+
+
+    line-height:0;
+
+
+}
+
+
+
+.comparison-character img {
+
+
+    width:240px;
+
+    transform:translate(-70px,50px);
+
+
+}
+
+
+
+/* ===========================
+   단계 버튼
+=========================== */
+
+
+.comparison-prev-btn,
+.comparison-next-btn {
+
+
+    width:150px;
+
+    height:52px;
+
+
+    border:none;
+
+    border-radius:15px;
+
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+
+    gap:8px;
+
+
+    padding:0 18px;
+
+
+    font-size:16px;
+
+    font-weight:600;
+
+
+    cursor:pointer;
+
+
+    line-height:1;
+
+
+}
+
+.comparison-prev-btn:hover {
+
+    background:#DCDCDC;
+
+    transform:translateY(-2px);
+
+}
+
+
+
+.comparison-next-btn:hover {
+
+    background:#18B97D;
+
+    transform:translateY(-2px);
+
+}
+
+
+
+.comparison-prev-btn,
+.comparison-next-btn {
+
+    transition:0.2s;
+
+}
+
+
+.comparison-prev-btn span,
+.comparison-next-btn span {
+
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+
+    white-space:nowrap;
+
+
+}
+
+.comparison-prev-btn span {
+
+    transform: translateX(-5px);
+
+}
+
+.comparison-next-btn span {
+
+    transform: translateX(5px);
+
+}
+
+
+.comparison-prev-btn svg,
+.comparison-next-btn svg {
+
+
+    width:20px;
+
+    height:20px;
+
+
+    flex-shrink:0;
+
+
+}
+
+
+
+.comparison-prev-btn {
+
+
+    background:#ECECEC;
+
+    color:#444;
+
+
+}
+
+
+
+.comparison-next-btn {
+
+
+    background:#20CD8D;
+
+    color:white;
+
+
+}
+
+
+
+
+
+/* ===========================
+   카테고리
+=========================== */
+
+
+.comparison-category-wrapper {
+
+
+    display:flex;
+
+    gap:15px;
+
+    margin-bottom:35px;
+
+
+    transform:translateX(17px);
+
+
+}
+
+
+
+.comparison-category-btn {
+
+
+    padding:13px 26px;
+
+
+    border:none;
+
+
+    border-radius:40px;
+
+
+    background:#F3F5F7;
+
+
+    font-size:16px;
+
+
+    font-weight:600;
+
+
+    cursor:pointer;
+
+
+    transition:.2s;
+
+
+}
+
+
+
+.comparison-category-btn:hover {
+
+    background:#E7F8F1;
+
+    transform:translateY(-2px);
+
+}
+
+
+
+.comparison-category-btn.active {
+
+
+    background:#20CD8D;
+
+
+    color:white;
+
+
+}
+
+
+
+
+
+/* ===========================
+   비교표 카드
+=========================== */
+
+
+.comparison-table-card {
+
+
+    width:100%;
+
+
+    max-width:1250px;
+
+
+    margin:0 auto;
+
+
+    padding:35px;
+
+
+    background:white;
+
+
+    border-radius:25px;
+
+
+    box-shadow:
+
+    0 8px 25px rgba(0,0,0,0.08);
+
+
+}
+
+
+
+
+/* ===========================
+   테이블
+=========================== */
+
+
+.comparison-table {
+
+
+    width:100%;
+
+
+    border-collapse:collapse;
+
+
+    text-align:center;
+
+
+    table-layout:fixed;
+
+
+}
+
+
+
+.comparison-table th {
+
+
+    background:#20CD8D;
+
+
+    color:white;
+
+
+    padding:17px 10px;
+
+
+    font-size:17px;
+
+
+    font-weight:700;
+
+
+}
+
+
+
+.comparison-table td {
+
+
+    padding:20px 12px;
+
+
+    border-bottom:1px solid #ECECEC;
+
+
+    font-size:16px;
+
+
+    line-height:1.6;
+
+
+    vertical-align:middle;
+
+
+}
+
+
+
+.comparison-row-title {
+
+
+    width:150px;
+
+
+    background:#F8F8F8;
+
+
+    font-weight:700;
+
+
+    color:#333;
+
+
+}
+
+
+
+
+/* 구매 예정 상품 열 */
+
+
+.comparison-product-column {
+
+
+    background:#E7F8F1;
+
+
+    color:#20CD8D;
+
+
+    font-weight:700;
+
+
+}
+
+
+
+.comparison-table th.comparison-product-column {
+
+
+    background:#18B97D;
+
+
+    color:white;
+
+
+}
+
+
+
+
+
+/* ===========================
+   반응형
+=========================== */
+
+
+@media(max-width:1000px){
+
+
+    .comparison-page{
+
+
+        padding:40px 25px;
+
+
+    }
+
+
+
+    .comparison-header{
+
+
+        flex-direction:column;
+
+
+        gap:25px;
+
+
+    }
+
+
+
+    .comparison-header-right{
+
+
+        width:100%;
+
+
+        justify-content:center;
+
+
+    }
+
+
+
+    .comparison-category-wrapper{
+
+
+        justify-content:center;
+
+
+        transform:none;
+
+
+    }
+
+
+
+    .comparison-table-card{
+
+
+        overflow-x:auto;
+
+
+    }
+
+
+}

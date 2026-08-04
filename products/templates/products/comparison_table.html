@@ -1,0 +1,419 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+
+<link rel="stylesheet" href="{% static 'css/comparison_table.css' %}">
+
+
+
+<div class="comparison-page">
+
+
+    <!-- consideration id 전달 -->
+
+    {{ consideration_id|json_script:"consideration-id" }}
+
+
+
+    <!-- 상단 영역 -->
+
+    <div class="comparison-header">
+
+
+
+        <div class="comparison-title-area">
+
+
+            <h1>
+                비교표 생성
+            </h1>
+
+
+            <p>
+                카테고리를 선택하여 대안을 비교해보세요.
+            </p>
+
+
+        </div>
+
+
+
+
+        <div class="comparison-header-right">
+
+
+            <!-- 단계 버튼 -->
+
+            <div class="comparison-step-button-area">
+
+
+                <button class="comparison-prev-btn">
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                        <path d="m15 18-6-6 6-6" />
+
+                    </svg>
+
+
+                    <span>
+                        이전 단계
+                    </span>
+
+
+                </button>
+
+
+
+
+                <button class="comparison-next-btn">
+
+
+                    <span>
+                        다음 단계 3/4
+                    </span>
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                        <path d="m9 18 6-6-6-6" />
+
+                    </svg>
+
+
+                </button>
+
+
+            </div>
+
+
+
+
+
+            <!-- 캐릭터 -->
+
+            <div class="comparison-character">
+
+
+                <img src="{% static 'images/comparison_table_character.png' %}" alt="비교 캐릭터">
+
+
+            </div>
+
+        </div>
+    </div>
+
+
+
+    <!-- 카테고리 버튼 -->
+
+    <div class="comparison-category-wrapper">
+
+
+
+        <button class="comparison-category-btn active" data-category="health">
+
+
+            🏃 운동(건강)
+
+
+        </button>
+
+
+
+        <button class="comparison-category-btn" data-category="travel">
+
+
+            ✈️ 여행
+
+
+        </button>
+
+
+
+        <button class="comparison-category-btn" data-category="culture">
+
+
+            🎭 문화(여가)
+
+
+        </button>
+
+
+
+    </div>
+
+
+
+    <!-- 비교표 -->
+
+    <div class="comparison-table-card">
+
+
+
+        <table class="comparison-table">
+
+
+            <thead>
+
+
+                <tr>
+
+
+                    <th>
+                        비교 항목
+                    </th>
+
+
+                    <th class="comparison-product-column">
+                        구매 예정 상품
+                    </th>
+
+
+                    <th>
+                        대안 1
+                    </th>
+
+
+                    <th>
+                        대안 2
+                    </th>
+
+
+                    <th>
+                        대안 3
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+
+
+            <tbody id="comparisonTableBody">
+
+
+                <!-- 상품명 -->
+
+
+                <tr>
+
+
+                    <td class="comparison-row-title">
+                        상품명
+                    </td>
+
+
+
+                    <td id="productName" class="comparison-product-column">
+
+                        맥북 프로
+
+                    </td>
+
+
+
+                    <td id="name1">
+
+                        태블릿
+
+                    </td>
+
+
+
+                    <td id="name2">
+
+                        일본 여행
+
+                    </td>
+
+
+
+                    <td id="name3">
+
+                        적금
+
+                    </td>
+
+
+                </tr>
+
+
+                <!-- 가격 -->
+
+
+                <tr>
+
+
+                    <td class="comparison-row-title">
+                        가격
+                    </td>
+
+
+
+                    <td id="productPrice" class="comparison-product-column">
+
+                        2,500,000원
+
+                    </td>
+
+
+
+                    <td id="price1">
+
+                        800,000원
+
+                    </td>
+
+
+
+                    <td id="price2">
+
+                        1,200,000원
+
+                    </td>
+
+
+
+                    <td id="price3">
+
+                        500,000원
+
+                    </td>
+
+
+                </tr>
+
+
+                <!-- 지속 기간 -->
+
+
+                <tr>
+
+
+                    <td class="comparison-row-title">
+
+                        지속 가능 기간
+
+                    </td>
+
+
+
+                    <td id="productDuration" class="comparison-product-column">
+
+                        5년
+
+                    </td>
+
+
+
+                    <td id="duration1">
+
+                        4년
+
+                    </td>
+
+
+
+                    <td id="duration2">
+
+                        5일
+
+                    </td>
+
+
+
+                    <td id="duration3">
+
+                        1년
+
+                    </td>
+
+
+                </tr>
+
+
+
+                <!-- 기대 효과 -->
+
+
+                <tr>
+
+
+                    <td class="comparison-row-title">
+
+                        기대 효과
+
+                    </td>
+
+
+
+                    <td id="productEffect" class="comparison-product-column">
+
+                        업무 효율 향상
+
+                    </td>
+
+
+
+                    <td id="effect1">
+
+                        학습 및 작업 효율
+
+                    </td>
+
+
+
+                    <td id="effect2">
+
+                        휴식 및 경험
+
+                    </td>
+
+
+
+                    <td id="effect3">
+
+                        자산 형성
+
+                    </td>
+
+
+                </tr>
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
+
+
+</div>
+
+
+
+<!-- API 연결 전 비활성화 -->
+
+<!--
+<script src="{% static 'js/comparison_table.js' %}"></script>
+-->
+
+
+{% endblock %}
