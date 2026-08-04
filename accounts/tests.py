@@ -219,6 +219,9 @@ class AccountAPITests(TestCase):
     def setUp(self):
         self.check_username_url = reverse("accounts_api:check-username")
         self.me_url = reverse("accounts_api:me")
+        self.basic_url = reverse("accounts_api:me-basic")
+        self.password_url = reverse("accounts_api:me-password")
+        self.profile_url = reverse("accounts_api:me-profile")
 
     def test_username_availability(self):
         response = self.client.get(
@@ -249,3 +252,145 @@ class AccountAPITests(TestCase):
         response = self.client.get(self.me_url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_session_user_can_update_basic_info(self):
+        user = create_user()
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            self.basic_url,
+            {
+                "username": "updated_user",
+                "name": "수정 사용자",
+                "birth_date": "1999-12-31",
+                "gender": User.Gender.FEMALE,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertEqual(user.username, "updated_user")
+        self.assertEqual(user.name, "수정 사용자")
+        self.assertEqual(response.json()["gender"], User.Gender.FEMALE)
+
+    def test_basic_info_rejects_duplicate_username(self):
+        user = create_user()
+        create_user(
+            username="TAKEN_USER",
+            email="taken@example.com",
+        )
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            self.basic_url,
+            {"username": "taken_user"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.json())
+
+    def test_session_user_can_update_consumer_profile(self):
+        user = create_user()
+        self.client.force_login(user)
+        data = {
+            "spending_type": [
+                User.SpendingType.QUALITY,
+                User.SpendingType.CAUTIOUS,
+            ],
+            "value_criteria": [
+                User.ValueCriterion.QUALITY,
+                User.ValueCriterion.DURATION,
+                User.ValueCriterion.EFFICIENCY,
+            ],
+            "monthly_budget": User.MonthlyBudget.FROM_500K_TO_1M,
+        }
+
+        response = self.client.patch(
+            self.profile_url,
+            data,
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertEqual(user.spending_type, data["spending_type"])
+        self.assertEqual(user.value_criteria, data["value_criteria"])
+        self.assertEqual(user.monthly_budget, data["monthly_budget"])
+
+    def test_profile_rejects_selection_limit_violation(self):
+        user = create_user()
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            self.profile_url,
+            {
+                "spending_type": [
+                    User.SpendingType.VALUE,
+                    User.SpendingType.QUALITY,
+                    User.SpendingType.CAUTIOUS,
+                ]
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("spending_type", response.json())
+
+    def test_session_user_can_change_password_and_remain_logged_in(self):
+        user = create_user(password="OldStrongPass!2468")
+        self.client.force_login(user)
+
+        response = self.client.post(
+            self.password_url,
+            {
+                "password": "NewStrongPass!8642",
+                "password_confirm": "NewStrongPass!8642",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("NewStrongPass!8642"))
+        self.assertEqual(self.client.get(self.me_url).status_code, status.HTTP_200_OK)
+
+    def test_password_change_rejects_mismatch(self):
+        user = create_user(password="OldStrongPass!2468")
+        self.client.force_login(user)
+
+        response = self.client.post(
+            self.password_url,
+            {
+                "password": "NewStrongPass!8642",
+                "password_confirm": "DifferentPass!8642",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("OldStrongPass!2468"))
+
+    def test_anonymous_user_cannot_update_mypage(self):
+        responses = [
+            self.client.patch(
+                self.basic_url,
+                {"name": "수정"},
+                content_type="application/json",
+            ),
+            self.client.patch(
+                self.profile_url,
+                {"monthly_budget": User.MonthlyBudget.UNDER_100K},
+                content_type="application/json",
+            ),
+            self.client.post(
+                self.password_url,
+                {"password": "StrongPass!2468", "password_confirm": "StrongPass!2468"},
+                content_type="application/json",
+            ),
+        ]
+
+        for response in responses:
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
