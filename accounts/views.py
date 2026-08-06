@@ -4,6 +4,7 @@ from django.contrib.auth import (
     get_user_model,
     login as auth_login,
     logout as auth_logout,
+    update_session_auth_hash,
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
@@ -18,6 +19,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import (
+    ConsumerProfileUpdateSerializer,
+    MyBasicInfoUpdateSerializer,
+    PasswordChangeSerializer,
     UserSerializer,
     UsernameAvailabilitySerializer,
 )
@@ -192,3 +196,46 @@ class MyInfoView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class MyBasicInfoUpdateView(generics.UpdateAPIView):
+    serializer_class = MyBasicInfoUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["patch", "options"]
+
+    def get_object(self):
+        return self.request.user
+
+    def patch(self, request, *args, **kwargs):
+        super().patch(request, *args, **kwargs)
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+
+
+class MyConsumerProfileUpdateView(generics.UpdateAPIView):
+    serializer_class = ConsumerProfileUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["patch", "options"]
+
+    def get_object(self):
+        return self.request.user
+
+    def patch(self, request, *args, **kwargs):
+        super().patch(request, *args, **kwargs)
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+
+
+class MyPasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordChangeSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        update_session_auth_hash(request, user)
+        return Response(
+            {"detail": "비밀번호가 변경되었습니다."},
+            status=status.HTTP_200_OK,
+        )

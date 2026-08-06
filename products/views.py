@@ -27,3 +27,16 @@ class ConsiderationCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         # alternatives 페이지가 아직 없어 URL 이름 대신 경로를 직접 씁니다.
         return f"/alternatives/considerations/{self.object.pk}/"
+
+from django.shortcuts import render
+
+
+def comparison_table_view(request, pk):
+
+    return render(
+        request,
+        "products/comparison_table.html",
+        {
+            "consideration_id": pk,
+        }
+    )

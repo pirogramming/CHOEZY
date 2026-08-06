@@ -1,0 +1,151 @@
+.alt-page {
+  width: 92%;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 40px 0 48px;
+  position: relative;
+}
+
+.alt-header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 70px;
+}
+
+.alt-header-left {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.alt-header-right {
+  position: absolute;
+  top: -10px;
+  right: 0;
+}
+
+.alt-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #222;
+  margin: 0;
+}
+
+.alt-step-img {
+  height: 40px;
+  width: auto;
+  display: block;
+  position: relative;
+  top: 8px;
+}
+
+.alt-mascot-img {
+  width: 220px;
+  height: auto;
+  display: block;
+}
+
+.alt-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.alt-card {
+  background: #ffffff;
+  border: 3px solid #7FE0BE;
+  border-radius: 20px;
+  padding: 40px;
+}
+
+.alt-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #eee;
+}
+
+.alt-card__icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #DFF3EA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-category {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.alt-card__title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #222;
+}
+
+.alt-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #EAFBF4;
+  border-radius: 18px;
+  padding: 26px;
+  margin-bottom: 22px;
+}
+
+.alt-item:last-child {
+  margin-bottom: 0;
+}
+
+.regen-btn {
+  flex-shrink: 0;
+  background: #20CD8D;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.alt-item__info {
+  flex: 1;
+  text-align: center;
+}
+
+.alt-item__name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+}
+
+.alt-item__price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 16px;
+  color: #777;
+  margin-top: 6px;
+}
+
+.icon-pig {
+  width: 16px;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .alt-cards {
+    grid-template-columns: 1fr;
+  }
+}
