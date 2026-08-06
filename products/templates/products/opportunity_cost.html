@@ -1,0 +1,220 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/opportunity_cost.css' %}">
+
+
+<div class="opportunity-page">
+
+
+    <!-- Header -->
+
+    <section class="opportunity-header">
+
+
+        <div class="opportunity-title-area">
+
+
+            <div class="opportunity-title">
+
+
+                <h1>
+                    대안 시각화
+                </h1>
+
+            </div>
+
+
+
+            <div class="opportunity-step-buttons">
+
+
+                <button class="opportunity-prev-btn">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                    <path d="m15 18-6-6 6-6" />
+
+                </svg>
+
+                <span>
+                    이전 단계
+                </span>
+
+                </button>
+
+
+
+                <button class="opportunity-next-btn">
+
+                <span>
+                    다음 단계 3/4
+                </span>
+
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+                    <path d="m9 18 6-6-6-6" />
+
+                </svg>
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+        <div class="opportunity-guide">
+
+            구매하려는 상품 가격으로 이런 것들을 할 수 있어요!
+
+        </div>
+
+
+
+
+
+        <div class="opportunity-character">
+
+            <img src="{% static 'images/opportunity_cost_character.png' %}">
+
+        </div>
+
+
+    </section>
+
+
+
+
+
+
+
+
+
+    <!-- Chart -->
+
+    <section class="opportunity-chart-wrapper">
+
+
+
+
+
+        <!-- Y축 -->
+
+        <div class="opportunity-y-axis">
+
+
+            <span class="opportunity-price">
+
+                {{ product_price }}
+
+            </span>
+
+
+
+            <div class="opportunity-axis-line"></div>
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- Bars -->
+
+        <div class="opportunity-bars-container">
+
+
+
+            {% for item in opportunity_costs %}
+
+
+
+            <div class="opportunity-bar-item">
+
+
+
+
+
+                <!-- 개수 -->
+
+                <div class="opportunity-count {{ item.text_color }}">
+
+                    {{ item.display_count }}
+
+                </div>
+
+
+
+
+
+
+
+                <!-- 고정 높이 막대 -->
+
+                <div 
+                    class="opportunity-bar {{ item.color }}"
+                    data-count="{{ item.count }}">
+                </div>
+
+
+
+
+
+
+
+                <!-- 대안 이름 -->
+
+                <div class="opportunity-name">
+
+                    {{ item.name|safe }}
+
+                </div>
+
+
+
+            </div>
+
+
+
+
+
+            {% endfor %}
+
+
+
+
+        </div>
+
+
+
+
+
+    </section>
+
+
+
+</div>
+
+
+
+
+
+
+
+<script src="{% static 'js/opportunity_cost.js' %}"></script>
+
+
+{% endblock %}

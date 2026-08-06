@@ -3,6 +3,7 @@ from django.urls import path, include
 from .views import ConsiderationCreateView
 
 from . import views
+from .views import opportunity_cost_view
 
 app_name = "products"
 
@@ -13,10 +14,16 @@ urlpatterns = [
         ConsiderationCreateView.as_view(),
         name="consideration_create",
     ),
-        path(
+    path(
         "comparison/<int:pk>/",
         views.comparison_table_view,
         name="comparison_table"
+    ),
+        
+    path(
+        "opportunity-cost/<int:pk>/",
+        opportunity_cost_view,
+        name="opportunity_cost"
     ),
 
 ]
