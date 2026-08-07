@@ -3,6 +3,8 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 40px 0 60px;
+  font-family: 'Inter', sans-serif;
+  position: relative;
 }
 
 .mypage-grid {
@@ -12,21 +14,29 @@
   align-items: start;
 }
 
+.mypage-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.mypage-col__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mypage-card__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+}
+
 .mypage-card {
   background: #ffffff;
   border: 2px solid #7FE0BE;
   border-radius: 20px;
   padding: 32px;
-}
-
-.mypage-card__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 700;
-  color: #222;
-  margin-bottom: 24px;
 }
 
 .info-list {
@@ -42,7 +52,7 @@
 }
 
 .info-row label {
-  font-size: 13px;
+  font-size: 15px;
   color: #888;
   font-weight: 500;
 }
@@ -51,9 +61,10 @@
   border: 1px solid #E0E0E0;
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 16px;
   color: #333;
   background: #F7F7F5;
+  font-family: 'Inter', sans-serif;
 }
 
 .mypage-edit-row {
@@ -66,11 +77,12 @@
   background: #20CD8D;
   color: #ffffff;
   border: none;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   padding: 9px 24px;
   border-radius: 14px;
   cursor: pointer;
+  font-family: 'Inter', sans-serif;
 }
 
 .profile-subsection-row {
@@ -89,14 +101,14 @@
 }
 
 .profile-subsection__title {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: #222;
   margin-bottom: 14px;
 }
 
 .profile-subsection__hint {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 400;
   color: #999;
   margin-left: 4px;
@@ -116,12 +128,13 @@
   border: 1px solid #D9D9D9;
   background: #ffffff;
   color: #555;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;
   text-align: center;
+  font-family: 'Inter', sans-serif;
 }
 
 .chip--active {
@@ -129,6 +142,15 @@
   border-color: #20CD8D;
   color: #ffffff;
   font-weight: 700;
+}
+
+.mypage-badge {
+  position: absolute;
+  right: 10px;
+  bottom: -20px;
+  width: 230px;
+  height: auto;
+  margin: -80px 5px 0 auto;
 }
 
 @media (max-width: 900px) {
