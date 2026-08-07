@@ -549,3 +549,92 @@ Name
 
 
 }
+
+
+/* =========================
+Financial Alternatives
+========================= */
+
+.opportunity-financial{
+
+    margin-top:60px;
+
+    padding:28px 32px;
+
+    background:#F8FBFC;
+
+    border:1px solid #E5ECEF;
+
+    border-radius:18px;
+
+}
+
+.opportunity-financial-title{
+
+    font-size:24px;
+
+    font-weight:700;
+
+    color:#222;
+
+    margin-bottom:22px;
+
+}
+
+.opportunity-financial-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:16px;
+
+}
+
+.opportunity-financial-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:18px 22px;
+
+    background:white;
+
+    border-radius:14px;
+
+}
+
+.opportunity-financial-name{
+
+    font-size:19px;
+
+    font-weight:600;
+
+    color:#333;
+
+}
+
+.opportunity-financial-effect{
+
+    font-size:18px;
+
+    color:#666;
+
+    text-align:right;
+
+}
+
+.opportunity-empty{
+
+    padding:40px 0;
+
+    text-align:center;
+
+    font-size:18px;
+
+    color:#999;
+
+}
