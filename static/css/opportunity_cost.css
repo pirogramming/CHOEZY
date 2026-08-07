@@ -343,6 +343,12 @@ Bars Container
     padding-left:30px;
     
     padding-top: 80px;
+
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
+    scrollbar-width:thin;
 }
 
 
@@ -359,6 +365,10 @@ Bar Item
 .opportunity-bar-item {
 
     width:90px;
+
+    height:560px;
+
+    flex-shrink:0;
 
     display:flex;
 
@@ -429,6 +439,8 @@ Fixed Bar
     width:90px;
 
     height:450px;
+
+    flex-shrink:0;
 
     display:flex;
 
