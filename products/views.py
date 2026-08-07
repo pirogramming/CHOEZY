@@ -1,4 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse
 from django.views.generic import CreateView
 
 from .forms import ConsiderationForm
@@ -25,8 +26,10 @@ class ConsiderationCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        # alternatives 페이지가 아직 없어 URL 이름 대신 경로를 직접 씁니다.
-        return f"/alternatives/considerations/{self.object.pk}/"
+        return reverse(
+            "alternatives:consideration_alternatives",
+            kwargs={"pk": self.object.pk},
+        )
 
 from django.shortcuts import render
 
