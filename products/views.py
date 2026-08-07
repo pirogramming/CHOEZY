@@ -43,3 +43,73 @@ def comparison_table_view(request, pk):
             "consideration_id": pk,
         }
     )
+
+from django.shortcuts import render
+
+
+def opportunity_cost_view(request, pk):
+
+    return render(
+        request,
+        "products/opportunity_cost.html",
+        {
+            "consideration_id": pk
+        }
+    )
+
+
+# 기회비용 시각화 페이지 UI 확인용 임시 데이터 (추후 삭제 요망)
+def opportunity_cost_view(request, pk):
+
+
+    opportunity_costs = [
+
+
+        {
+            "name": "온라인<br>강의",
+            "count": 10,
+            "display_count": "10개",
+            "color": "pink",
+            "text_color": "pink-text",
+        },
+
+
+        {
+            "name": "헬스장<br>12개월",
+            "count": 1.4,
+            "display_count": "1.4개월",
+            "color": "yellow",
+            "text_color": "yellow-text",
+        },
+
+
+        {
+            "name": "전시회<br>관람 1회",
+            "count": 29.7,
+            "display_count": "29.7회",
+            "color": "orange",
+            "text_color": "orange-text",
+        },
+
+
+        {
+            "name": "일본 3박 4일<br>여행",
+            "count": 1.2,
+            "display_count": "1.2회",
+            "color": "travel",
+            "text_color": "pink-text",
+        },
+
+
+    ]
+
+
+    return render(
+        request,
+        "products/opportunity_cost.html",
+        {
+            "consideration_id": pk,
+            "product_price": "220만원",
+            "opportunity_costs": opportunity_costs,
+        }
+    )
