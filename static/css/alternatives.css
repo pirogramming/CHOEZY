@@ -33,18 +33,19 @@
 
 .alt-step-buttons {
   display: flex;
-  gap: 12px;
+  gap: 15px;
 }
 
 .alt-step-button {
-  height: 40px;
-  padding: 0 16px;
+  width: 150px;
+  height: 52px;
+  padding: 0 18px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -75,9 +76,13 @@
 }
 
 .alt-step-button svg {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+}
+
+.alt-step-button span {
+  white-space: nowrap;
 }
 
 .alt-mascot-img {
