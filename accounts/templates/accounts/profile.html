@@ -17,19 +17,23 @@
         <div class="info-list">
           <div class="info-row">
             <label>아이디</label>
-            <input type="text" value="{{ user.username|default:'' }}" disabled>
+            <input type="text" id="field-username" value="{{ user.username }}" disabled>
           </div>
           <div class="info-row">
             <label>성함</label>
-            <input type="text" value="{{ user.name|default:'' }}" disabled>
+            <input type="text" id="field-name" value="{{ user.name }}" disabled>
           </div>
           <div class="info-row">
             <label>생년월일</label>
-            <input type="text" value="{{ user.birth_date|default:'' }}" disabled>
+            <input type="date" id="field-birth-date" value="{{ user.birth_date|date:'Y-m-d' }}" disabled>
           </div>
           <div class="info-row">
             <label>성별</label>
-            <input type="text" value="{{ user.gender|default:'' }}" disabled>
+            <select id="field-gender" disabled>
+              <option value="FEMALE" {% if user.gender == "FEMALE" %}selected{% endif %}>여성</option>
+              <option value="MALE" {% if user.gender == "MALE" %}selected{% endif %}>남성</option>
+              <option value="OTHER" {% if user.gender == "OTHER" %}selected{% endif %}>기타</option>
+            </select>
           </div>
           <div class="info-row">
             <label>비밀번호</label>
@@ -42,7 +46,7 @@
         </div>
 
         <div class="mypage-edit-row">
-          <button type="button" class="edit-btn">수정</button>
+          <button type="button" class="edit-btn" id="basic-edit-btn" data-mode="view">수정</button>
         </div>
       </div>
     </div>
@@ -57,47 +61,47 @@
         <div class="profile-subsection-row">
           <div class="profile-subsection">
             <div class="profile-subsection__title">소비성향 <span class="profile-subsection__hint">(최대 2개 선택 가능)</span></div>
-            <div class="chip-grid">
-              <button type="button" class="chip chip--active">가성비 중시</button>
-              <button type="button" class="chip chip--active">품질 중시</button>
-              <button type="button" class="chip">경험/추억 중시</button>
-              <button type="button" class="chip">자기계발 중시</button>
-              <button type="button" class="chip">자산형성 중시</button>
-              <button type="button" class="chip">신중한 소비 중시</button>
+            <div class="chip-grid" id="spending-type-group" data-max="2" data-editing="false">
+              <button type="button" class="chip {% if 'VALUE' in user.spending_type %}chip--active{% endif %}" data-code="VALUE">가성비 중시</button>
+              <button type="button" class="chip {% if 'QUALITY' in user.spending_type %}chip--active{% endif %}" data-code="QUALITY">품질 중시</button>
+              <button type="button" class="chip {% if 'EXPERIENCE' in user.spending_type %}chip--active{% endif %}" data-code="EXPERIENCE">경험·만족 중시</button>
+              <button type="button" class="chip {% if 'GROWTH' in user.spending_type %}chip--active{% endif %}" data-code="GROWTH">자기계발 중시</button>
+              <button type="button" class="chip {% if 'ASSET' in user.spending_type %}chip--active{% endif %}" data-code="ASSET">자산 형성 중시</button>
+              <button type="button" class="chip {% if 'CAUTIOUS' in user.spending_type %}chip--active{% endif %}" data-code="CAUTIOUS">신중한 소비 중시</button>
             </div>
           </div>
 
           <div class="profile-subsection">
             <div class="profile-subsection__title">월 소비 가능 예상 금액 <span class="profile-subsection__hint">(하나만 선택 가능)</span></div>
-            <div class="chip-grid">
-              <button type="button" class="chip">10만원 이하</button>
-              <button type="button" class="chip chip--active">10~30만원</button>
-              <button type="button" class="chip">30~50만원</button>
-              <button type="button" class="chip">50~100만원</button>
-              <button type="button" class="chip">100~200만원</button>
-              <button type="button" class="chip">200만원 이상</button>
+            <div class="chip-grid" id="monthly-budget-group" data-max="1" data-editing="false">
+              <button type="button" class="chip {% if user.monthly_budget == 'UNDER_100K' %}chip--active{% endif %}" data-code="UNDER_100K">10만원 이하</button>
+              <button type="button" class="chip {% if user.monthly_budget == '100K_300K' %}chip--active{% endif %}" data-code="100K_300K">10~30만원</button>
+              <button type="button" class="chip {% if user.monthly_budget == '300K_500K' %}chip--active{% endif %}" data-code="300K_500K">30~50만원</button>
+              <button type="button" class="chip {% if user.monthly_budget == '500K_1M' %}chip--active{% endif %}" data-code="500K_1M">50~100만원</button>
+              <button type="button" class="chip {% if user.monthly_budget == '1M_2M' %}chip--active{% endif %}" data-code="1M_2M">100~200만원</button>
+              <button type="button" class="chip {% if user.monthly_budget == 'OVER_2M' %}chip--active{% endif %}" data-code="OVER_2M">200만원 이상</button>
             </div>
           </div>
         </div>
 
         <div class="mypage-edit-row">
-          <button type="button" class="edit-btn">수정</button>
+          <button type="button" class="edit-btn" id="spending-edit-btn" data-mode="view">수정</button>
         </div>
 
         <div class="profile-subsection profile-subsection--full">
           <div class="profile-subsection__title">중요 가치 기준 <span class="profile-subsection__hint">(최대 3개 선택 가능)</span></div>
-          <div class="chip-grid chip-grid--wide">
-            <button type="button" class="chip chip--active">가격</button>
-            <button type="button" class="chip chip--active">활용도</button>
-            <button type="button" class="chip">품질/성능</button>
-            <button type="button" class="chip">지속가능성/가치</button>
-            <button type="button" class="chip">만족감</button>
-            <button type="button" class="chip">효율성</button>
+          <div class="chip-grid chip-grid--wide" id="value-criteria-group" data-max="3" data-editing="false">
+            <button type="button" class="chip {% if 'PRICE' in user.value_criteria %}chip--active{% endif %}" data-code="PRICE">가격</button>
+            <button type="button" class="chip {% if 'UTILIZATION' in user.value_criteria %}chip--active{% endif %}" data-code="UTILIZATION">활용도</button>
+            <button type="button" class="chip {% if 'QUALITY' in user.value_criteria %}chip--active{% endif %}" data-code="QUALITY">품질·성능</button>
+            <button type="button" class="chip {% if 'DURATION' in user.value_criteria %}chip--active{% endif %}" data-code="DURATION">지속·유지 기간</button>
+            <button type="button" class="chip {% if 'SATISFACTION' in user.value_criteria %}chip--active{% endif %}" data-code="SATISFACTION">만족감</button>
+            <button type="button" class="chip {% if 'EFFICIENCY' in user.value_criteria %}chip--active{% endif %}" data-code="EFFICIENCY">효율성</button>
           </div>
         </div>
 
         <div class="mypage-edit-row">
-          <button type="button" class="edit-btn">수정</button>
+          <button type="button" class="edit-btn" id="value-edit-btn" data-mode="view">수정</button>
         </div>
       </div>
     </div>
@@ -107,4 +111,6 @@
   <img src="{% static 'images/mypage-badge.png' %}" alt="" class="mypage-badge">
 
 </div>
+
+<script src="{% static 'js/mypage.js' %}"></script>
 {% endblock %}
