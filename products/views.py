@@ -1,5 +1,9 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, render
 from django.views.generic import CreateView
+
+from alternatives.visualization import build_opportunity_cost_context
 
 from .forms import ConsiderationForm
 from .models import Consideration
@@ -25,8 +29,6 @@ class ConsiderationCreateView(LoginRequiredMixin, CreateView):
         # alternatives 페이지가 아직 없어 URL 이름 대신 경로를 직접 씁니다.
         return f"/alternatives/considerations/{self.object.pk}/"
 
-from django.shortcuts import render
-
 
 def comparison_table_view(request, pk):
 
@@ -37,73 +39,29 @@ def comparison_table_view(request, pk):
             "consideration_id": pk,
         }
     )
-    
-from django.shortcuts import render
 
 
+@login_required
 def opportunity_cost_view(request, pk):
+    """기회비용 시각화 페이지 (docs/API.md §7).
 
-    return render(
-        request,
-        "products/opportunity_cost.html",
-        {
-            "consideration_id": pk
-        }
+    비교표 페이지와 달리 JS가 API를 부르지 않습니다. 막대 높이·색·표기까지
+    전부 서버에서 확정해 컨텍스트로 내려줍니다 (§2.10).
+
+    남의 고민은 404입니다 — 403으로 돌려주면 "그 id는 존재한다"는 사실이
+    새어 나갑니다.
+    """
+    consideration = get_object_or_404(
+        Consideration,
+        pk=pk,
+        user=request.user,
     )
-    
 
-# 기회비용 시각화 페이지 UI 확인용 임시 데이터 (추후 삭제 요망)
-def opportunity_cost_view(request, pk):
-
-
-    opportunity_costs = [
-
-
-        {
-            "name": "온라인<br>강의",
-            "count": 10,
-            "display_count": "10개",
-            "color": "pink",
-            "text_color": "pink-text",
-        },
-
-
-        {
-            "name": "헬스장<br>12개월",
-            "count": 1.4,
-            "display_count": "1.4개월",
-            "color": "yellow",
-            "text_color": "yellow-text",
-        },
-
-
-        {
-            "name": "전시회<br>관람 1회",
-            "count": 29.7,
-            "display_count": "29.7회",
-            "color": "orange",
-            "text_color": "orange-text",
-        },
-
-
-        {
-            "name": "일본 3박 4일<br>여행",
-            "count": 1.2,
-            "display_count": "1.2회",
-            "color": "travel",
-            "text_color": "pink-text",
-        },
-
-
-    ]
-
+    context = build_opportunity_cost_context(consideration)
+    context["consideration_id"] = consideration.pk
 
     return render(
         request,
         "products/opportunity_cost.html",
-        {
-            "consideration_id": pk,
-            "product_price": "220만원",
-            "opportunity_costs": opportunity_costs,
-        }
+        context,
     )

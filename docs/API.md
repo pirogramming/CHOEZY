@@ -284,6 +284,7 @@ MVP 규모에서는 **1번 방식(전 과정을 한 트랜잭션)으로 충분**
 | GET | `/products/considerations/` | `products:consideration_list` | ✔ | 내 고민 목록 |
 | GET | `/products/considerations/<int:pk>/` | `products:consideration_detail` | ✔ | 고민 상세 |
 | POST | `/products/considerations/<int:pk>/delete/` | `products:consideration_delete` | ✔ | 고민 삭제 |
+| GET | `/products/opportunity-cost/<int:pk>/` | `products:opportunity_cost` | ✔ | 기회비용 시각화 |
 | GET | `/alternatives/considerations/<int:pk>/` | `alternatives:alternative_list` | ✔ | 대안 생성 |
 | GET | `/alternatives/considerations/<int:pk>/comparison/` | `alternatives:comparison` | ✔ | 비교표·기회비용 |
 | GET | `/analyses/considerations/<int:pk>/decision/` | `analyses:decision` | ✔ | AI 구매 의사결정 |
@@ -533,6 +534,49 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 **삭제가 거부되는 경우** — 해당 고민의 `FinalChoice`에 연결된 `SpendingRecord`가 있을 때. `SpendingRecord.final_choice`는 `SET_NULL`이지만 `FinalChoice.alternative`가 `PROTECT`라 삭제 순서상 충돌이 발생할 수 있으므로, 서비스 레이어에서 먼저 확인하고 메시지로 안내합니다.
 
 > **삭제는 `status`와 무관하게 허용됩니다.** §9의 상태 전이 규칙은 "고민을 어떻게 진행하는가"에 대한 것이고, 삭제는 소유자가 자기 데이터를 없애는 동작입니다. `DECIDED` 상태에서 삭제를 막으면 사용자가 자기 기록을 지울 수 없게 됩니다.
+
+### 5.5 `GET /products/opportunity-cost/<int:pk>/` — 기회비용 시각화 (페이지)
+
+"이 가격이면 대신 이걸 할 수 있어요"를 막대그래프로 보여주는 화면입니다. **JSON API가 아니라 서버 사이드 렌더링 페이지입니다.** 비교표(§6.5)와 달리 JS가 API를 부르지 않고, 막대 높이·색·표기까지 서버가 컨텍스트로 확정해 내려줍니다 (§2.10).
+
+숫자는 전부 `Alternative`에 저장된 계산 결과를 그대로 씁니다. 화면에서 다시 계산하지 않습니다 — 같은 고민이 화면마다 다른 숫자를 보이면 안 됩니다.
+
+**템플릿 컨텍스트**
+
+| 키 | 설명 |
+|---|---|
+| `consideration_id` | 고민 id |
+| `product_name` | 상품명 |
+| `product_price` | 표시용 문자열. 만원 단위로 떨어지면 `"220만원"`, 아니면 `"1,234,500원"` |
+| `opportunity_costs` | 막대 목록 (아래) |
+| `financial_costs` | 재정형 대안 목록 (아래) |
+
+`opportunity_costs[]`
+
+| 키 | 설명 |
+|---|---|
+| `name` | `AlternativeItem.name`. **DB 문자열이므로 템플릿에서 `\|safe`를 쓰지 않습니다** |
+| `count` | 막대 블록을 쌓는 실제 비율 (`equivalent_quantity`). 숫자 타입이고 내림하지 않습니다 |
+| `display_count` | 표기용. `§7.4` 규칙으로 내림한 수량 + `unit_label` (예: `"12개월"`, `"0.6회"`) |
+| `color` / `text_color` | `static/css/opportunity_cost.css`의 색 클래스. 막대 순서대로 팔레트를 순환합니다 |
+
+> **`count`와 `display_count`가 다른 이유**: 막대는 실제 비율(`12.22`)로 그려야 정확하고, 옆에 적히는 숫자는 §7.4의 내림 규칙(`12개월`)을 따라야 다른 화면과 일치합니다.
+
+**재정(`FINANCE`) 카테고리는 막대가 되지 않습니다.**
+
+`result_type = FUTURE_VALUE`인 대안은 나눗셈이 아니라 "그 돈을 대신 굴리면 얼마"라서(§7.5) 개수 개념이 없습니다. 막대에 끼워 넣으면 항상 1블록짜리가 되어 숫자가 오히려 왜곡되므로, `financial_costs`로 갈라서 문장으로 보여줍니다.
+
+| 키 | 설명 |
+|---|---|
+| `name` | 항목명 (예: `"정기적금"`) |
+| `expected_effect` | 계산 결과 문장 (예: `"월 183,333원씩 12개월 → 약 223만원"`) |
+| `display_text` | `expected_effect`가 비었을 때의 대체 문구 |
+
+**응답**
+
+- 미로그인: `302` → 로그인 페이지
+- 남의 고민: `404` — `403`으로 돌려주면 "그 id는 존재한다"는 사실이 새어 나갑니다
+- 대안이 없을 때(`status = DRAFT`): `200` + 빈 상태 안내. 에러가 아닙니다
 
 ---
 
@@ -1624,6 +1668,7 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
 | 고민 목록·상세 | `/products/considerations/`<br>`/products/considerations/<id>/` | `.../<id>/delete/` | - |
 | 대안 생성 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
 | 비교표·기회비용 | `/alternatives/considerations/<id>/comparison/` | - | `GET .../comparison/`<br>`PATCH /api/products/considerations/<id>/` |
+| 기회비용 시각화 | `/products/opportunity-cost/<id>/` | - | - (서버 사이드 렌더링, §5.5) |
 | AI 의사결정 | `/analyses/considerations/<id>/decision/` | - | `POST /api/analyses/considerations/<id>/decision/` |
 | 최종 선택 | `/analyses/considerations/<id>/final-choice/` | 같은 URL | - |
 | 최종 결과 | `/analyses/considerations/<id>/result/` | - | - |
