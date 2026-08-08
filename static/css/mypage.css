@@ -1,0 +1,166 @@
+.mypage-page {
+  width: 92%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 40px 0 60px;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+
+.mypage-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.mypage-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.mypage-col__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mypage-card__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #222;
+}
+
+.mypage-card {
+  background: #ffffff;
+  border: 2px solid #7FE0BE;
+  border-radius: 20px;
+  padding: 32px;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-row label {
+  font-size: 15px;
+  color: #888;
+  font-weight: 500;
+}
+
+.info-row input {
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 16px;
+  color: #333;
+  background: #F7F7F5;
+  font-family: 'Inter', sans-serif;
+}
+
+.mypage-edit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.edit-btn {
+  background: #20CD8D;
+  color: #ffffff;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 9px 24px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.profile-subsection-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.profile-subsection {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-subsection--full {
+  margin-top: 24px;
+}
+
+.profile-subsection__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 14px;
+}
+
+.profile-subsection__hint {
+  font-size: 14px;
+  font-weight: 400;
+  color: #999;
+  margin-left: 4px;
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.chip-grid--wide {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.chip {
+  border: 1px solid #D9D9D9;
+  background: #ffffff;
+  color: #555;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+
+.chip--active {
+  background: #20CD8D;
+  border-color: #20CD8D;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.mypage-badge {
+  position: absolute;
+  right: 10px;
+  bottom: -20px;
+  width: 230px;
+  height: auto;
+  margin: -80px 5px 0 auto;
+}
+
+@media (max-width: 900px) {
+  .mypage-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-subsection-row {
+    grid-template-columns: 1fr;
+  }
+  .chip-grid--wide {
+    grid-template-columns: 1fr 1fr;
+  }
+}

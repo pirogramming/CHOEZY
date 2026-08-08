@@ -1,0 +1,110 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/mypage.css' %}">
+
+<div class="mypage-page">
+  <div class="mypage-grid">
+
+    <div class="mypage-col">
+      <div class="mypage-col__title-row">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#20CD8D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="mypage-card__title">기본 정보</span>
+      </div>
+
+      <div class="mypage-card mypage-card--info">
+        <div class="info-list">
+          <div class="info-row">
+            <label>아이디</label>
+            <input type="text" value="{{ user.username|default:'' }}" disabled>
+          </div>
+          <div class="info-row">
+            <label>성함</label>
+            <input type="text" value="{{ user.name|default:'' }}" disabled>
+          </div>
+          <div class="info-row">
+            <label>생년월일</label>
+            <input type="text" value="{{ user.birth_date|default:'' }}" disabled>
+          </div>
+          <div class="info-row">
+            <label>성별</label>
+            <input type="text" value="{{ user.gender|default:'' }}" disabled>
+          </div>
+          <div class="info-row">
+            <label>비밀번호</label>
+            <input type="password" value="********" disabled>
+          </div>
+          <div class="info-row">
+            <label>비밀번호 확인</label>
+            <input type="password" value="********" disabled>
+          </div>
+        </div>
+
+        <div class="mypage-edit-row">
+          <button type="button" class="edit-btn">수정</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mypage-col">
+      <div class="mypage-col__title-row">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#20CD8D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+        <span class="mypage-card__title">나의 소비 프로필</span>
+      </div>
+
+      <div class="mypage-card mypage-card--profile">
+        <div class="profile-subsection-row">
+          <div class="profile-subsection">
+            <div class="profile-subsection__title">소비성향 <span class="profile-subsection__hint">(최대 2개 선택 가능)</span></div>
+            <div class="chip-grid">
+              <button type="button" class="chip chip--active">가성비 중시</button>
+              <button type="button" class="chip chip--active">품질 중시</button>
+              <button type="button" class="chip">경험/추억 중시</button>
+              <button type="button" class="chip">자기계발 중시</button>
+              <button type="button" class="chip">자산형성 중시</button>
+              <button type="button" class="chip">신중한 소비 중시</button>
+            </div>
+          </div>
+
+          <div class="profile-subsection">
+            <div class="profile-subsection__title">월 소비 가능 예상 금액 <span class="profile-subsection__hint">(하나만 선택 가능)</span></div>
+            <div class="chip-grid">
+              <button type="button" class="chip">10만원 이하</button>
+              <button type="button" class="chip chip--active">10~30만원</button>
+              <button type="button" class="chip">30~50만원</button>
+              <button type="button" class="chip">50~100만원</button>
+              <button type="button" class="chip">100~200만원</button>
+              <button type="button" class="chip">200만원 이상</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mypage-edit-row">
+          <button type="button" class="edit-btn">수정</button>
+        </div>
+
+        <div class="profile-subsection profile-subsection--full">
+          <div class="profile-subsection__title">중요 가치 기준 <span class="profile-subsection__hint">(최대 3개 선택 가능)</span></div>
+          <div class="chip-grid chip-grid--wide">
+            <button type="button" class="chip chip--active">가격</button>
+            <button type="button" class="chip chip--active">활용도</button>
+            <button type="button" class="chip">품질/성능</button>
+            <button type="button" class="chip">지속가능성/가치</button>
+            <button type="button" class="chip">만족감</button>
+            <button type="button" class="chip">효율성</button>
+          </div>
+        </div>
+
+        <div class="mypage-edit-row">
+          <button type="button" class="edit-btn">수정</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <img src="{% static 'images/mypage-badge.png' %}" alt="" class="mypage-badge">
+
+</div>
+{% endblock %}
