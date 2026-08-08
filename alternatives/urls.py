@@ -5,7 +5,7 @@ app_name = "alternatives"
 
 urlpatterns = [
     path(
-        "categories/<int:pk>/",
+        "considerations/<int:pk>/",
         views.category_alternatives,
         name="consideration_alternatives",
     ),

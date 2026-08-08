@@ -8,7 +8,29 @@
   <div class="alt-header-row">
     <div class="alt-header-left">
       <h1 class="alt-title">카테고리별 대안 생성</h1>
-      <img src="{% static 'images/Component4.png' %}" alt="단계 이동 버튼" class="alt-step-img">
+      <div class="alt-step-buttons">
+        <button
+          type="button"
+          class="alt-step-button alt-step-prev"
+          data-step-url="{% url 'products:consideration_create' %}"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          <span>이전 단계</span>
+        </button>
+        <button
+          type="button"
+          class="alt-step-button alt-step-next"
+          data-step-url="{% url 'products:comparison_table' consideration_id %}"
+          disabled
+        >
+          <span>다음단계로 2/4</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="alt-header-right">
       <img src="{% static 'images/alt-mascot.png' %}" alt="" class="alt-mascot-img">

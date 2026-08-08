@@ -31,12 +31,53 @@
   margin: 0;
 }
 
-.alt-step-img {
+.alt-step-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.alt-step-button {
   height: 40px;
-  width: auto;
-  display: block;
-  position: relative;
-  top: 8px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.alt-step-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.alt-step-prev {
+  background: #f3f3f3;
+  color: #8b8b8b;
+}
+
+.alt-step-prev:hover {
+  background: #e9e9e9;
+}
+
+.alt-step-next {
+  background: #20cd8d;
+  color: #fff;
+}
+
+.alt-step-next:not(:disabled):hover {
+  background: #18b97c;
+}
+
+.alt-step-button svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .alt-mascot-img {
@@ -57,6 +98,12 @@
   font-size: 16px;
   padding: 60px 0;
   grid-column: 1 / -1;
+}
+
+.alt-retry-btn {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: -40px;
 }
 
 .alt-card {

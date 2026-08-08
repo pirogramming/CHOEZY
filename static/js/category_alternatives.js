@@ -9,7 +9,9 @@ async function apiGet(url) {
   const res = await fetch(url, { credentials: "same-origin" });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(body.message || body.detail || "요청에 실패했습니다.");
+    throw new Error(
+      body.error?.message || body.message || body.detail || "요청에 실패했습니다."
+    );
   }
   return body;
 }
@@ -22,7 +24,9 @@ async function apiPost(url) {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(body.message || body.detail || "요청에 실패했습니다.");
+    throw new Error(
+      body.error?.message || body.message || body.detail || "요청에 실패했습니다."
+    );
   }
   return body;
 }
@@ -65,6 +69,8 @@ function renderCards(data) {
     return;
   }
   cardsEl.innerHTML = data.categories.map(renderCategory).join("");
+  const nextButton = document.querySelector(".alt-step-next");
+  if (nextButton) nextButton.disabled = false;
   attachRegenerateHandlers();
 }
 
@@ -84,7 +90,21 @@ async function loadAlternatives(considerationId) {
 
     renderCards(data);
   } catch (err) {
-    cardsEl.innerHTML = `<p class="alt-loading">${err.message}</p>`;
+    cardsEl.replaceChildren();
+
+    const message = document.createElement("p");
+    message.className = "alt-loading";
+    message.textContent = `${err.message} 잠시 후 다시 시도해주세요.`;
+
+    const retryButton = document.createElement("button");
+    retryButton.type = "button";
+    retryButton.className = "regen-btn alt-retry-btn";
+    retryButton.textContent = "다시 시도";
+    retryButton.addEventListener("click", () => {
+      loadAlternatives(considerationId);
+    });
+
+    cardsEl.append(message, retryButton);
   }
 }
 
@@ -113,5 +133,12 @@ function attachRegenerateHandlers() {
 document.addEventListener("DOMContentLoaded", () => {
   const root = document.getElementById("alt-page");
   const considerationId = root.dataset.considerationId;
+
+  document.querySelectorAll(".alt-step-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!button.disabled) window.location.href = button.dataset.stepUrl;
+    });
+  });
+
   loadAlternatives(considerationId);
 });
