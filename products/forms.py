@@ -7,12 +7,6 @@ from .models import Consideration
 
 
 class ConsiderationForm(forms.ModelForm):
-    """구매 고민 입력 폼 (docs/API.md §5.1).
-
-    상품명·가격을 포함한 상품 정보는 전부 사용자가 직접 입력합니다.
-    `product_url`은 참고용 링크일 뿐 서버가 그 페이지를 읽어오지 않습니다.
-    """
-
     product_price = forms.IntegerField(
         label="가격",
         min_value=1,
@@ -24,110 +18,121 @@ class ConsiderationForm(forms.ModelForm):
             attrs={
                 "inputmode": "numeric",
                 "autocomplete": "off",
-                "placeholder": "2200000",
+                "placeholder": "상품의 가격을 입력해주세요.",
                 "data-price-input": "",
             },
         ),
     )
-
-    # ModelForm이 자동 생성하면 빈 선택지("---------")가 라디오에 하나 더
-    # 붙으므로 직접 선언합니다.
     purpose = forms.ChoiceField(
         label="구매 목적",
-        choices=Consideration.Purpose.choices,
+        choices=[
+            choice
+            for choice in Consideration.Purpose.choices
+            if choice[0] != Consideration.Purpose.ETC
+        ],
         widget=forms.RadioSelect,
-    )
-
-    exclude_category = forms.ModelChoiceField(
-        label="상품 자체 카테고리",
-        queryset=Category.objects.filter(is_active=True),
         required=False,
-        empty_label="선택 안 함",
-        help_text="이 카테고리는 대안 후보에서 제외됩니다.",
     )
-
     categories = forms.ModelMultipleChoiceField(
-        label="비교할 카테고리",
+        label="비교 분야",
         queryset=Category.objects.filter(is_active=True),
         widget=forms.CheckboxSelectMultiple,
+        required=False,
         help_text=(
             f"최대 {settings.MAX_CATEGORY_SELECTION}개까지 선택할 수 있습니다."
         ),
     )
-
-    compare_criteria = forms.MultipleChoiceField(
-        label="비교 기준",
-        choices=Consideration.CompareCriterion.choices,
-        widget=forms.CheckboxSelectMultiple,
+    category_detail = forms.CharField(
+        label="비교 분야 직접 입력",
+        max_length=50,
         required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "예: 전자기기, 문화, 생활 편의"},
+        ),
     )
 
     class Meta:
         model = Consideration
-
         fields = [
+            "product_url",
             "product_name",
             "product_price",
-            "product_features",
-            "product_url",
             "purpose",
             "purpose_detail",
-            "exclude_category",
             "categories",
-            "compare_criteria",
+            "category_detail",
         ]
-
         labels = {
+            "product_url": "상품 URL",
             "product_name": "상품명",
-            "product_features": "상품 특징",
-            "product_url": "상품 페이지 링크",
-            "purpose_detail": "목적 직접 입력",
+            "purpose_detail": "구매 목적 직접 입력",
         }
-
         widgets = {
-            "product_name": forms.TextInput(
-                attrs={
-                    "placeholder": "예: 아이패드 프로 11인치",
-                },
-            ),
-            "product_features": forms.Textarea(
-                attrs={
-                    "rows": 3,
-                    "placeholder": "고민에 참고할 만한 특징을 적어 주세요.",
-                },
-            ),
             "product_url": forms.URLInput(
-                attrs={
-                    "placeholder": "https://",
-                },
+                attrs={"placeholder": "상품의 URL을 입력해주세요."},
+            ),
+            "product_name": forms.TextInput(
+                attrs={"placeholder": "고민 중인 상품명을 입력해주세요."},
             ),
             "purpose_detail": forms.TextInput(
-                attrs={
-                    "placeholder": "'기타'를 선택했다면 목적을 적어 주세요.",
-                },
+                attrs={"placeholder": "구매 목적을 직접 입력해주세요."},
             ),
         }
 
     def clean_categories(self):
-        categories = self.cleaned_data["categories"]
-
-        if len(categories) > settings.MAX_CATEGORY_SELECTION:
-            raise forms.ValidationError(
-                f"카테고리는 최대 {settings.MAX_CATEGORY_SELECTION}개까지 "
-                "선택할 수 있습니다.",
-            )
-
-        return categories
+        return list(self.cleaned_data["categories"])
 
     def clean(self):
         cleaned_data = super().clean()
-
         purpose = cleaned_data.get("purpose")
-        purpose_detail = cleaned_data.get("purpose_detail")
+        purpose_detail = (cleaned_data.get("purpose_detail") or "").strip()
+        categories = cleaned_data.get("categories") or []
+        category_detail = (cleaned_data.get("category_detail") or "").strip()
 
-        if purpose == Consideration.Purpose.ETC and not purpose_detail:
-            raise forms.ValidationError(
-                "구매 목적을 '기타'로 선택하면 목적을 직접 입력해야 합니다.",
+        if purpose_detail:
+            cleaned_data["purpose"] = Consideration.Purpose.ETC
+            cleaned_data["purpose_detail"] = purpose_detail
+        elif not purpose:
+            self.add_error("purpose", "구매 목적을 선택하거나 직접 입력해주세요.")
+
+        if category_detail:
+            aliases = {
+                "여행": Category.Code.TRAVEL,
+                "운동": Category.Code.HEALTH,
+                "건강": Category.Code.HEALTH,
+                "운동건강": Category.Code.HEALTH,
+                "문화": Category.Code.CULTURE,
+                "여가": Category.Code.CULTURE,
+                "문화여가": Category.Code.CULTURE,
+                "생활": Category.Code.LIVING,
+                "생활편의": Category.Code.LIVING,
+                "디지털": Category.Code.DIGITAL,
+                "전자기기": Category.Code.DIGITAL,
+                "디지털전자기기": Category.Code.DIGITAL,
+                "재정": Category.Code.FINANCE,
+                "금융": Category.Code.FINANCE,
+            }
+            normalized = "".join(category_detail.lower().split()).replace("·", "")
+            category_code = aliases.get(normalized)
+            category = Category.objects.filter(
+                code=category_code,
+                is_active=True,
+            ).first()
+            if not category:
+                self.add_error(
+                    "category_detail",
+                    "현재 지원하는 비교 분야를 입력해주세요.",
+                )
+            elif category not in categories:
+                categories.append(category)
+
+        if not categories:
+            self.add_error("categories", "비교 분야를 1개 이상 선택해주세요.")
+        elif len(categories) > settings.MAX_CATEGORY_SELECTION:
+            self.add_error(
+                "categories",
+                f"비교 분야는 최대 {settings.MAX_CATEGORY_SELECTION}개까지 "
+                "선택할 수 있습니다.",
             )
-
+        cleaned_data["categories"] = categories
         return cleaned_data

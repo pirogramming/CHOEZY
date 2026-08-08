@@ -93,7 +93,7 @@
 
                 {{ form.product_url }}
 
-                <button type="button">
+                <button type="button" data-product-preview-url="{% url 'products_api:preview' %}">
                     입력
                 </button>
 
@@ -185,7 +185,7 @@
 
                     {{ form.purpose_detail }}
 
-                    <button class="small-confirm">
+                    <button type="button" class="small-confirm">
                         확인
                     </button>
 
@@ -266,9 +266,9 @@
 
                     <div class="etc-input-row">
 
-                        <input type="text" placeholder="직접 입력해주세요.">
+                        {{ form.category_detail }}
 
-                        <button class="small-confirm">
+                        <button type="button" class="small-confirm">
                             확인
                         </button>
 

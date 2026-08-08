@@ -3,6 +3,7 @@
 > 기준 문서: [ERD.md](ERD.md)
 > 아키텍처: **Django 템플릿 페이지(HTML) + JSON API 혼합**
 > 인증: **Django 세션 인증** (`django.contrib.auth`)
+> 구현 기준일: **2026-08-07**
 
 ---
 
@@ -24,15 +25,19 @@ CHOEZY는 화면 전환이 많지 않고 로그인 상태가 항상 필요한 �
 | 동작 후 | 처리 | 예 |
 |---|---|---|
 | **다른 페이지로 이동** | Django Form + POST + 리다이렉트 | 회원가입, 로그인, 고민 생성, 고민 삭제, 최종 선택 |
-| **같은 페이지에 머무름** | JSON API | 아이디 중복 확인, 대안 생성·재생성, 의사결정, 비교 기준 변경, 소비 기록 |
+| **같은 페이지에 머무름** | JSON API | 아이디 중복 확인, 상품 URL 미리보기, 계정 수정, 대안 생성·재생성·비교 |
 
 폼 POST로 처리하는 동작에는 **JSON API를 만들지 않습니다.** 반대로 JSON API가 있는 동작에는 페이지 POST를 두지 않습니다. (§3의 두 표에 같은 동작이 중복되면 안 됩니다.)
 
-> **고민 생성이 폼 POST인 이유**: 상품 정보를 사용자가 직접 입력하므로 비동기 조회가 필요 없습니다. 저장 후에는 대안 생성 페이지로 이동하므로 화면에 머무를 이유가 없고, Django Form의 검증·에러 재렌더링을 그대로 쓸 수 있습니다.
+> **고민 생성이 폼 POST인 이유**: URL 미리보기 결과 또는 직접 입력값을
+> 사용자가 확인·수정한 뒤 저장하며, 저장 후 다음 화면으로 이동하기 때문입니다.
+> URL에서 상품 정보를 가져오는 동작만 같은 화면의 JSON API로 분리합니다.
 
 > **대안 생성이 JSON API인 이유**: 응답에 5~20초가 걸려 로딩 UI가 필요하고, 성공하면 같은 페이지에서 카드만 채웁니다.
 
-> **DRF를 쓰지 않는 이유**: 현재 `requirements.txt`에 `djangorestframework`가 없고, JSON이 필요한 엔드포인트가 10여 개 수준입니다. `JsonResponse` + `django.views.View`로 충분하며, 세션 인증·CSRF를 Django 기본 동작 그대로 쓸 수 있습니다.
+> JSON API는 **Django REST Framework(DRF)** 로 구현합니다. 인증은
+> `SessionAuthentication`, 기본 권한은 `IsAuthenticated`를 사용하고,
+> 아이디 중복 확인처럼 공개가 필요한 API만 `AllowAny`를 지정합니다.
 
 ---
 
@@ -52,8 +57,6 @@ config/urls.py
 ""              → core.urls           페이지
 "accounts/"     → accounts.urls       페이지
 "products/"     → products.urls       페이지
-"alternatives/" → alternatives.urls   페이지
-"analyses/"     → analyses.urls       페이지
 "api/"          → config.api_urls     JSON API
 ```
 
@@ -65,30 +68,21 @@ urlpatterns = [
     path("accounts/", include("accounts.api_urls")),
     path("products/", include("products.api_urls")),
     path("alternatives/", include("alternatives.api_urls")),
-    path("analyses/", include("analyses.api_urls")),
+    path("analyses/", include("analyses.urls")),
 ]
 ```
 
-> 앱별 `urls.py`(페이지)와 `api_urls.py`(JSON)를 분리하면 뷰 파일도 `views.py` / `api_views.py`로 자연스럽게 나뉘고, 나중에 DRF를 도입하더라도 `api_urls.py`만 교체하면 됩니다.
+> 앱별 `urls.py`(페이지)와 `api_urls.py`(JSON)를 분리합니다. 계정 API 뷰는
+> 현재 `accounts/views.py`에 함께 있고, 상품·대안 API 뷰는 각 앱의
+> `api_views.py`에 있습니다.
 
 ### 2.3 인증
 
 - 모든 요청은 **세션 쿠키(`sessionid`)** 로 인증합니다.
 - 로그인이 필요한 페이지는 `@login_required` → 미로그인 시 `/accounts/login/?next=<원래 경로>` 로 **302 리다이렉트**.
-- 로그인이 필요한 JSON API는 미로그인 시 **401**과 에러 JSON을 반환합니다. (리다이렉트하지 않습니다.)
-
-```python
-# core/decorators.py — JSON API용 로그인 데코레이터
-def api_login_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return error_response("UNAUTHORIZED", "로그인이 필요합니다.", status=401)
-        return view_func(request, *args, **kwargs)
-    return wrapper
-```
-
-> 미로그인 JSON 요청에 302를 주면 프론트에서 로그인 페이지 HTML을 JSON으로 파싱하려다 실패합니다. **JSON API는 반드시 401을 반환합니다.**
+- 로그인이 필요한 JSON API는 DRF `SessionAuthentication` 기준으로
+  미로그인 시 **403 Forbidden**을 반환하며 로그인 페이지로 리다이렉트하지 않습니다.
+- 공개 API인 아이디 중복 확인만 `AllowAny`를 사용합니다.
 
 ### 2.4 CSRF
 
@@ -136,7 +130,7 @@ fetch("/api/alternatives/12/regenerate/", {
 }
 ```
 
-**실패** — 항상 아래 형태입니다.
+**실패** — 대안 및 상품 미리보기 서비스 오류는 아래 형태입니다.
 
 ```json
 {
@@ -150,16 +144,8 @@ fetch("/api/alternatives/12/regenerate/", {
 }
 ```
 
-`details`는 필드 단위 오류가 있을 때만 포함합니다.
-
-```python
-# core/responses.py
-def error_response(code, message, details=None, status=400):
-    payload = {"error": {"code": code, "message": message}}
-    if details:
-        payload["error"]["details"] = details
-    return JsonResponse(payload, status=status)
-```
+`details`는 대안 API에서 추가 정보가 있을 때 사용합니다. DRF serializer의
+입력값 검증 오류는 필드명을 키로 하는 DRF 기본 형식으로 반환됩니다.
 
 ### 2.7 HTTP 상태 코드
 
@@ -169,8 +155,8 @@ def error_response(code, message, details=None, status=400):
 | `201 Created` | 생성 성공 |
 | `204 No Content` | 삭제 성공 |
 | `400 Bad Request` | 유효성 검증 실패, JSON 파싱 실패 |
-| `401 Unauthorized` | 미로그인 |
-| `403 Forbidden` | CSRF 검증 실패 |
+| `403 Forbidden` | 미로그인 또는 CSRF 검증 실패 |
+| `422 Unprocessable Entity` | 상품 페이지는 열렸지만 상품명·가격 추출 실패 |
 | `404 Not Found` | 리소스 없음 **또는 내 소유가 아님** |
 | `405 Method Not Allowed` | 지원하지 않는 메서드 |
 | `409 Conflict` | 현재 상태에서 허용되지 않는 동작 (이미 생성됨 등) |
@@ -183,21 +169,29 @@ def error_response(code, message, details=None, status=400):
 
 | code | status | 설명 |
 |---|---|---|
-| `UNAUTHORIZED` | 401 | 로그인 필요 |
 | `NOT_FOUND` | 404 | 리소스 없음 / 내 소유 아님 |
 | `VALIDATION_ERROR` | 400 | 입력값 오류 (`details` 포함) |
 | `INVALID_JSON` | 400 | 요청 본문 파싱 실패 |
 | `INVALID_STATUS` | 409 | 현재 `status`에서 허용되지 않는 요청 (§9) |
+| `INVALID_CATEGORIES` | 409 | 선택 카테고리가 1~3개 범위를 벗어남 |
 | `ALREADY_EXISTS` | 409 | 이미 생성된 리소스 (의사결정, 소비 기록 연결) |
 | `NO_CANDIDATE_ITEMS` | 409 | 후보 `AlternativeItem` 부족 |
 | `AI_REQUEST_FAILED` | 502 | Gemini 호출/파싱 실패 |
 | `AI_TIMEOUT` | 504 | Gemini 응답 시간 초과 |
+| `INVALID_URL` | 400 | 상품 URL 형식 오류 |
+| `URL_NOT_REACHABLE` | 400 | 상품 URL의 도메인 주소 확인 실패 |
+| `PRIVATE_URL_NOT_ALLOWED` | 400 | 내부망·사설 IP URL 차단 |
+| `UNSUPPORTED_CONTENT` | 400 | HTML이 아닌 응답 형식 |
+| `RESPONSE_TOO_LARGE` | 400 | 상품 페이지 응답 크기 제한 초과 |
+| `PRODUCT_INFO_NOT_FOUND` | 422 | 상품명 또는 가격 메타데이터 없음 |
+| `PRODUCT_FETCH_FAILED` | 502 | 외부 상품 페이지 요청 실패 |
 
 **폼 페이지에서는 이 코드를 쓰지 않습니다.** 카테고리 3개 초과, 최종 선택의 대안 불일치 같은 검증은 폼 `clean()`의 에러 메시지로 처리되며, 화면에 그대로 렌더됩니다. (§5.1, §8.3)
 
 ### 2.9 페이지네이션
 
-목록 조회는 `?page=1&page_size=10` 쿼리 파라미터를 받습니다. `page_size` 기본값 10, 최대 50.
+현재 구현된 JSON API에는 페이지네이션 대상 목록이 없습니다. 향후 고민·소비
+기록 목록 API를 구현할 때 `?page=1&page_size=10` 형식을 적용합니다.
 
 ### 2.10 표시 문자열은 서버가 완성합니다
 
@@ -211,33 +205,29 @@ def error_response(code, message, details=None, status=400):
 | `display_text` | 계산 결과 | `"헬스장 약 12개월"` | `"정기적금 12개월 → 약 223만원"` |
 | `source.note` | `item` 필드 | `"2026.07 기준 · 한국소비자원"` | 뒤에 **` · 세전`** 추가 |
 
-**만드는 위치는 두 곳뿐입니다.**
+**실제 생성 위치**
 
 | 만드는 곳 | 담당 |
 |---|---|
-| `analyses/calculator.py` | 계산에서 파생되는 값 — `display_text`, `chart`, `unit_price_display`, 재정형의 `duration`·`expected_effect` |
-| 직렬화 단계 (`core/display.py`) | 빈 값 처리 — `display_or_dash(value)` |
+| `analyses/calculator.py` | 계산에서 파생되는 `display_text`, 재정형의 `duration`·`expected_effect` |
+| `alternatives/api_views.py` | `unit_price_display`, `price_display`, `duration_display`, `chart`, `source.note` |
 
 ```python
-# core/display.py
-def display_or_dash(value: str | None) -> str:
-    """빈 문자열이나 None을 화면용 대시로 바꾼다."""
-    return value if value else "—"
+duration_display = alternative.duration or "—"
 ```
 
-> **AI가 쓴 문자열(소비형 `duration`·`expected_effect`)은 계산과 무관**하므로 `calculator.py`가 볼 수 없습니다. 그래서 빈 값 처리만 직렬화 단계의 공통 헬퍼가 맡습니다. **규칙이 두 군데로 흩어지지 않도록 헬퍼는 하나만 둡니다.**
+소비형 `duration`·`expected_effect`는 Gemini 응답을 저장하고, 재정형은
+계산기가 만든 값을 저장합니다.
 
 ### 2.11 동시 요청 — `select_for_update()`
 
 **"고민 1건당 1개"인 리소스를 생성하는 요청은 `Consideration` 행을 잠근 뒤 상태를 검사합니다.**
 
-해당 엔드포인트는 다음 4개입니다.
+현재 구현된 해당 엔드포인트는 다음 2개입니다.
 
 ```text
 POST /api/alternatives/considerations/<id>/generate/
 POST /api/alternatives/<id>/regenerate/
-POST /api/analyses/considerations/<id>/decision/
-POST /analyses/considerations/<id>/final-choice/   (폼)
 ```
 
 ```python
@@ -276,126 +266,185 @@ MVP 규모에서는 **1번 방식(전 과정을 한 트랜잭션)으로 충분**
 | 메서드 | URL | url name | 인증 | 화면 |
 |---|---|---|---|---|
 | GET | `/` | `core:home` | - | 랜딩 |
-| GET/POST | `/accounts/signup/` | `accounts:signup` | - | 회원가입 |
+| GET/POST | `/accounts/signup/` | `accounts:signup` | - | 회원가입 1단계 기본 정보 |
+| GET/POST | `/accounts/signup/profile/` | `accounts:signup_profile` | - | 회원가입 2단계 소비 프로필 |
 | GET/POST | `/accounts/login/` | `accounts:login` | - | 로그인 |
 | POST | `/accounts/logout/` | `accounts:logout` | ✔ | 로그아웃 |
-| GET | `/accounts/mypage/` | `accounts:mypage` | ✔ | 마이페이지 |
 | GET/POST | `/products/considerations/new/` | `products:consideration_create` | ✔ | 구매 고민 입력 |
-| GET | `/products/considerations/` | `products:consideration_list` | ✔ | 내 고민 목록 |
-| GET | `/products/considerations/<int:pk>/` | `products:consideration_detail` | ✔ | 고민 상세 |
-| POST | `/products/considerations/<int:pk>/delete/` | `products:consideration_delete` | ✔ | 고민 삭제 |
+| GET | `/products/comparison/<int:pk>/` | `products:comparison_table` | - | 비교표 화면 |
 | GET | `/products/opportunity-cost/<int:pk>/` | `products:opportunity_cost` | ✔ | 기회비용 시각화 |
-| GET | `/alternatives/considerations/<int:pk>/` | `alternatives:alternative_list` | ✔ | 대안 생성 |
-| GET | `/alternatives/considerations/<int:pk>/comparison/` | `alternatives:comparison` | ✔ | 비교표·기회비용 |
-| GET | `/analyses/considerations/<int:pk>/decision/` | `analyses:decision` | ✔ | AI 구매 의사결정 |
-| GET/POST | `/analyses/considerations/<int:pk>/final-choice/` | `analyses:final_choice` | ✔ | 최종 선택 입력 |
-| GET | `/analyses/considerations/<int:pk>/result/` | `analyses:result` | ✔ | 최종 결과 |
-| GET | `/analyses/spending/` | `analyses:spending` | ✔ | 소비 기록 (후순위) |
+| GET | `/alternatives/considerations/<int:pk>/` | `alternatives:consideration_alternatives` | ✔ | 카테고리별 대안 |
 
 ### 3.2 JSON API
 
 | 메서드 | URL | 인증 | 설명 |
 |---|---|---|---|
-| GET | `/api/accounts/username-check/` | - | 아이디 중복 확인 |
-| PATCH | `/api/products/considerations/<int:pk>/` | ✔ | 비교 기준 변경 |
-| GET | `/api/alternatives/categories/` | - | 카테고리 목록 |
+| GET | `/api/accounts/check-username/` | - | 아이디 중복 확인 |
+| GET | `/api/accounts/me/` | ✔ | 내 기본 정보·소비 프로필 조회 |
+| PATCH | `/api/accounts/me/basic/` | ✔ | 내 기본 정보 수정 |
+| POST | `/api/accounts/me/password/` | ✔ | 내 비밀번호 변경 |
+| PATCH | `/api/accounts/me/profile/` | ✔ | 내 소비 프로필 수정 |
+| POST | `/api/products/preview/` | ✔ | 상품 URL에서 상품명·가격 추출 |
 | POST | `/api/alternatives/considerations/<int:pk>/generate/` | ✔ | **대안 생성** |
 | GET | `/api/alternatives/considerations/<int:pk>/` | ✔ | 현재 대안 목록 |
 | POST | `/api/alternatives/<int:pk>/regenerate/` | ✔ | **대안 개별 재생성** |
 | GET | `/api/alternatives/considerations/<int:pk>/comparison/` | ✔ | 비교표 데이터 |
-| POST | `/api/analyses/considerations/<int:pk>/decision/` | ✔ | **AI 의사결정 생성** |
-| GET | `/api/analyses/considerations/<int:pk>/decision/` | ✔ | AI 의사결정 조회 |
-| GET | `/api/analyses/spending/` | ✔ | 소비 기록 목록 |
-| POST | `/api/analyses/spending/` | ✔ | 소비 기록 생성 |
-| PATCH | `/api/analyses/spending/<int:pk>/` | ✔ | 소비 기록 수정 |
-| DELETE | `/api/analyses/spending/<int:pk>/` | ✔ | 소비 기록 삭제 |
-| GET | `/api/analyses/spending/summary/` | ✔ | 소비 집계 (차트) |
+
+> 위 표는 현재 `config/api_urls.py`에서 실제 접근 가능한 API만 적습니다.
+> 카테고리 목록, 고민 비교 기준 수정, AI 의사결정 및 소비 기록 API는 문서의
+> 후속 설계에는 남아 있지만 현재 라우팅되어 있지 않습니다.
 
 ---
 
 ## 4. accounts — 계정
 
-### 4.1 `GET/POST /accounts/signup/` — 회원가입
+### 4.1 `GET/POST /accounts/signup/` — 회원가입 1단계
 
-**폼 필드** (`accounts/forms.py`)
+기본 정보를 검증한 뒤 사용자를 바로 생성하지 않고
+`pending_signup` 세션에 비밀번호 해시와 함께 임시 저장합니다.
+
+| 필드 | 타입 | 필수 | 제약/허용값 |
+|---|---|---|---|
+| `name` | string(50) | ✔ | 빈 문자열 불가 |
+| `username` | string(150) | ✔ | Django 아이디 형식, 대소문자 무시 중복 검사 |
+| `email` | email | ✔ | 대소문자 무시 중복 검사, 소문자로 저장 |
+| `gender` | choice | ✔ | `FEMALE` / `MALE` / `OTHER` |
+| `birth_date` | date | ✔ | `YYYY-MM-DD` |
+| `password` | string | ✔ | Django 비밀번호 정책 적용 |
+| `password_confirm` | string | ✔ | `password`와 일치 |
+
+- 성공: `302` → `/accounts/signup/profile/`
+- 실패: `200` + 필드 오류가 포함된 HTML
+
+### 4.2 `GET/POST /accounts/signup/profile/` — 회원가입 2단계
+
+1단계 세션이 있어야 접근할 수 있습니다. 소비 프로필까지 검증한 후 사용자를
+생성하고 Django 로그인 세션을 만든 뒤 임시 회원가입 세션을 삭제합니다.
+
+| 필드 | 타입 | 필수 | 제약/허용값 |
+|---|---|---|---|
+| `spending_type` | string[] | ✔ | 아래 값 중 1~2개, 중복 불가 |
+| `value_criteria` | string[] | ✔ | 아래 값 중 1~3개, 중복 불가 |
+| `monthly_budget` | string | ✔ | 아래 예산 구간 중 1개 |
+
+`spending_type`:
+`VALUE`, `QUALITY`, `EXPERIENCE`, `GROWTH`, `ASSET`, `CAUTIOUS`
+
+`value_criteria`:
+`PRICE`, `SATISFACTION`, `QUALITY`, `UTILIZATION`, `DURATION`, `EFFICIENCY`
+
+`monthly_budget`:
+`UNDER_100K`, `100K_300K`, `300K_500K`, `500K_1M`, `1M_2M`, `OVER_2M`
+
+- 성공: 사용자 생성 및 자동 로그인 후 `302` → `/products/considerations/new/`
+- 1단계 세션 없음: `302` → `/accounts/signup/`
+- 완료 직전 아이디와 이메일 중복 여부를 다시 검사합니다.
+
+### 4.3 `GET/POST /accounts/login/` — 로그인
 
 | 필드 | 타입 | 필수 | 설명 |
 |---|---|---|---|
-| `username` | string | ✔ | 아이디 (unique) |
-| `password1` / `password2` | string | ✔ | 비밀번호 / 확인 |
-| `name` | string(50) | ✔ | 이름 |
-| `birth_date` | date | | 생년월일 |
-| `gender` | choice | | `FEMALE` / `MALE` / `OTHER` |
-| `spending_type` | choice | | `EXPERIENCE` / `VALUE` / `GROWTH` / `ASSET` |
-| `value_criteria` | choice[] | | `PRICE` / `SATISFACTION` / `QUALITY` / `UTILIZATION` / `LONG_TERM_VALUE` (복수) |
-| `monthly_budget` | choice | | `UNDER_100K` / `100K_300K` / `300K_500K` / `500K_1M` / `1M_2M` / `OVER_2M` |
+| `email` | email | ✔ | 대소문자를 구분하지 않음 |
+| `password` | string | ✔ | 사용자 비밀번호 |
+| `next` | string | | 동일 호스트의 안전한 이동 경로만 허용 |
 
-**응답**
+- 성공: Django 세션 생성 후 안전한 `next`가 있으면 해당 경로, 없으면 `/`로 `302`
+- 실패: `200` + `이메일 또는 비밀번호가 올바르지 않습니다.`
 
-- 성공: `302` → `/accounts/login/`
-- 실패: `200` + 폼 에러가 포함된 회원가입 HTML
+### 4.4 `POST /accounts/logout/` — 로그아웃
 
-> `value_criteria`는 `ArrayField`이므로 폼에서 `MultipleChoiceField` + `CheckboxSelectMultiple`로 받아 리스트로 저장합니다.
+현재 세션을 종료하고 `302` → `/`로 이동합니다. **GET은 405**입니다.
 
-### 4.2 `GET/POST /accounts/login/` — 로그인
+### 4.5 `GET /api/accounts/check-username/` — 아이디 중복 확인
 
-`username`, `password`를 받습니다. 성공 시 `?next=` 파라미터가 있으면 그곳으로, 없으면 `/products/considerations/new/`로 `302`.
+인증 없이 호출할 수 있습니다.
 
-### 4.3 `POST /accounts/logout/` — 로그아웃
-
-`302` → `/`. **GET을 허용하지 않습니다.** (링크 프리페치나 이미지 태그로 세션이 끊기는 것을 막기 위해서입니다.)
-
-### 4.4 `GET /api/accounts/username-check/` — 아이디 중복 확인
-
-회원가입 폼에서 입력 중 실시간 확인용입니다.
-
-**쿼리 파라미터**
-
-| 이름 | 타입 | 필수 | 설명 |
+| Query | 타입 | 필수 | 설명 |
 |---|---|---|---|
-| `username` | string | ✔ | 확인할 아이디 |
+| `username` | string | ✔ | 최대 150자, Django 아이디 형식 |
 
 **200 OK**
 
 ```json
 {
-  "username": "choezy",
+  "username": "choezy_user",
   "available": true
 }
 ```
 
-**400 VALIDATION_ERROR** — `username`이 비었거나 형식에 맞지 않을 때.
+`username`이 비었거나 형식에 맞지 않으면 DRF 필드 오류 형식의 `400`입니다.
+현재 이 API의 조회는 대소문자를 구분하는 정확 일치이고, 실제 회원가입의
+중복 검사는 대소문자를 구분하지 않습니다. 또한 중복 확인 후 다른 요청이
+먼저 가입할 수 있으므로 회원가입 완료 단계에서 아이디 중복을 다시 검사합니다.
 
-> 이 API는 **로그인 없이 호출 가능**하므로 존재하는 아이디를 대량으로 조회할 수 있습니다. 회원가입 화면에서만 쓰이도록 하고, 필요하면 IP 단위 호출 제한(`django-ratelimit` 등)을 검토합니다.
+### 4.6 `GET /api/accounts/me/` — 내 정보 조회
 
-### 4.5 `GET /accounts/mypage/` — 마이페이지 (페이지)
+로그인한 사용자의 기본 정보와 회원가입 때 저장한 소비 프로필을 반환합니다.
+비밀번호는 반환하지 않습니다.
 
-AI 프롬프트에 들어가는 소비 프로필을 보여줍니다. 서버 사이드 렌더링이며 **JSON API를 두지 않습니다.**
+**200 OK**
 
-**템플릿 컨텍스트**
-
-```python
+```json
 {
-    "user": request.user,          # 소비 프로필 전체
-    "consideration_count": int,    # 지금까지의 고민 수
-    "recent_considerations": QuerySet[:5],
+  "id": 5,
+  "username": "choezy_user",
+  "email": "user@example.com",
+  "name": "최지",
+  "birth_date": "2000-01-01",
+  "gender": "FEMALE",
+  "spending_type": ["VALUE", "CAUTIOUS"],
+  "value_criteria": ["PRICE", "QUALITY"],
+  "monthly_budget": "300K_500K"
 }
 ```
 
-choices 필드의 한글 라벨은 템플릿에서 바로 꺼냅니다.
+### 4.7 `PATCH /api/accounts/me/basic/` — 기본 정보 수정
 
-```django
-{{ user.get_spending_type_display }}
-{{ user.get_monthly_budget_display }}
+`username`, `name`, `birth_date`, `gender` 중 변경할 필드만 보냅니다.
+`email`은 이 API에서 수정하지 않습니다. 빈 객체는 `400`이고, 아이디 중복은
+대소문자를 구분하지 않고 검사합니다.
+
+```json
+{
+  "username": "updated_user",
+  "name": "수정 사용자",
+  "birth_date": "1999-12-31",
+  "gender": "FEMALE"
+}
 ```
 
-`value_criteria`는 `ArrayField`라 `get_FOO_display()`가 없습니다. 템플릿 필터나 뷰에서 라벨로 변환해 넘깁니다.
+성공 시 `4.6`과 동일한 전체 사용자 객체를 `200`으로 반환합니다.
 
-```python
-labels = [User.ValueCriterion(v).label for v in user.value_criteria]
+### 4.8 `POST /api/accounts/me/password/` — 비밀번호 변경
+
+```json
+{
+  "password": "NewStrongPass!2468",
+  "password_confirm": "NewStrongPass!2468"
+}
 ```
 
-> **`GET /api/accounts/me/`를 두지 않는 이유**: §1 기준으로 이건 "화면 진입 시 필요한 데이터"이지 "화면 안에서 일어나는 동작"이 아닙니다. 마이페이지는 페이지이므로 서버가 컨텍스트로 넘기면 끝입니다. 고민 목록·상세(§5.2)와 같은 처리입니다.
+Django 비밀번호 정책과 일치 여부를 검증하고 변경 후 현재 로그인 세션을
+유지합니다.
+
+```json
+{ "detail": "비밀번호가 변경되었습니다." }
+```
+
+### 4.9 `PATCH /api/accounts/me/profile/` — 소비 프로필 수정
+
+`spending_type`, `value_criteria`, `monthly_budget` 중 변경할 필드만 보냅니다.
+선택 개수와 허용값은 회원가입 2단계와 같습니다. 빈 객체는 `400`입니다.
+
+```json
+{
+  "spending_type": ["QUALITY", "CAUTIOUS"],
+  "value_criteria": ["PRICE", "UTILIZATION", "EFFICIENCY"],
+  "monthly_budget": "500K_1M"
+}
+```
+
+성공 시 `4.6`과 동일한 전체 사용자 객체를 `200`으로 반환합니다.
 
 ---
 
@@ -409,19 +458,23 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 
 | 필드 | 타입 | 필수 | 설명 |
 |---|---|---|---|
-| `product_name` | string(200) | ✔ | 상품명 — **사용자 직접 입력** |
-| `product_price` | int | ✔ | 가격 — **사용자 직접 입력**, **1 이상** |
-| `product_features` | string | | 상품 특징 |
-| `product_url` | url(500) | | 상품 페이지 링크 (사용자가 붙여넣기) |
-| `purpose` | choice | ✔ | `DEVELOPMENT` / `DESIGN` / `STUDY` / `HOBBY` / `TRAVEL_RECORD` / `ETC` |
-| `purpose_detail` | string(200) | △ | `purpose=ETC`일 때 필수 |
-| `exclude_category` | int | | 상품 자체 카테고리 (대안 후보에서 제외) |
+| `product_url` | url(500) | | 상품 페이지 링크. 미리보기 API 사용 후에도 수정 가능 |
+| `product_name` | string(200) | ✔ | 상품명. 자동 입력값 또는 사용자 직접 입력값 |
+| `product_price` | int | ✔ | 가격. 원 단위 정수, 1 이상 |
+| `purpose` | choice | △ | `SELF_DEVELOPMENT` / `TRAVEL` / `DESIGN` / `GIFT` / `WORK` / `HOBBY` / `CONVENIENCE` |
+| `purpose_detail` | string(200) | △ | 직접 입력값이 있으면 서버가 `purpose=ETC`로 저장 |
 | `categories` | int[] | ✔ | **최대 3개** (`ModelMultipleChoiceField`) |
-| `compare_criteria` | choice[] | | `PRICE` / `DURATION` / `EXPECTED_EFFECT` / `AVAILABLE_BUDGET` |
+| `category_detail` | string(50) | | 지원 카테고리 이름 직접 입력 |
 
-> **상품 정보는 전부 사용자가 직접 입력합니다.** 네이버 쇼핑 API 서비스가 종료되어 검색·자동 채우기 기능이 없습니다. `product_url`은 참고용 링크를 붙여넣는 선택 필드이며, 서버가 그 페이지를 읽어오지 않습니다.
+> `purpose`와 `purpose_detail` 중 하나는 필수입니다. 직접 입력값이 있으면
+> 선택된 `purpose`보다 직접 입력값을 우선합니다.
 
-> **상품 이미지는 MVP에 없습니다.** 대안 카드와 비교표에서는 카테고리 이모지나 플레이스홀더를 사용합니다.
+`category_detail`은 공백과 `·`을 제거한 뒤 지원 카테고리 별칭으로
+변환합니다. 현재 지원 값은 여행, 운동·건강, 문화·여가, 생활·편의,
+디지털·전자기기, 재정이며 체크박스 선택과 합쳐 최대 3개입니다.
+
+`compare_criteria`는 폼에서 받지 않고 생성 시 서버가
+`PRICE`, `DURATION`, `EXPECTED_EFFECT`, `AVAILABLE_BUDGET` 전체를 저장합니다.
 
 **입력값 안내 (화면)**
 
@@ -442,18 +495,72 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 | 상황 | 처리 |
 |---|---|
 | `product_price <= 0` | `product_price` 필드 에러 |
-| `purpose=ETC`인데 `purpose_detail` 없음 | `clean()`에서 non-field 에러 |
-| `categories` 4개 이상 | `clean_categories()`에서 "카테고리는 최대 3개까지 선택할 수 있습니다." |
-| `categories`가 비어 있음 | 필수 필드 에러 |
+| `purpose`와 `purpose_detail`이 모두 비어 있음 | `purpose` 필드 에러 |
+| 체크박스와 직접 입력을 합친 카테고리가 4개 이상 | `categories` 필드 에러 |
+| 체크박스와 직접 입력이 모두 비어 있음 | `categories` 필드 에러 |
 | `is_active=False`인 카테고리 | `queryset` 자체를 `is_active=True`로 제한해 애초에 선택 불가 |
 
 생성된 고민의 `status`는 `DRAFT`입니다.
 
-> **카테고리 3개 제한 검증 위치**: M2M 행 수 조건이라 DB `CheckConstraint`로 표현할 수 없습니다. 폼의 `clean_categories()`에서 막고, 서비스 레이어(`alternatives/services.py`)에서도 한 번 더 확인합니다. 상수는 `config/settings.py`의 `MAX_CATEGORY_SELECTION = 3`입니다. (ERD §6)
+> **카테고리 3개 제한 검증 위치**: M2M 행 수 조건이라 DB `CheckConstraint`로 표현할 수 없습니다. 폼의 `clean()`에서 막고, 서비스 레이어(`alternatives/services.py`)에서도 한 번 더 확인합니다. 상수는 `config/settings.py`의 `MAX_CATEGORY_SELECTION = 3`입니다. (ERD §6)
 
-> `exclude_category`는 `categories`에 포함되어 있어도 오류로 처리하지 않고, 대안 후보 조회 단계에서 제외합니다. 다만 그 카테고리는 대안이 0개가 될 수 있으므로 화면에서 함께 선택되지 않도록 막는 편이 좋습니다.
+### 5.2 `POST /api/products/preview/` — 상품 URL 미리보기
 
-### 5.2 `GET /products/considerations/` · `GET /products/considerations/<int:pk>/` — 목록·상세 (페이지)
+로그인이 필요합니다. URL 페이지에 공개된 Open Graph, 일반 meta 태그,
+JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반환값은 화면의
+입력칸을 채우는 용도이며 사용자가 수정한 뒤 고민 생성 폼을 제출할 수 있습니다.
+
+**Request**
+
+```json
+{ "url": "https://shop.example.com/products/123" }
+```
+
+| 필드 | 타입 | 필수 | 제약 |
+|---|---|---|---|
+| `url` | URL string | ✔ | 최대 500자, HTTP/HTTPS 공개 주소 |
+
+내부망 접근을 막기 위해 localhost, loopback, private/reserved IP를 거부하고
+리다이렉트된 URL도 다시 검사합니다. 응답은 최대 1MB, 요청 제한시간은 8초입니다.
+
+**200 OK**
+
+```json
+{
+  "product_name": "Apple AirPods 4",
+  "product_price": 199000,
+  "image_url": "https://shop.example.com/images/airpods.jpg",
+  "product_url": "https://shop.example.com/products/123"
+}
+```
+
+| 상황 | code | status |
+|---|---|---|
+| URL 형식 오류 | `INVALID_URL` 또는 DRF 필드 오류 | 400 |
+| 도메인 주소 확인 실패 | `URL_NOT_REACHABLE` | 400 |
+| 내부망·사설 IP | `PRIVATE_URL_NOT_ALLOWED` | 400 |
+| 지원하지 않는 응답 형식 | `UNSUPPORTED_CONTENT` | 400 |
+| 응답 크기 1MB 초과 | `RESPONSE_TOO_LARGE` | 400 |
+| 상품명 또는 가격 없음 | `PRODUCT_INFO_NOT_FOUND` | 422 |
+| 403·429·네트워크·타임아웃 오류 | `PRODUCT_FETCH_FAILED` | 502 |
+
+```json
+{
+  "error": {
+    "code": "PRODUCT_INFO_NOT_FOUND",
+    "message": "상품명 또는 가격을 찾지 못했습니다. 직접 입력해주세요."
+  }
+}
+```
+
+> 네이버 스마트스토어는 429, 쿠팡은 403 등 사이트의 봇 차단 정책에 따라
+> 추출에 실패할 수 있습니다. 실패하면 상품명과 가격을 직접 입력합니다.
+
+### 5.3 후속 계획 — 고민 목록·상세 페이지 (현재 미구현)
+
+`GET /products/considerations/` 및
+`GET /products/considerations/<int:pk>/`에 대한 아래 내용은 후속 설계이며
+현재 URL에 등록되어 있지 않습니다.
 
 서버 사이드 렌더링입니다. 별도 JSON API를 두지 않습니다.
 
@@ -481,7 +588,9 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 
 조회는 항상 `Consideration.objects.get(pk=pk, user=request.user)` — 내 고민이 아니면 **404**입니다.
 
-### 5.3 `PATCH /api/products/considerations/<int:pk>/` — 비교 기준 변경
+### 5.4 후속 계획 — 비교 기준 변경 API (현재 미구현)
+
+예정 URL: `PATCH /api/products/considerations/<int:pk>/`
 
 **비교표 화면에서 체크박스를 바꿀 때만** 사용합니다. 화면에 머무른 채 표를 다시 그려야 하므로 JSON API입니다.
 
@@ -520,7 +629,9 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 
 > 상품 정보 수정 기능은 MVP에 없습니다. 오타를 고치고 싶다면 삭제 후 새로 만듭니다.
 
-### 5.4 `POST /products/considerations/<int:pk>/delete/` — 고민 삭제 (폼)
+### 5.5 후속 계획 — 고민 삭제 (현재 미구현)
+
+예정 URL: `POST /products/considerations/<int:pk>/delete/`
 
 목록·상세 화면의 삭제 버튼입니다. `{% csrf_token %}`이 포함된 폼으로 제출합니다.
 
@@ -582,7 +693,9 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 
 ## 6. alternatives — 대안 생성
 
-### 6.1 `GET /api/alternatives/categories/` — 카테고리 목록
+### 6.1 후속 계획 — 카테고리 목록 API (현재 미구현)
+
+예정 URL: `GET /api/alternatives/categories/`
 
 메인 페이지의 카테고리 선택 UI에서 사용합니다.
 
@@ -753,6 +866,7 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 |---|---|---|
 | 내 고민이 아님 | `NOT_FOUND` | 404 |
 | `status != DRAFT` (이미 생성됨) | `INVALID_STATUS` | 409 |
+| 선택 카테고리가 1~3개가 아님 | `INVALID_CATEGORIES` | 409 |
 | 어떤 카테고리의 **계산 가능한** 활성 후보가 3개 미만 (§7.7) | `NO_CANDIDATE_ITEMS` | 409 |
 | Gemini 호출 실패 / JSON 파싱 실패 / 유효하지 않은 `item_id` | `AI_REQUEST_FAILED` | 502 |
 | Gemini 타임아웃 | `AI_TIMEOUT` | 504 |
@@ -761,7 +875,7 @@ labels = [User.ValueCriterion(v).label for v in user.value_criteria]
 {
   "error": {
     "code": "NO_CANDIDATE_ITEMS",
-    "message": "여행 카테고리에 사용할 수 있는 대안 데이터가 부족합니다.",
+    "message": "사용할 수 있는 대안 데이터가 부족합니다.",
     "details": { "category": ["TRAVEL: 계산 가능한 활성 항목 2개 (최소 3개 필요)"] }
   }
 }
@@ -969,8 +1083,19 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
           "slot": 1,
           "name": "헬스장 1개월",
           "price": 180000,
+          "price_display": "180,000원",
           "duration_display": "12개월",
           "expected_effect": "주 3회 운동 습관 형성과 체력 향상",
+          "available_budget": {
+            "budget_code": "300K_500K",
+            "budget_display": "30~50만원",
+            "budget_min": 300000,
+            "budget_max": 500000,
+            "difference_min": 120000,
+            "difference_max": 320000,
+            "status": "UNDER",
+            "display": "월 예산 대비 12만원~32만원 여유"
+          },
           "opportunity_cost": {
             "result_type": "QUANTITY",
             "equivalent_quantity": "12.22",
@@ -1007,6 +1132,16 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
   "price_display": "—",
   "duration_display": "12개월",
   "expected_effect": "12개월 뒤 약 223만원",
+  "available_budget": {
+    "budget_code": "300K_500K",
+    "budget_display": "30~50만원",
+    "budget_min": 300000,
+    "budget_max": 500000,
+    "difference_min": null,
+    "difference_max": null,
+    "status": "NOT_APPLICABLE",
+    "display": "해당 없음"
+  },
   "opportunity_cost": {
     "result_type": "FUTURE_VALUE",
     "equivalent_quantity": null,
@@ -1041,6 +1176,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
 | `price` | `QUANTITY`는 `unit_price`(단가), **`FUTURE_VALUE`는 항상 `null`** (§7.3) |
 | `price_display` | "가격" 열에 그대로 출력할 문자열. `FUTURE_VALUE`는 `"—"` |
 | `duration_display` | "지속 가능 기간" 열에 그대로 출력할 문자열. 빈 값은 `"—"` (§2.10) |
+| `available_budget` | 사용자 월 예산 구간과 대안 가격의 비교 결과. 재정형은 `NOT_APPLICABLE` |
 | `opportunity_cost` | 계산 결과 원본. `result_type`에 따라 채워지는 필드가 다릅니다 (§7.2) |
 | `chart` | **시각화 전용 가공값.** `type`으로 그래프 종류가 결정됩니다 |
 | `source.note` | 화면에 그대로 출력할 문구. **서버에서 조립합니다** |
@@ -1339,50 +1475,38 @@ FUTURE_VALUE 행의 source.note
 ```python
 # analyses/calculator.py
 
-def calculate(product_price: int, item: AlternativeItem) -> OpportunityCost:
+def calculate_opportunity_cost(
+    item: AlternativeItem,
+    product_price: int,
+) -> CalculationResult:
     """calc_type에 따라 QUANTITY 또는 FUTURE_VALUE 결과를 반환한다."""
 
 
 @dataclass(frozen=True)
-class OpportunityCost:
-    result_type: str                      # QUANTITY | FUTURE_VALUE
+class CalculationResult:
+    unit_price: int
+    result_type: str
     equivalent_quantity: Decimal | None
     future_value: int | None
-    unit_price: int                       # QUANTITY=단가 / FUTURE_VALUE=원금 (§7.3)
-    unit_price_display: str | None        # FUTURE_VALUE면 None (§2.10)
+    duration: str
+    expected_effect: str
     display_text: str
-    chart: dict                           # §6.5의 chart 계약
-    source_note: str                      # FUTURE_VALUE면 " · 세전" 포함 (§7.5)
-    duration: str | None                  # FUTURE_VALUE일 때만 채움 (§7.5)
-    expected_effect: str | None           # FUTURE_VALUE일 때만 채움 (§7.5)
 ```
 
-**계산에서 파생되는 표시 문자열은 전부 여기서 만듭니다.** (§2.10) 직렬화 단계는 이 값을 그대로 복사하고, AI가 쓴 문자열의 빈 값 처리만 `display_or_dash()`로 합니다.
+계산기는 기회비용 결과와 `display_text`, 재정형의 `duration` 및
+`expected_effect`를 만듭니다. `unit_price_display`, `chart`, `source.note`는
+`alternatives/api_views.py`의 직렬화 함수에서 만듭니다.
 
 ```python
-duration_display = display_or_dash(alternative.duration)
-```
-
-**`duration`·`expected_effect`의 판정은 `is None`으로 합니다.**
-
-```python
-duration = (
-    cost.duration
-    if cost.duration is not None      # ✔
-    else ai_item.get("duration", "")
+duration = calculation.duration or selection["duration"].strip()
+expected_effect = (
+    calculation.expected_effect
+    or selection["expected_effect"].strip()
 )
 ```
 
-```python
-duration = cost.duration or ai_item.get("duration")   # ✘ 빈 문자열이 falsy
-```
-
-> **`""`와 `None`은 다른 뜻입니다.**
->
-> - `None` — 계산이 이 필드를 만들지 않았다. **AI 응답의 값을 쓴다.**
-> - `""` — **서버가 "값 없음"으로 채웠다.** AI 응답을 쓰면 안 된다.
->
-> 재정 항목에는 애초에 `duration`을 요구하지 않으므로(§6.2) AI 응답에 그 키가 없습니다. 계산이 채운 값이 `""`인 경우 `or`로 판정하면 빈 문자열이 falsy라 AI 응답으로 넘어가고, 없는 키를 읽어 `None`이 저장되거나 엉뚱한 값이 붙습니다. **계산 결과가 우선인지 아닌지는 값의 내용이 아니라 `None` 여부로만 판정합니다.**
+`UNIT_PRICE` 계산 결과의 두 문자열은 빈 문자열이므로 AI가 작성한 값을
+사용하고, 재정형은 계산 결과가 채워져 있으므로 서버 값을 사용합니다.
 
 AI 호출 없이 순수 함수로 동작하므로 **단위 테스트를 먼저 작성합니다.** 최소 케이스는 다음과 같습니다.
 
@@ -1394,10 +1518,10 @@ SAVINGS     period_month=12 / n(n+1)/2 공식 검증 / 중간값 버림 없음
 INVESTMENT  return_rate 양수 / 음수(손실) / 전액 손실
 표기        만원 단위 내림 (223.575만 → 223) / 정수 내림 (12.22 → 12)
 필드 소유    FUTURE_VALUE는 duration·expected_effect를 채우고
-            QUANTITY는 None으로 둔다
+            QUANTITY는 빈 문자열로 둔다
             INVESTMENT는 기간을 곱하지 않는다 (FV = P × (1+r))
-표시 문자열  unit_price_display가 FUTURE_VALUE에서 None
-            source_note에 " · 세전"이 붙는지
+직렬화      unit_price_display가 FUTURE_VALUE에서 None
+            source.note에 " · 세전"이 붙는지
 공통        result_type과 채워진 필드가 CheckConstraint를 만족하는지
 ```
 
@@ -1427,7 +1551,7 @@ INVESTMENT  return_rate 양수 / 음수(손실) / 전액 손실
 **이 판정은 AI 호출 전에 끝냅니다.** `product_price`와 `AlternativeItem`만 있으면 되므로 AI가 필요 없습니다.
 
 ```python
-def is_calculable(product_price: int, item: AlternativeItem) -> bool:
+def is_calculable(item: AlternativeItem, product_price: int) -> bool:
     """calculate()가 유효한 결과를 내는 항목인지 판정한다."""
 ```
 
@@ -1441,7 +1565,10 @@ def is_calculable(product_price: int, item: AlternativeItem) -> bool:
 
 ---
 
-## 8. analyses — 의사결정 · 최종 선택 · 소비 기록
+## 8. analyses — 의사결정 · 최종 선택 · 소비 기록 (후속 계획)
+
+> 이 절의 페이지와 API는 현재 `analyses` URL에 등록되어 있지 않은 후속
+> 설계입니다. 현재 구현 API 목록에는 포함하지 않습니다.
 
 ### 8.1 `POST /api/analyses/considerations/<int:pk>/decision/` — AI 의사결정 생성 ★
 
@@ -1466,7 +1593,7 @@ def is_calculable(product_price: int, item: AlternativeItem) -> bool:
   "recommendation": "MIDDLE",
   "recommendation_display": "중간",
   "summary": "개발·업무 목적에는 잘 맞지만, 월 예산 30~50만원 기준으로 220만원은 약 5개월치 소비 예산에 해당합니다. 지금 필요한 성능이 아니라면 한 단계 낮은 사양도 고려해볼 만합니다.",
-  "ai_model": "gemini-2.5-flash",
+  "ai_model": "gemini-2.5-flash-lite",
   "created_at": "2026-07-30T14:12:44+09:00"
 }
 ```
@@ -1617,23 +1744,18 @@ MVP 이후 구현 대상입니다. 인터페이스만 정의해 둡니다.
 
 ## 9. 상태 전이
 
-`Consideration.status`는 아래 순서로만 진행합니다.
+현재 구현된 API가 변경하는 상태는 `DRAFT`에서 `GENERATED`까지입니다.
 
 ```text
-DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──▶ DECIDED ──▶ CLOSED
+DRAFT ──POST /api/alternatives/considerations/<id>/generate/──▶ GENERATED
 ```
-
-**이 표가 단일 기준입니다.** 각 엔드포인트 절의 에러 표는 여기서 파생된 것이며, 충돌하면 이 표가 우선합니다.
 
 | 엔드포인트 | `DRAFT` | `GENERATED` | `DECIDED` | `CLOSED` |
 |---|:---:|:---:|:---:|:---:|
-| `POST .../generate/` (대안 생성) | ✔ | ✘ | ✘ | ✘ |
-| `POST /api/alternatives/<id>/regenerate/` | ✘ | ✔ | ✘ | ✘ |
-| `POST .../decision/` (의사결정 생성) | ✘ | ✔ | ✘ | ✘ |
-| `POST .../final-choice/` (최종 선택) | ✘ | ✔ | ✘ | ✘ |
-| `PATCH /api/products/considerations/<id>/` (비교 기준) | ✔ | ✔ | ✘ | ✘ |
-| **모든 GET 조회** | ✔ | ✔ | ✔ | ✔ |
-| **`POST .../delete/` (고민 삭제)** | ✔ | ✔ | ✔ | ✔ |
+| 대안 생성 `POST .../generate/` | ✔ | ✘ | ✘ | ✘ |
+| 개별 재생성 `POST /api/alternatives/<id>/regenerate/` | ✘ | ✔ | ✘ | ✘ |
+| 대안 목록 `GET .../considerations/<id>/` | ✔ | ✔ | ✔ | ✔ |
+| 비교표 `GET .../comparison/` | ✘ | ✔ | ✔ | ✔ |
 
 `✘`인 조합은 JSON API에서 **409 `INVALID_STATUS`** 입니다.
 
@@ -1647,13 +1769,8 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
 }
 ```
 
-폼 페이지(최종 선택)는 409 대신 **리다이렉트 + `messages.error`** 로 안내합니다. (§8.3)
-
-> **삭제만 상태와 무관하게 허용됩니다.** 이 표의 나머지는 "고민을 어떻게 진행하는가"에 대한 워크플로 규칙이지만, 삭제는 소유자가 자기 데이터를 없애는 동작입니다. `DECIDED`에서 삭제를 막으면 사용자가 자기 기록을 영영 지울 수 없게 됩니다. 삭제가 거부되는 유일한 경우는 `SpendingRecord`가 연결됐을 때이며, 이는 상태가 아니라 참조 무결성 문제입니다. (§5.4)
-
-> **`DECIDED`에서 비교 기준(`PATCH`)도 막습니다.** 최종 선택이 끝난 뒤 비교표의 열 구성이 바뀌면 "무엇을 보고 결정했는지"가 달라집니다.
-
-> `CLOSED`로 바꾸는 API는 MVP에 두지 않습니다. 관리자 페이지나 후속 배치에서만 사용합니다.
+`DECIDED`, `CLOSED` 값은 모델에 존재하지만 이를 만드는 의사결정·최종 선택
+API는 현재 미구현입니다. 해당 후속 설계는 §8을 참고합니다.
 
 ---
 
@@ -1661,34 +1778,26 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
 
 | 화면 | 진입 (GET) | 제출 (폼 POST) | 화면 안 동작 (JSON) |
 |---|---|---|---|
-| 회원가입 | `/accounts/signup/` | 같은 URL | `GET /api/accounts/username-check/` |
+| 회원가입 1단계 | `/accounts/signup/` | 같은 URL | `GET /api/accounts/check-username/` |
+| 회원가입 2단계 | `/accounts/signup/profile/` | 같은 URL | - |
 | 로그인 | `/accounts/login/` | 같은 URL | - |
-| 마이페이지 | `/accounts/mypage/` | - | - |
-| 구매 고민 입력 | `/products/considerations/new/` | 같은 URL | `GET /api/alternatives/categories/` |
-| 고민 목록·상세 | `/products/considerations/`<br>`/products/considerations/<id>/` | `.../<id>/delete/` | - |
-| 대안 생성 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
-| 비교표·기회비용 | `/alternatives/considerations/<id>/comparison/` | - | `GET .../comparison/`<br>`PATCH /api/products/considerations/<id>/` |
+| 마이페이지 | `/accounts/mypage/` | - | `GET /api/accounts/me/`<br>`PATCH /api/accounts/me/basic/`<br>`POST /api/accounts/me/password/`<br>`PATCH /api/accounts/me/profile/` |
+| 구매 고민 입력 | `/products/considerations/new/` | 같은 URL | `POST /api/products/preview/` |
+| 카테고리별 대안 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
+| 비교표·기회비용 | `/products/comparison/<id>/` | - | `GET /api/alternatives/considerations/<id>/comparison/` |
 | 기회비용 시각화 | `/products/opportunity-cost/<id>/` | - | - (서버 사이드 렌더링, §5.5) |
-| AI 의사결정 | `/analyses/considerations/<id>/decision/` | - | `POST /api/analyses/considerations/<id>/decision/` |
-| 최종 선택 | `/analyses/considerations/<id>/final-choice/` | 같은 URL | - |
-| 최종 결과 | `/analyses/considerations/<id>/result/` | - | - |
-| 소비 기록 | `/analyses/spending/` | - | `GET`·`POST`·`PATCH`·`DELETE /api/analyses/spending/`<br>`GET /api/analyses/spending/summary/` |
 
 **"제출" 열과 "화면 안 동작" 열에 같은 동작이 동시에 나오지 않습니다.** (§1)
 
-**대안 생성 화면의 흐름**
+**현재 백엔드 기준 대안 생성 흐름**
 
 ```text
-페이지 진입 (GET /alternatives/considerations/12/)
-  └─ 서버가 status를 보고 분기
-       status=DRAFT     → "대안 생성하기" 버튼만 렌더
-       status=GENERATED → 대안 카드 렌더 (서버 사이드)
-
-"대안 생성하기" 클릭
-  └─ POST /api/alternatives/considerations/12/generate/
-       로딩 UI (5~20초)
-       성공 → 응답 JSON으로 카드 렌더
-       실패 → 에러 메시지 + 재시도 버튼
+구매 고민 폼 제출
+  └─ Consideration(status=DRAFT) 생성
+       └─ POST /api/alternatives/considerations/12/generate/
+            Gemini 호출 후 카테고리별 대안 3개 생성
+            성공 → status=GENERATED + 응답 JSON으로 카드 렌더
+            실패 → 에러 메시지 + 재시도
 
 카드의 재생성 버튼 클릭
   └─ POST /api/alternatives/108/regenerate/
@@ -1697,7 +1806,9 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
        실패 → 카드 유지 + 토스트
 ```
 
-> 이미 생성된 대안은 **페이지 진입 시 서버에서 렌더**합니다. `GET /api/alternatives/considerations/<id>/`는 재생성 후 전체를 다시 맞출 때나 카테고리 탭을 비동기로 바꿀 때 사용합니다.
+> 상품 입력 성공 후 `/alternatives/considerations/<id>/` 페이지로
+> 이동하는 라우팅은 연결되어 있습니다. 다만 해당 템플릿에서 실제 생성·조회·
+> 재생성 API 결과를 카드로 렌더링하는 프론트 연결은 필요합니다.
 
 ---
 
@@ -1706,29 +1817,23 @@ DRAFT ──POST /generate/──▶ GENERATED ──POST /final-choice/──�
 ### 파일 구조
 
 ```text
-core/
-  responses.py     success_response / error_response
-  decorators.py    api_login_required
-  pagination.py    paginate
-  display.py       display_or_dash (§2.10)
-
 accounts/
-  urls.py  views.py  forms.py      회원가입·로그인·마이페이지
-  api_urls.py  api_views.py        username-check
+  urls.py  views.py  forms.py      2단계 회원가입·로그인·로그아웃
+  api_urls.py                    계정 JSON API URL
+  serializers.py                계정 조회·수정 검증
 
 products/
-  urls.py  views.py  forms.py      고민 생성·목록·상세·삭제 (폼)
-  api_urls.py  api_views.py        PATCH 비교 기준
+  urls.py  views.py  forms.py      고민 생성 폼·비교표 페이지
+  api_urls.py  api_views.py        상품 URL 미리보기 API
+  serializers.py  services.py     URL 검증·메타데이터 추출
 
 alternatives/
-  urls.py  views.py                대안·비교표 페이지
-  api_urls.py  api_views.py        categories, generate, regenerate, comparison
+  urls.py  views.py                고민별 카테고리 대안 페이지
+  api_urls.py  api_views.py        generate, list, regenerate, comparison
   services.py      대안 생성·재생성 (검증 포함)
+  ai_service.py    Gemini 호출 + 응답 파싱
 
 analyses/
-  urls.py  views.py  forms.py      최종 선택 (폼), 결과·소비 기록 페이지
-  api_urls.py  api_views.py        decision, spending
-  ai_service.py    Gemini 호출 + 프롬프트
   calculator.py    기회비용 계산 (§7)
 ```
 
@@ -1737,8 +1842,6 @@ analyses/
 ```text
 Consideration.categories 개수 <= 3
 Alternative.category_id == Alternative.item.category_id
-FinalChoice.consideration_id == FinalChoice.alternative.consideration_id
-FinalChoice: ALTERNATIVE이면 alternative 필수 / PRODUCT·POSTPONE이면 NULL
 재생성 시 version = 기존 + 1
 슬롯별 is_current=True 행은 항상 1개
 AI가 반환한 item_id가 후보 목록에 실제로 존재하는지
@@ -1746,28 +1849,27 @@ AI에게 넘기는 후보는 is_calculable()을 통과한 항목만
 FUTURE_VALUE 대안의 unit_price는 product_price (item.average_price 아님)
 FUTURE_VALUE 대안의 duration·expected_effect는 AI 응답을 무시하고 서버가 채움
 FUTURE_VALUE 응답의 unit_price_display / price는 항상 null (§6.2, §6.5)
-duration·expected_effect 덮어쓰기 판정은 is None (or 연산자 금지, §7.6)
+계산 결과의 duration·expected_effect가 있으면 서버값, 없으면 AI 값을 사용
 FUTURE_VALUE의 source.note에는 서버가 " · 세전"을 붙임 (§7.5)
 calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date 요구 금지)
 생성 계열 요청은 select_for_update()로 Consideration을 잠근 뒤 상태 검사
 ```
 
-### 구현 순서
+### 현재 구현 상태
 
 ```text
-1. core/responses.py, core/decorators.py           공통 응답·인증
-2. accounts 회원가입/로그인 (폼)                     세션 확보
-3. analyses/calculator.py + 단위 테스트              calculate() + is_calculable() (§7)
-4. GET /api/alternatives/categories/                 조회만, AI 없음
-5. 고민 생성 폼 + 목록·상세 페이지                    카테고리 3개 검증
-6. analyses/ai_service.py                            Gemini 연동
-7. POST .../generate/                                핵심 플로우
-8. POST /api/alternatives/<id>/regenerate/           version + is_current
-9. GET .../comparison/                              비교표 + chart 계약
-10. POST .../decision/                               AI 의사결정
-11. 최종 선택 폼 + 결과 페이지                        FinalChoice 검증
-12. 고민 삭제                                        SpendingRecord 연결 확인
-13. spending/*                                       후순위
+[✔] Django 세션 기반 2단계 회원가입·로그인·로그아웃
+[✔] 아이디 중복 확인
+[✔] 내 정보 조회·기본 정보 수정·비밀번호 변경·소비 프로필 수정
+[✔] 구매 고민 입력 폼과 카테고리 최대 3개 검증
+[✔] 상품 URL 공개 메타데이터 미리보기 + 직접 입력 fallback
+[✔] AlternativeItem 시드(생활·편의, 디지털·전자기기)
+[✔] Gemini 기반 카테고리별 대안 3개 생성
+[✔] 개별 대안 재생성과 버전 관리
+[✔] 현재 대안 목록 및 비교표 JSON API
+[ ] 상품 입력 → 카테고리별 대안 HTML 페이지 라우팅·렌더링 연결
+[ ] 마이페이지 HTML과 계정 API 연결
+[ ] AI 의사결정·최종 선택·소비 기록 API
 ```
 
 > **`calculator.py`를 3번으로 올렸습니다.** 기회비용 계산은 순수 함수라 DB·AI 없이 단위 테스트를 쓸 수 있고, 이 서비스에서 숫자가 틀리면 안 되는 유일한 부분입니다. 여기가 확정돼야 7·9번의 응답 필드가 고정됩니다.
@@ -1776,9 +1878,11 @@ calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date �
 
 ```text
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
-GEMINI_TIMEOUT=25
+GEMINI_MODEL=gemini-2.5-flash-lite
 ```
+
+Gemini 제한시간은 현재 `config/settings.py`의
+`GEMINI_TIMEOUT_MS = 25_000`으로 고정되어 있습니다.
 
 ---
 

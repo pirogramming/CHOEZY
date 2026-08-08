@@ -75,14 +75,43 @@ document.addEventListener(
 
             urlButton.addEventListener(
                 "click",
-                function () {
+                async function () {
+                    const urlInput = document.querySelector('[name="product_url"]');
+                    const nameInput = document.querySelector('[name="product_name"]');
+                    const priceInput = document.querySelector('[name="product_price"]');
+                    const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+                    const previewUrl = urlButton.dataset.productPreviewUrl;
 
+                    if (!urlInput.value.trim()) {
+                        alert("상품 URL을 입력해주세요.");
+                        return;
+                    }
 
-                    alert(
-                        "상품 정보를 확인합니다."
-                    );
-
-
+                    urlButton.disabled = true;
+                    try {
+                        const response = await fetch(previewUrl, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": csrfToken,
+                            },
+                            credentials: "same-origin",
+                            body: JSON.stringify({url: urlInput.value.trim()}),
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(
+                                data.error?.message || "상품 정보를 불러오지 못했습니다."
+                            );
+                        }
+                        nameInput.value = data.product_name;
+                        priceInput.value = data.product_price;
+                        urlInput.value = data.product_url;
+                    } catch (error) {
+                        alert(`${error.message} 상품명과 가격을 직접 입력해주세요.`);
+                    } finally {
+                        urlButton.disabled = false;
+                    }
                 }
             );
 
