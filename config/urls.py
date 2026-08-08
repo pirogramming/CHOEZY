@@ -10,6 +10,7 @@ urlpatterns = [
     # 페이지 (HTML)
     path("accounts/", include("accounts.urls")),
     path("products/", include("products.urls")),
+    path("analyses/", include("analyses.urls")),
     path("alternatives/", include("alternatives.urls")),
 
     # JSON API

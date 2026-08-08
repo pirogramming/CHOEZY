@@ -1,9 +1,14 @@
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
 from core.models import TimeStampedModel
+
+
+# AI 의사결정 화면의 체크리스트 줄 수 (docs/API.md §8.1)
+DECISION_KEY_POINT_COUNT = 3
 
 
 class Decision(TimeStampedModel):
@@ -33,12 +38,28 @@ class Decision(TimeStampedModel):
         choices=Level.choices,
     )
 
+    key_points = ArrayField(
+        base_field=models.CharField(max_length=100),
+        default=list,
+        blank=True,
+    )
+
     summary = models.TextField()
 
     ai_model = models.CharField(
         max_length=100,
         blank=True,
     )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(
+                    key_points__len__lte=DECISION_KEY_POINT_COUNT,
+                ),
+                name="decision_key_points_max_count",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.consideration.product_name} - AI 의사결정"

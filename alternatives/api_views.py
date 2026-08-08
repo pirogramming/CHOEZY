@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.responses import service_error_response
+
 from .models import Alternative
 from .services import (
     AlternativeServiceError,
@@ -165,19 +167,6 @@ def serialize_alternative(alternative, history=None):
     return result
 
 
-def error_response(exc):
-    return Response(
-        {
-            "error": {
-                "code": exc.code,
-                "message": exc.message,
-                "details": exc.details,
-            }
-        },
-        status=exc.status_code,
-    )
-
-
 def serialize_consideration(consideration, alternatives, include_history=False):
     alternatives = list(alternatives)
     history_map = {}
@@ -254,7 +243,7 @@ class AlternativeGenerateAPIView(APIView):
                 pk, request.user
             )
         except AlternativeServiceError as exc:
-            return error_response(exc)
+            return service_error_response(exc)
 
         alternatives.sort(
             key=lambda item: (
@@ -275,7 +264,7 @@ class AlternativeListAPIView(APIView):
         try:
             consideration = Consideration.objects.get(pk=pk, user=request.user)
         except Consideration.DoesNotExist:
-            return error_response(
+            return service_error_response(
                 AlternativeServiceError(
                     "NOT_FOUND", "구매 고민을 찾을 수 없습니다.", 404
                 )
@@ -308,7 +297,7 @@ class AlternativeRegenerateAPIView(APIView):
         try:
             previous, alternative = regenerate_alternative(pk, request.user)
         except AlternativeServiceError as exc:
-            return error_response(exc)
+            return service_error_response(exc)
 
         result = serialize_alternative(alternative)
         result["category"] = {
@@ -393,13 +382,13 @@ class AlternativeComparisonAPIView(APIView):
                 pk=pk, user=request.user
             )
         except Consideration.DoesNotExist:
-            return error_response(
+            return service_error_response(
                 AlternativeServiceError(
                     "NOT_FOUND", "구매 고민을 찾을 수 없습니다.", 404
                 )
             )
         if consideration.status == Consideration.Status.DRAFT:
-            return error_response(
+            return service_error_response(
                 AlternativeServiceError(
                     "INVALID_STATUS",
                     "대안 생성 후 비교표를 조회할 수 있습니다.",
@@ -416,7 +405,7 @@ class AlternativeComparisonAPIView(APIView):
             .order_by("category__display_order", "category_id", "slot")
         )
         if not alternatives:
-            return error_response(
+            return service_error_response(
                 AlternativeServiceError(
                     "INVALID_STATUS",
                     "현재 비교할 대안이 없습니다.",
