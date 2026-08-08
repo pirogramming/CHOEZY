@@ -4,10 +4,9 @@ from . import views
 app_name = "alternatives"
 
 urlpatterns = [
-    path("categories/", views.category_alternatives, name="category_alternatives"),
     path(
-        "considerations/<int:pk>/",
-        views.consideration_alternatives,
+        "categories/<int:pk>/",
+        views.category_alternatives,
         name="consideration_alternatives",
     ),
 ]

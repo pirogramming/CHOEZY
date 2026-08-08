@@ -128,8 +128,6 @@
 .decision-checklist svg {
   flex-shrink: 0;
   margin-top: 3px;
-  width: 20px;
-  height: 20px;
 }
 
 .bar-chart {
@@ -229,13 +227,30 @@
 }
 
 .decision-mascot {
-  width: 250px;
+  width: 220px;
   height: auto;
   flex-shrink: 0;
-  margin-left: -80px;
+  margin-left: -30px;
   position: relative;
   top: 16px;
   z-index: 2;
+}
+
+.decision-empty {
+  text-align: center;
+  padding: 80px 0;
+}
+
+.decision-empty p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.decision-error-text {
+  color: #E24B4A;
+  font-size: 14px;
+  margin-top: 12px;
 }
 
 @media (max-width: 900px) {
