@@ -1,14 +1,14 @@
 from django.urls import path
 
-from . import views
+from .api_views import DecisionAPIView
 
 
-app_name = "analyses"
+app_name = "analyses_api"
 
 urlpatterns = [
     path(
         "considerations/<int:pk>/decision/",
-        views.decision,
+        DecisionAPIView.as_view(),
         name="decision",
     ),
 ]

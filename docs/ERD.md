@@ -146,6 +146,7 @@ erDiagram
         varchar purpose_fit "구매 목적 적합도"
         varchar expected_satisfaction "예상 만족도"
         varchar recommendation "추천 의견"
+        array key_points "판단 근거 체크리스트 3줄"
         text summary "설명 문구"
         varchar ai_model
         timestamptz created_at
@@ -498,6 +499,7 @@ slot=2, version=2, is_current=True
 | `purpose_fit` | 구매 목적 적합도 — `HIGH` / `MIDDLE` / `LOW` |
 | `expected_satisfaction` | 예상 만족도 — `HIGH` / `MIDDLE` / `LOW` |
 | `recommendation` | 추천 의견 — `HIGH` / `MIDDLE` / `LOW` |
+| `key_points` | 판단 근거 체크리스트 — **정확히 3줄**, 각 100자 이하 (화면의 체크리스트 UI) |
 | `summary` | AI가 작성한 종합 설명 |
 | `ai_model` | 의사결정을 생성한 AI 모델 |
 

@@ -1421,19 +1421,68 @@ def is_calculable(product_price: int, item: AlternativeItem) -> bool:
   "expected_satisfaction_display": "중간",
   "recommendation": "MIDDLE",
   "recommendation_display": "중간",
+  "key_points": [
+    "개발·업무 목적에 성능이 부합합니다",
+    "월 예산 대비 약 5개월치 소비입니다",
+    "동일 비용으로 여행·자기계발도 가능합니다"
+  ],
   "summary": "개발·업무 목적에는 잘 맞지만, 월 예산 30~50만원 기준으로 220만원은 약 5개월치 소비 예산에 해당합니다. 지금 필요한 성능이 아니라면 한 단계 낮은 사양도 고려해볼 만합니다.",
   "ai_model": "gemini-2.5-flash",
-  "created_at": "2026-07-30T14:12:44+09:00"
+  "created_at": "2026-07-30T14:12:44+09:00",
+  "chart": {
+    "gauge": {
+      "key": "purpose_fit",
+      "label": "구매 목적 적합도",
+      "level": "HIGH",
+      "level_display": "높음",
+      "score": 88,
+      "color": "#2ECC71",
+      "angle_deg": 158.4
+    },
+    "bars": [
+      { "key": "purpose_fit", "label": "구매 목적 적합도", "level": "HIGH", "level_display": "높음", "score": 88, "color": "#2ECC71" },
+      { "key": "expected_satisfaction", "label": "예상 만족도", "level": "MIDDLE", "level_display": "중간", "score": 55, "color": "#F4C430" },
+      { "key": "recommendation", "label": "추천도", "level": "MIDDLE", "level_display": "중간", "score": 55, "color": "#F4C430" }
+    ]
+  }
 }
 ```
+
+**필드 설명**
+
+| 필드 | 설명 |
+|---|---|
+| `key_points` | 화면의 체크리스트. **정확히 3줄**, 각 100자 이하. AI가 씁니다 |
+| `chart.gauge` | 반원 게이지. `angle_deg`는 **0도가 왼쪽 끝(낮음), 180도가 오른쪽 끝(높음)** |
+| `chart.bars` | 막대그래프 3개. `score`는 막대 높이(%), 순서 고정 (적합도 → 만족도 → 추천도) |
+
+> **`score`·`color`를 서버가 내려주는 이유**: §2.10과 같습니다. 게이지 바늘 각도와 막대 높이는 `HIGH`/`MIDDLE`/`LOW`에서 파생되는 값이고, 프론트마다 다르게 매핑되면 같은 등급이 화면마다 다른 높이로 보입니다. 매핑은 `analyses/serializers.py` 한 곳에만 둡니다.
 
 **에러**
 
 | 상황 | code | status |
 |---|---|---|
+| 없거나 내 고민이 아님 | `NOT_FOUND` | 404 |
 | `status != GENERATED` | `INVALID_STATUS` | 409 |
 | 이미 의사결정이 있음 | `ALREADY_EXISTS` | 409 |
-| AI 실패 / 타임아웃 | `AI_REQUEST_FAILED` / `AI_TIMEOUT` | 502 / 504 |
+| AI 실패 / 응답 형식 오류 | `AI_REQUEST_FAILED` | 502 |
+| AI 타임아웃 | `AI_TIMEOUT` | 504 |
+
+**AI 응답 계약**
+
+Gemini에게는 **등급 3개와 문장만** 요구합니다. 점수·확률·가격은 받지 않습니다.
+
+```json
+{
+  "purpose_fit": "HIGH",
+  "expected_satisfaction": "MIDDLE",
+  "recommendation": "MIDDLE",
+  "key_points": ["...", "...", "..."],
+  "summary": "..."
+}
+```
+
+기회비용 숫자는 이미 `Alternative`에 계산되어 있으므로 프롬프트에 근거로 넣고, **AI가 새 숫자를 만들지 않도록 응답 스키마에서 제외합니다.** 등급이 `HIGH`/`MIDDLE`/`LOW`가 아니거나 `key_points`가 3개가 아니면 `AI_REQUEST_FAILED`(502)입니다.
 
 > `Decision`은 `OneToOneField`이므로 고민당 1개만 존재합니다. 다시 만들고 싶다면 별도의 "재생성" 정책이 필요하지만 **MVP에서는 재생성을 제공하지 않습니다.** 이미 있으면 `409 ALREADY_EXISTS`를 주고, 프론트는 `GET`으로 기존 결과를 보여줍니다.
 
