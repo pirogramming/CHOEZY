@@ -312,7 +312,7 @@ class DecisionPageTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response["Location"])
 
-    def test_renders_without_decision(self):
+    def test_renders_create_button_without_decision(self):
         self.client.force_login(self.user)
 
         response = self.client.get(self.url)
@@ -320,6 +320,18 @@ class DecisionPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["decision_data"])
         self.assertTrue(response.context["can_create_decision"])
+        self.assertContains(response, "decision-create-btn")
+
+    def test_hides_create_button_before_alternatives_exist(self):
+        self.client.force_login(self.user)
+        self.consideration.status = Consideration.Status.DRAFT
+        self.consideration.save(update_fields=["status"])
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["can_create_decision"])
+        self.assertNotContains(response, "decision-create-btn")
 
     def test_renders_existing_decision(self):
         self.client.force_login(self.user)
@@ -340,6 +352,13 @@ class DecisionPageTests(TestCase):
         self.assertEqual(
             response.context["decision_data"]["chart"]["gauge"]["score"], 55
         )
+        # 화면에 하드코딩된 값이 아니라 실제 데이터가 렌더되는지 확인한다
+        self.assertContains(response, "근거 1")
+        self.assertContains(response, "종합 설명")
+        self.assertContains(response, "rotate(99.0, 160, 170)")
+        self.assertContains(response, "height:55%")
+        self.assertContains(response, "height:88%")
+        self.assertNotContains(response, "현재 사용자는 업무 생산성을")
 
     def test_other_users_consideration_is_404(self):
         other = get_user_model().objects.create_user(
