@@ -120,6 +120,9 @@ Buttons
 
     white-space:nowrap;
 
+    /* 단계 이동 버튼은 a라서 기본 밑줄을 지웁니다. */
+    text-decoration:none;
+
 }
 
 
