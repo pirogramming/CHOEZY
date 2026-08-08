@@ -55,6 +55,10 @@ class AlternativeGenerationAPITests(TestCase):
 
     def ai_response(self):
         return {
+            "product_assessment": {
+                "duration": "약 4~5년",
+                "expected_effect": "업무와 자기계발 효율 향상",
+            },
             "selections": [
                 {
                     "category_code": self.category.code,
@@ -113,6 +117,11 @@ class AlternativeGenerationAPITests(TestCase):
         self.consideration.refresh_from_db()
         self.assertEqual(
             self.consideration.status, Consideration.Status.GENERATED
+        )
+        self.assertEqual(self.consideration.product_duration, "약 4~5년")
+        self.assertEqual(
+            self.consideration.product_expected_effect,
+            "업무와 자기계발 효율 향상",
         )
         alternatives = Alternative.objects.filter(
             consideration=self.consideration, is_current=True
@@ -329,6 +338,11 @@ class AlternativeGenerationAPITests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
+        self.assertEqual(payload["product"]["duration_display"], "약 4~5년")
+        self.assertEqual(
+            payload["product"]["expected_effect"],
+            "업무와 자기계발 효율 향상",
+        )
         self.assertEqual(
             [column["key"] for column in payload["columns"]],
             ["price", "expected_effect", "available_budget"],

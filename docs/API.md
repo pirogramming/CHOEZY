@@ -743,12 +743,12 @@ JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반�
    → is_calculable()을 통과한 항목만 남김          (§7.7)
    → 카테고리별 후보가 3개 미만이면 NO_CANDIDATE_ITEMS
 3. 사용자 소비 프로필 + 상품 정보 + 후보 목록으로 프롬프트 구성
-4. Gemini 호출 → item_ids만 응답받음
+4. Gemini 호출 → 구매 예정 상품 평가(product_assessment)와 item_ids 응답받음
 5. 응답 item_id를 후보 목록과 대조 (없는 id는 거부)
 6. 가격은 DB의 AlternativeItem.average_price에서 다시 조회
 7. 기회비용 계산 (calculator.py)                    ← 2단계 덕분에 실패하지 않음
 8. Alternative 생성 (version=1, is_current=True)
-9. Consideration.status → GENERATED
+9. 구매 예정 상품의 예상 사용 기간·기대 효과 저장 후 Consideration.status → GENERATED
 10. LLMRequestLog 기록
 ```
 
@@ -764,7 +764,9 @@ JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반�
   "status": "GENERATED",
   "product": {
     "name": "Apple 맥북 에어 13 M4",
-    "price": 2200000
+    "price": 2200000,
+    "duration_display": "약 4~5년",
+    "expected_effect": "개발·업무 생산성과 이동 중 작업 편의 향상"
   },
   "categories": [
     {
@@ -1067,7 +1069,9 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
   "product": {
     "name": "Apple 맥북 에어 13 M4",
     "price": 2200000,
-    "features": "M4 칩, 16GB 통합 메모리, 512GB SSD"
+    "features": "M4 칩, 16GB 통합 메모리, 512GB SSD",
+    "duration_display": "약 4~5년",
+    "expected_effect": "개발·업무 생산성과 이동 중 작업 편의 향상"
   },
   "user_budget": { "code": "300K_500K", "display": "30~50만원" },
   "columns": [
@@ -1174,6 +1178,8 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
 | 필드 | 설명 |
 |---|---|
 | `columns` | `compare_criteria`에 선택된 열만. 순서 고정 (가격 → 기간 → 효과 → 예산) |
+| `product.duration_display` | 대안 생성 시 Gemini가 추정한 구매 예정 상품의 일반적인 예상 사용 기간. 빈 값은 `"—"` |
+| `product.expected_effect` | 구매 목적과 소비 프로필을 반영한 구매 예정 상품의 예상 기대 효과. 빈 값은 `"—"` |
 | `price` | `QUANTITY`는 `unit_price`(단가), **`FUTURE_VALUE`는 항상 `null`** (§7.3) |
 | `price_display` | "가격" 열에 그대로 출력할 문자열. `FUTURE_VALUE`는 `"—"` |
 | `duration_display` | "지속 가능 기간" 열에 그대로 출력할 문자열. 빈 값은 `"—"` (§2.10) |

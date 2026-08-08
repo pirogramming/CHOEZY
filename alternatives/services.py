@@ -63,6 +63,10 @@ def _build_prompt(consideration, candidates):
     }
     return (
         "당신은 사용자의 소비 결정을 돕는 추천 도우미입니다. "
+        "product_assessment에는 구매 예정 상품의 일반적인 예상 사용 기간과 "
+        "사용자의 구매 목적·소비 프로필을 고려한 기대 효과를 한국어로 "
+        "작성하세요. 사용 기간은 확정값처럼 표현하지 말고 '약 2~3년'처럼 "
+        "예상 범위로 작성하세요. "
         "각 카테고리에서 서로 다른 후보를 정확히 3개 선택하세요. "
         "item_id는 제공된 후보에서만 고르고, 슬롯은 1, 2, 3을 한 번씩 "
         "사용하세요. UNIT_PRICE 항목에는 duration, expected_effect, "
@@ -77,6 +81,14 @@ def _validate_response(response, candidates):
         response.get("selections"), list
     ):
         raise GeminiRequestError("Gemini 응답 형식이 올바르지 않습니다.")
+
+    product_assessment = response.get("product_assessment")
+    if not isinstance(product_assessment, dict):
+        raise GeminiRequestError("구매 예정 상품 평가가 필요합니다.")
+    for field in ("duration", "expected_effect"):
+        value = product_assessment.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise GeminiRequestError(f"상품 평가의 {field}이 필요합니다.")
 
     candidate_map = {
         category.code: {item.id: item for item in items}
@@ -122,7 +134,10 @@ def _validate_response(response, candidates):
                     if not isinstance(value, str) or not value.strip():
                         raise GeminiRequestError(f"{field}이 필요합니다.")
             validated.append((code, item, selection))
-    return validated
+    return validated, {
+        "duration": product_assessment["duration"].strip(),
+        "expected_effect": product_assessment["expected_effect"].strip(),
+    }
 
 
 def _log(consideration, purpose, prompt, response, status):
@@ -203,7 +218,9 @@ def generate_alternatives(consideration_id, user, selector=None):
 
             prompt = _build_prompt(consideration, candidates)
             response = selector.select(prompt)
-            validated = _validate_response(response, candidates)
+            validated, product_assessment = _validate_response(
+                response, candidates
+            )
 
             created = []
             category_by_code = {
@@ -237,7 +254,18 @@ def generate_alternatives(consideration_id, user, selector=None):
                     )
                 )
             consideration.status = Consideration.Status.GENERATED
-            consideration.save(update_fields=["status", "updated_at"])
+            consideration.product_duration = product_assessment["duration"]
+            consideration.product_expected_effect = product_assessment[
+                "expected_effect"
+            ]
+            consideration.save(
+                update_fields=[
+                    "status",
+                    "product_duration",
+                    "product_expected_effect",
+                    "updated_at",
+                ]
+            )
     except AlternativeServiceError:
         raise
     except GeminiTimeoutError as exc:

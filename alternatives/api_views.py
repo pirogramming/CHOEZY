@@ -228,6 +228,8 @@ def serialize_consideration(consideration, alternatives, include_history=False):
         "product": {
             "name": consideration.product_name,
             "price": consideration.product_price,
+            "duration_display": consideration.product_duration or "—",
+            "expected_effect": consideration.product_expected_effect or "—",
         },
         "categories": category_results,
         "generated_at": generated_at,
@@ -447,6 +449,12 @@ class AlternativeComparisonAPIView(APIView):
                     "name": consideration.product_name,
                     "price": consideration.product_price,
                     "features": consideration.product_features,
+                    "duration_display": (
+                        consideration.product_duration or "—"
+                    ),
+                    "expected_effect": (
+                        consideration.product_expected_effect or "—"
+                    ),
                 },
                 "user_budget": {
                     "code": consideration.user.monthly_budget,
