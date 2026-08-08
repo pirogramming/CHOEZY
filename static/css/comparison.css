@@ -1,0 +1,256 @@
+.decision-page {
+  width: 92%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.decision-grid {
+  display: grid;
+  grid-template-columns: 1fr 2.1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.decision-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.decision-col__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.decision-card__icon-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.decision-card__title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 150%;
+  letter-spacing: -1.9%;
+  color: #2D4048;
+}
+
+.decision-card {
+  background: #ffffff;
+  border: 2px solid #D9D9D9;
+  border-radius: 18px;
+  padding: 24px;
+  flex: 1;
+  position: relative;
+}
+
+.decision-card--bar {
+  display: flex;
+  flex-direction: column;
+}
+
+.decision-legend {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #999;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ECC71;
+  display: inline-block;
+}
+
+.gauge-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.gauge-label {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.gauge-label__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.gauge-badge {
+  display: inline-block;
+  background: #DFF3EA;
+  color: #1CA672;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 12px;
+}
+
+.decision-checklist {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+}
+
+.decision-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 20px;
+  color: #555;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.decision-checklist li:last-child {
+  margin-bottom: 0;
+}
+
+.decision-checklist svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+}
+
+.bar-chart {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  margin-top: 40px;
+}
+
+.bar-chart__yaxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 18px;
+  color: #999;
+  padding-bottom: 34px;
+}
+
+.bar-chart__bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  border-left: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  padding: 0 20px;
+}
+
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  width: 100px;
+}
+
+.bar-col__bar {
+  width: 56px;
+  border-radius: 8px 8px 0 0;
+}
+
+.bar-col__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 18px;
+  color: #555;
+  font-weight: 500;
+  margin-top: 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.decision-summary {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.decision-summary__box {
+  flex: 1 1 auto;
+  max-width: calc(100% - 220px);
+  background: #ffffff;
+  border: 2px solid #7FE0BE;
+  border-radius: 16px;
+  padding: 20px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.decision-summary__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #222;
+  background: #EAFBF4;
+  border: 1px solid #7FE0BE;
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: 12px;
+  width: fit-content;
+}
+
+.decision-summary__label svg {
+  margin-left: 0;
+}
+
+.decision-summary__text {
+  font-size: 23px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.decision-mascot {
+  width: 250px;
+  height: auto;
+  flex-shrink: 0;
+  margin-left: -80px;
+  position: relative;
+  top: 16px;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  .decision-grid {
+    grid-template-columns: 1fr;
+  }
+  .decision-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .decision-summary__box {
+    max-width: 100%;
+  }
+  .decision-mascot {
+    margin-left: 0;
+    margin-top: -20px;
+  }
+}

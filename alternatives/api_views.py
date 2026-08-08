@@ -10,6 +10,7 @@ from .services import (
     generate_alternatives,
     regenerate_alternative,
 )
+from .visualization import format_price
 
 
 COMPARISON_COLUMNS = {
@@ -41,10 +42,8 @@ BUDGET_RANGES = {
 }
 
 
-def format_budget_amount(amount):
-    if amount % 10_000 == 0:
-        return f"{amount // 10_000}만원"
-    return f"{amount:,}원"
+# 금액 표기는 기회비용 시각화 페이지와 같은 규칙을 써야 합니다.
+format_budget_amount = format_price
 
 
 def compare_with_budget(price, budget_code, budget_display):

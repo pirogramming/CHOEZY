@@ -1,6 +1,10 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.generic import CreateView
+
+from alternatives.visualization import build_opportunity_cost_context
 
 from .forms import ConsiderationForm
 from .models import Consideration
@@ -31,85 +35,30 @@ class ConsiderationCreateView(LoginRequiredMixin, CreateView):
             kwargs={"pk": self.object.pk},
         )
 
-from django.shortcuts import render
-
 
 def comparison_table_view(request, pk):
-
     return render(
         request,
         "products/comparison_table.html",
         {
             "consideration_id": pk,
-        }
+        },
     )
 
-from django.shortcuts import render
 
-
+@login_required
 def opportunity_cost_view(request, pk):
+    """현재 사용자의 구매 고민에 대한 기회비용 시각화 페이지입니다."""
+    consideration = get_object_or_404(
+        Consideration,
+        pk=pk,
+        user=request.user,
+    )
+    context = build_opportunity_cost_context(consideration)
+    context["consideration_id"] = consideration.pk
 
     return render(
         request,
         "products/opportunity_cost.html",
-        {
-            "consideration_id": pk
-        }
-    )
-
-
-# 기회비용 시각화 페이지 UI 확인용 임시 데이터 (추후 삭제 요망)
-def opportunity_cost_view(request, pk):
-
-
-    opportunity_costs = [
-
-
-        {
-            "name": "온라인<br>강의",
-            "count": 10,
-            "display_count": "10개",
-            "color": "pink",
-            "text_color": "pink-text",
-        },
-
-
-        {
-            "name": "헬스장<br>12개월",
-            "count": 1.4,
-            "display_count": "1.4개월",
-            "color": "yellow",
-            "text_color": "yellow-text",
-        },
-
-
-        {
-            "name": "전시회<br>관람 1회",
-            "count": 29.7,
-            "display_count": "29.7회",
-            "color": "orange",
-            "text_color": "orange-text",
-        },
-
-
-        {
-            "name": "일본 3박 4일<br>여행",
-            "count": 1.2,
-            "display_count": "1.2회",
-            "color": "travel",
-            "text_color": "pink-text",
-        },
-
-
-    ]
-
-
-    return render(
-        request,
-        "products/opportunity_cost.html",
-        {
-            "consideration_id": pk,
-            "product_price": "220만원",
-            "opportunity_costs": opportunity_costs,
-        }
+        context,
     )

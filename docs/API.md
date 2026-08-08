@@ -272,10 +272,8 @@ MVP 규모에서는 **1번 방식(전 과정을 한 트랜잭션)으로 충분**
 | POST | `/accounts/logout/` | `accounts:logout` | ✔ | 로그아웃 |
 | GET/POST | `/products/considerations/new/` | `products:consideration_create` | ✔ | 구매 고민 입력 |
 | GET | `/products/comparison/<int:pk>/` | `products:comparison_table` | - | 비교표 화면 |
-
-> 카테고리별 대안 생성 HTML은 템플릿만 존재하며 현재 루트 URL에 연결되지
-> 않았습니다. 상품 입력 성공 후 이동하는
-> `/alternatives/considerations/<int:pk>/`도 아직 404이므로 후속 연결이 필요합니다.
+| GET | `/products/opportunity-cost/<int:pk>/` | `products:opportunity_cost` | ✔ | 기회비용 시각화 |
+| GET | `/alternatives/considerations/<int:pk>/` | `alternatives:consideration_alternatives` | ✔ | 카테고리별 대안 |
 
 ### 3.2 JSON API
 
@@ -647,6 +645,49 @@ JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반�
 **삭제가 거부되는 경우** — 해당 고민의 `FinalChoice`에 연결된 `SpendingRecord`가 있을 때. `SpendingRecord.final_choice`는 `SET_NULL`이지만 `FinalChoice.alternative`가 `PROTECT`라 삭제 순서상 충돌이 발생할 수 있으므로, 서비스 레이어에서 먼저 확인하고 메시지로 안내합니다.
 
 > **삭제는 `status`와 무관하게 허용됩니다.** §9의 상태 전이 규칙은 "고민을 어떻게 진행하는가"에 대한 것이고, 삭제는 소유자가 자기 데이터를 없애는 동작입니다. `DECIDED` 상태에서 삭제를 막으면 사용자가 자기 기록을 지울 수 없게 됩니다.
+
+### 5.5 `GET /products/opportunity-cost/<int:pk>/` — 기회비용 시각화 (페이지)
+
+"이 가격이면 대신 이걸 할 수 있어요"를 막대그래프로 보여주는 화면입니다. **JSON API가 아니라 서버 사이드 렌더링 페이지입니다.** 비교표(§6.5)와 달리 JS가 API를 부르지 않고, 막대 높이·색·표기까지 서버가 컨텍스트로 확정해 내려줍니다 (§2.10).
+
+숫자는 전부 `Alternative`에 저장된 계산 결과를 그대로 씁니다. 화면에서 다시 계산하지 않습니다 — 같은 고민이 화면마다 다른 숫자를 보이면 안 됩니다.
+
+**템플릿 컨텍스트**
+
+| 키 | 설명 |
+|---|---|
+| `consideration_id` | 고민 id |
+| `product_name` | 상품명 |
+| `product_price` | 표시용 문자열. 만원 단위로 떨어지면 `"220만원"`, 아니면 `"1,234,500원"` |
+| `opportunity_costs` | 막대 목록 (아래) |
+| `financial_costs` | 재정형 대안 목록 (아래) |
+
+`opportunity_costs[]`
+
+| 키 | 설명 |
+|---|---|
+| `name` | `AlternativeItem.name`. **DB 문자열이므로 템플릿에서 `\|safe`를 쓰지 않습니다** |
+| `count` | 막대 블록을 쌓는 실제 비율 (`equivalent_quantity`). 숫자 타입이고 내림하지 않습니다 |
+| `display_count` | 표기용. `§7.4` 규칙으로 내림한 수량 + `unit_label` (예: `"12개월"`, `"0.6회"`) |
+| `color` / `text_color` | `static/css/opportunity_cost.css`의 색 클래스. 막대 순서대로 팔레트를 순환합니다 |
+
+> **`count`와 `display_count`가 다른 이유**: 막대는 실제 비율(`12.22`)로 그려야 정확하고, 옆에 적히는 숫자는 §7.4의 내림 규칙(`12개월`)을 따라야 다른 화면과 일치합니다.
+
+**재정(`FINANCE`) 카테고리는 막대가 되지 않습니다.**
+
+`result_type = FUTURE_VALUE`인 대안은 나눗셈이 아니라 "그 돈을 대신 굴리면 얼마"라서(§7.5) 개수 개념이 없습니다. 막대에 끼워 넣으면 항상 1블록짜리가 되어 숫자가 오히려 왜곡되므로, `financial_costs`로 갈라서 문장으로 보여줍니다.
+
+| 키 | 설명 |
+|---|---|
+| `name` | 항목명 (예: `"정기적금"`) |
+| `expected_effect` | 계산 결과 문장 (예: `"월 183,333원씩 12개월 → 약 223만원"`) |
+| `display_text` | `expected_effect`가 비었을 때의 대체 문구 |
+
+**응답**
+
+- 미로그인: `302` → 로그인 페이지
+- 남의 고민: `404` — `403`으로 돌려주면 "그 id는 존재한다"는 사실이 새어 나갑니다
+- 대안이 없을 때(`status = DRAFT`): `200` + 빈 상태 안내. 에러가 아닙니다
 
 ---
 
@@ -1740,10 +1781,11 @@ API는 현재 미구현입니다. 해당 후속 설계는 §8을 참고합니다
 | 회원가입 1단계 | `/accounts/signup/` | 같은 URL | `GET /api/accounts/check-username/` |
 | 회원가입 2단계 | `/accounts/signup/profile/` | 같은 URL | - |
 | 로그인 | `/accounts/login/` | 같은 URL | - |
-| 마이페이지 UI | 현재 별도 페이지 URL 없음 | - | `GET /api/accounts/me/`<br>`PATCH /api/accounts/me/basic/`<br>`POST /api/accounts/me/password/`<br>`PATCH /api/accounts/me/profile/` |
+| 마이페이지 | `/accounts/mypage/` | - | `GET /api/accounts/me/`<br>`PATCH /api/accounts/me/basic/`<br>`POST /api/accounts/me/password/`<br>`PATCH /api/accounts/me/profile/` |
 | 구매 고민 입력 | `/products/considerations/new/` | 같은 URL | `POST /api/products/preview/` |
-| 카테고리별 대안 | **현재 페이지 URL 연결 필요** | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
+| 카테고리별 대안 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
 | 비교표·기회비용 | `/products/comparison/<id>/` | - | `GET /api/alternatives/considerations/<id>/comparison/` |
+| 기회비용 시각화 | `/products/opportunity-cost/<id>/` | - | - (서버 사이드 렌더링, §5.5) |
 
 **"제출" 열과 "화면 안 동작" 열에 같은 동작이 동시에 나오지 않습니다.** (§1)
 
@@ -1764,10 +1806,9 @@ API는 현재 미구현입니다. 해당 후속 설계는 §8을 참고합니다
        실패 → 카드 유지 + 토스트
 ```
 
-> API 동작은 구현되어 있지만 상품 입력 성공 후 이동하는
-> `/alternatives/considerations/<id>/` 페이지 라우팅과 실제 API 데이터 렌더링은
-> 아직 연결되지 않았습니다. `GET /api/alternatives/considerations/<id>/`는
-> 기존 대안을 다시 불러오는 용도로 사용할 수 있습니다.
+> 상품 입력 성공 후 `/alternatives/considerations/<id>/` 페이지로
+> 이동하는 라우팅은 연결되어 있습니다. 다만 해당 템플릿에서 실제 생성·조회·
+> 재생성 API 결과를 카드로 렌더링하는 프론트 연결은 필요합니다.
 
 ---
 
@@ -1787,7 +1828,7 @@ products/
   serializers.py  services.py     URL 검증·메타데이터 추출
 
 alternatives/
-  urls.py  views.py                카테고리 대안 템플릿(루트 연결 필요)
+  urls.py  views.py                고민별 카테고리 대안 페이지
   api_urls.py  api_views.py        generate, list, regenerate, comparison
   services.py      대안 생성·재생성 (검증 포함)
   ai_service.py    Gemini 호출 + 응답 파싱
