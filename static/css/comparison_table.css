@@ -281,6 +281,22 @@
 
 }
 
+.comparison-next-btn:disabled {
+    opacity:0.65;
+    cursor:wait;
+    transform:none;
+}
+
+.comparison-loading,
+.comparison-error {
+    color:#7d7d7d;
+    font-size:16px;
+}
+
+.comparison-error {
+    color:#d9534f;
+}
+
 
 
 

@@ -9,7 +9,11 @@
 
 
 
-<div class="comparison-page">
+<div
+    class="comparison-page"
+    data-previous-url="{% url 'alternatives:consideration_alternatives' consideration_id %}"
+    data-next-url="{% url 'products:opportunity_cost' consideration_id %}"
+>
 
 
     <!-- consideration id 전달 -->
@@ -50,7 +54,7 @@
             <div class="comparison-step-button-area">
 
 
-                <button class="comparison-prev-btn">
+                <button type="button" class="comparison-prev-btn">
 
 
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -71,7 +75,7 @@
 
 
 
-                <button class="comparison-next-btn">
+                <button type="button" class="comparison-next-btn">
 
 
                     <span>
@@ -117,33 +121,7 @@
 
 
 
-        <button class="comparison-category-btn active" data-category="health">
-
-
-            🏃 운동(건강)
-
-
-        </button>
-
-
-
-        <button class="comparison-category-btn" data-category="travel">
-
-
-            ✈️ 여행
-
-
-        </button>
-
-
-
-        <button class="comparison-category-btn" data-category="culture">
-
-
-            🎭 문화(여가)
-
-
-        </button>
+        <span class="comparison-loading">비교 데이터를 불러오는 중입니다...</span>
 
 
 
@@ -217,7 +195,7 @@
 
                     <td id="productName" class="comparison-product-column">
 
-                        맥북 프로
+                        —
 
                     </td>
 
@@ -225,7 +203,7 @@
 
                     <td id="name1">
 
-                        태블릿
+                        —
 
                     </td>
 
@@ -233,7 +211,7 @@
 
                     <td id="name2">
 
-                        일본 여행
+                        —
 
                     </td>
 
@@ -241,7 +219,7 @@
 
                     <td id="name3">
 
-                        적금
+                        —
 
                     </td>
 
@@ -263,7 +241,7 @@
 
                     <td id="productPrice" class="comparison-product-column">
 
-                        2,500,000원
+                        —
 
                     </td>
 
@@ -271,7 +249,7 @@
 
                     <td id="price1">
 
-                        800,000원
+                        —
 
                     </td>
 
@@ -279,7 +257,7 @@
 
                     <td id="price2">
 
-                        1,200,000원
+                        —
 
                     </td>
 
@@ -287,7 +265,7 @@
 
                     <td id="price3">
 
-                        500,000원
+                        —
 
                     </td>
 
@@ -311,7 +289,7 @@
 
                     <td id="productDuration" class="comparison-product-column">
 
-                        5년
+                        —
 
                     </td>
 
@@ -319,7 +297,7 @@
 
                     <td id="duration1">
 
-                        4년
+                        —
 
                     </td>
 
@@ -327,7 +305,7 @@
 
                     <td id="duration2">
 
-                        5일
+                        —
 
                     </td>
 
@@ -335,7 +313,7 @@
 
                     <td id="duration3">
 
-                        1년
+                        —
 
                     </td>
 
@@ -360,7 +338,7 @@
 
                     <td id="productEffect" class="comparison-product-column">
 
-                        업무 효율 향상
+                        —
 
                     </td>
 
@@ -368,7 +346,7 @@
 
                     <td id="effect1">
 
-                        학습 및 작업 효율
+                        —
 
                     </td>
 
@@ -376,7 +354,7 @@
 
                     <td id="effect2">
 
-                        휴식 및 경험
+                        —
 
                     </td>
 
@@ -384,7 +362,7 @@
 
                     <td id="effect3">
 
-                        자산 형성
+                        —
 
                     </td>
 
@@ -409,11 +387,7 @@
 
 
 
-<!-- API 연결 전 비활성화 -->
-
-<!--
 <script src="{% static 'js/comparison_table.js' %}"></script>
--->
 
 
 {% endblock %}

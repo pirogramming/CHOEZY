@@ -82,6 +82,8 @@ erDiagram
         varchar product_name "상품명"
         int product_price "가격, 1원 이상"
         text product_features "상품 특징"
+        varchar product_duration "AI 예상 사용 기간"
+        text product_expected_effect "AI 예상 기대 효과"
         varchar product_url "참고 링크 (선택)"
         varchar purpose "구매 목적"
         varchar purpose_detail "기타 직접 입력"
@@ -294,6 +296,8 @@ erDiagram
 |---|---|
 | `user_id` | 누구의 고민인지 |
 | `product_name` / `product_price` / `product_features` | 고민 중인 상품 정보 |
+| `product_duration` | 대안 생성 시 Gemini가 추정한 상품의 예상 사용 기간 |
+| `product_expected_effect` | 구매 목적·소비 프로필을 반영한 상품의 예상 기대 효과 |
 | `product_url` | 참고용 상품 페이지 링크 (선택). 서버가 읽어오지 않음 |
 | `purpose` | 구매 목적 — 개발/업무, 디자인/창작, 공부, 취미, 여행 기록, 기타 |
 | `purpose_detail` | 기타 선택 시 직접 입력 |

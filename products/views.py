@@ -36,6 +36,7 @@ class ConsiderationCreateView(LoginRequiredMixin, CreateView):
         )
 
 
+@login_required
 def comparison_table_view(request, pk):
     return render(
         request,

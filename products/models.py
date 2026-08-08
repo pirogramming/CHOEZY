@@ -45,6 +45,15 @@ class Consideration(TimeStampedModel):
         blank=True,
     )
 
+    product_duration = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    product_expected_effect = models.TextField(
+        blank=True,
+    )
+
     product_url = models.URLField(
         max_length=500,
         blank=True,

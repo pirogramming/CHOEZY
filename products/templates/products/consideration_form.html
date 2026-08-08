@@ -39,7 +39,11 @@
 
         <div class="step-button-area">
 
-            <button class="prev-step">
+            <button
+                type="button"
+                class="prev-step"
+                data-previous-url="{% url 'core:home' %}"
+            >
 
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -56,7 +60,11 @@
 
 
 
-            <button class="next-step">
+            <button
+                type="submit"
+                class="next-step"
+                form="consideration-form"
+            >
 
                 <span>
                     다음 단계 1/4
@@ -81,9 +89,25 @@
 
 
 
-    <form method="POST">
+    <form method="POST" id="consideration-form" novalidate>
 
         {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="form-error-summary" role="alert" aria-live="polite">
+            <strong>입력 내용을 다시 확인해주세요.</strong>
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
 
         <div class="product-card">
@@ -107,7 +131,7 @@
 
                 {{ form.product_price }}
 
-                <button type="submit">
+                <button type="button" id="product-confirm-btn">
                     확인
                 </button>
 
@@ -185,7 +209,11 @@
 
                     {{ form.purpose_detail }}
 
-                    <button type="button" class="small-confirm">
+                    <button
+                        type="button"
+                        class="small-confirm"
+                        data-confirm-target="purpose"
+                    >
                         확인
                     </button>
 
@@ -268,7 +296,11 @@
 
                         {{ form.category_detail }}
 
-                        <button type="button" class="small-confirm">
+                        <button
+                            type="button"
+                            class="small-confirm"
+                            data-confirm-target="category"
+                        >
                             확인
                         </button>
 
