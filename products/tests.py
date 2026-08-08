@@ -589,6 +589,29 @@ class OpportunityCostViewTests(TestCase):
 
         self.assertContains(response, 'data-count="12.22"')
 
+    def test_다음_단계는_AI_의사결정_페이지로_간다(self):
+        self.login()
+
+        response = self.client.get(self.url)
+
+        self.assertContains(
+            response,
+            reverse("analyses:decision", args=[self.consideration.pk]),
+        )
+
+    def test_이전_단계는_비교표_페이지로_간다(self):
+        self.login()
+
+        response = self.client.get(self.url)
+
+        self.assertContains(
+            response,
+            reverse(
+                "products:comparison_table",
+                args=[self.consideration.pk],
+            ),
+        )
+
 
 class FormatQuantityTests(TestCase):
     """수량 표기 규칙 (docs/API.md §7.4) — 반올림이 아니라 내림."""
