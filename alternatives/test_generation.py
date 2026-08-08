@@ -44,7 +44,7 @@ class AlternativeGenerationAPITests(TestCase):
             user=self.user,
             product_name="테스트 노트북",
             product_price=1_200_000,
-            purpose=Consideration.Purpose.STUDY,
+            purpose=Consideration.Purpose.SELF_DEVELOPMENT,
         )
         self.consideration.categories.add(self.category)
         self.url = (

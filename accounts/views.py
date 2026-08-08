@@ -88,6 +88,13 @@ def logout_view(request):
     return redirect("core:home")
 
 
+@require_http_methods(["GET"])
+@login_required
+def profile_view(request):
+    """마이페이지: 기본 정보 및 소비 프로필을 보여줍니다."""
+    return render(request, "accounts/profile.html")
+
+
 @require_http_methods(["GET", "POST"])
 def signup_view(request):
     """회원가입 1단계 기본 정보를 검증하여 세션에 임시 저장합니다."""
