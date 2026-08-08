@@ -270,6 +270,7 @@ MVP 규모에서는 **1번 방식(전 과정을 한 트랜잭션)으로 충분**
 | GET/POST | `/accounts/signup/profile/` | `accounts:signup_profile` | - | 회원가입 2단계 소비 프로필 |
 | GET/POST | `/accounts/login/` | `accounts:login` | - | 로그인 |
 | POST | `/accounts/logout/` | `accounts:logout` | ✔ | 로그아웃 |
+| GET | `/accounts/profile/` | `accounts:profile` | ✔ | 마이페이지 |
 | GET/POST | `/products/considerations/new/` | `products:consideration_create` | ✔ | 구매 고민 입력 |
 | GET | `/products/comparison/<int:pk>/` | `products:comparison_table` | - | 비교표 화면 |
 | GET | `/products/opportunity-cost/<int:pk>/` | `products:opportunity_cost` | ✔ | 기회비용 시각화 |
@@ -791,7 +792,7 @@ JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반�
             "type": "COUNT",
             "value": 12.22,
             "unit_label": "개월",
-            "caption": "맥북 1대 = 헬스장 12개월"
+            "caption": "헬스장 약 12개월"
           },
           "item": {
             "id": 31,
@@ -834,7 +835,7 @@ JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반�
     "principal": 2200000,
     "future_value": 2235750,
     "gain_amount": 35750,
-    "caption": "220만원을 12개월 적금 → 약 223만원"
+    "caption": "정기적금 12개월 → 약 223만원"
   },
   "item": {
     "id": 77,
@@ -854,7 +855,7 @@ JSON-LD `Product` 정보를 읽어 상품명과 가격을 반환합니다. 반�
 | `unit_price` | 계산에 사용한 기준 금액. `QUANTITY`는 단가, `FUTURE_VALUE`는 **원금** (§7.3) |
 | `unit_price_display` | **화면에 출력할 가격 문자열.** `FUTURE_VALUE`는 항상 `null` |
 | `duration_display` | 화면에 출력할 기간 문자열. 빈 값은 `"—"` (§2.10) |
-| `chart` | §6.5와 동일한 계약. 대안 카드에서도 그래프를 그릴 수 있도록 함께 내려줍니다 |
+| `chart` | 대안 카드용 그래프 값. 생성·목록·재생성 응답의 `caption`은 `display_text`와 같습니다 |
 
 > **`unit_price_display: null`인 카드는 가격을 표시하지 않습니다.** `unit_price`를 그대로 찍으면 `FINANCE` 카드에 **상품 가격과 똑같은 220만원**이 "대안 가격"으로 뜹니다. 재정형의 `unit_price`는 단가가 아니라 원금이기 때문입니다. 원금을 보여주고 싶다면 `chart.principal`을 쓰고, 가격 칸은 비웁니다.
 >
@@ -1023,7 +1024,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
     "type": "COUNT",
     "value": 8.8,
     "unit_label": "개월",
-    "caption": "맥북 1대 = 요가 클래스 8개월"
+    "caption": "요가 클래스 약 8개월"
   },
   "item": {
     "id": 44,
@@ -1106,7 +1107,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
             "type": "COUNT",
             "value": 12.22,
             "unit_label": "개월",
-            "caption": "맥북 1대 = 헬스장 12개월"
+            "caption": "Apple 맥북 에어 13 M4 = 헬스장 약 12개월"
           },
           "source": {
             "name": "한국소비자원 가격정보",
@@ -1153,7 +1154,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
     "principal": 2200000,
     "future_value": 2235750,
     "gain_amount": 35750,
-    "caption": "220만원을 12개월 적금 → 약 223만원"
+    "caption": "정기적금 12개월 → 약 223만원"
   },
   "source": {
     "name": "은행연합회 소비자포털",
@@ -1185,7 +1186,7 @@ Alternative.objects.filter(consideration=consideration, is_current=True)
 
 | `result_type` | `chart.type` | 필드 | 그래프 |
 |---|---|---|---|
-| `QUANTITY` | `COUNT` | `value`(수량), `unit_label`, `caption` | "맥북 1대 = 헬스장 12개월" — **개수를 보여주는** 아이콘 반복 또는 막대 |
+| `QUANTITY` | `COUNT` | `value`(수량), `unit_label`, `caption` | "상품명 = 대안 기회비용" — **개수를 보여주는** 아이콘 반복 또는 막대 |
 | `FUTURE_VALUE` | `GROWTH` | `principal`, `future_value`, `gain_amount`, `caption` | 원금 대비 증가분을 보여주는 누적 막대 |
 
 > **`ratio`(`unit_price ÷ product_price`)를 쓰지 않는 이유**: 이 화면이 전하려는 메시지는 "헬스장 1개월은 맥북 가격의 8%"가 아니라 **"맥북 1대 = 헬스장 12개월"** 입니다. 필요한 값은 비율이 아니라 `equivalent_quantity`입니다. 게다가 `FUTURE_VALUE` 행에서는 `future_value ÷ product_price`가 1을 넘어 막대 의미 자체가 깨집니다. 두 유형은 **애초에 다른 그래프**이므로 `chart.type`으로 분기합니다.
@@ -1830,7 +1831,7 @@ API는 현재 미구현입니다. 해당 후속 설계는 §8을 참고합니다
 | 회원가입 1단계 | `/accounts/signup/` | 같은 URL | `GET /api/accounts/check-username/` |
 | 회원가입 2단계 | `/accounts/signup/profile/` | 같은 URL | - |
 | 로그인 | `/accounts/login/` | 같은 URL | - |
-| 마이페이지 | `/accounts/mypage/` | - | `GET /api/accounts/me/`<br>`PATCH /api/accounts/me/basic/`<br>`POST /api/accounts/me/password/`<br>`PATCH /api/accounts/me/profile/` |
+| 마이페이지 | `/accounts/profile/` | - | `GET /api/accounts/me/`<br>`PATCH /api/accounts/me/basic/`<br>`POST /api/accounts/me/password/`<br>`PATCH /api/accounts/me/profile/` |
 | 구매 고민 입력 | `/products/considerations/new/` | 같은 URL | `POST /api/products/preview/` |
 | 카테고리별 대안 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
 | 비교표·기회비용 | `/products/comparison/<id>/` | - | `GET /api/alternatives/considerations/<id>/comparison/` |
@@ -1916,7 +1917,7 @@ calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date �
 [✔] Gemini 기반 카테고리별 대안 3개 생성
 [✔] 개별 대안 재생성과 버전 관리
 [✔] 현재 대안 목록 및 비교표 JSON API
-[ ] 상품 입력 → 카테고리별 대안 HTML 페이지 라우팅·렌더링 연결
+[✔] 상품 입력 → 고민별 카테고리 대안 HTML 페이지 라우팅·렌더링 연결
 [ ] 마이페이지 HTML과 계정 API 연결
 [ ] AI 의사결정·최종 선택·소비 기록 API
 ```
@@ -1927,7 +1928,7 @@ calc_params 필수 키는 calc_type별로 검사 (적금·예금에 base_date �
 
 ```text
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 Gemini 제한시간은 현재 `config/settings.py`의
