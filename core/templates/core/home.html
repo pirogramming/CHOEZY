@@ -1,5 +1,226 @@
-{% extends "core/base.html" %}
+{% load static %}
 
-{% block content %}
-<h1>메인페이지</h1>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CHOEZY</title>
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+
+<body>
+
+    <!-- =========================
+        NAVIGATION
+    ========================== -->
+    <header class="home-nav">
+
+        <div class="home-nav-inner">
+
+            <!-- 로고 -->
+            <a href="/" class="home-logo">
+                <img
+                    src="{% static 'images/choezy_logo.png' %}"
+                    alt=""
+                >
+            </a>
+
+
+            <!-- PC 네비게이션 -->
+            <nav class="home-nav-menu">
+
+                <a href="{% url 'products:consideration_create' %}" class="home-nav-link">
+                    홈
+                </a>
+
+                <a href="#" class="home-nav-link">
+                    소비로그
+                </a>
+
+                <a href="#" class="home-nav-link">
+                    초이지 리포트
+                </a>
+
+                <a href="{% url 'accounts:profile' %}" class="home-nav-link">
+                    마이페이지
+                </a>
+
+                <a href="{% url 'accounts:login' %}" class="home-nav-link">
+                    로그인
+                </a>
+
+            </nav>
+
+
+            <!-- 모바일 메뉴 버튼 -->
+            <button
+                type="button"
+                class="home-menu-button"
+                id="homeMenuButton"
+                aria-label="메뉴 열기"
+                aria-expanded="false"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+        </div>
+
+
+        <!-- 모바일 네비게이션 -->
+        <nav class="home-mobile-menu" id="homeMobileMenu">
+
+            <a href="{% url 'products:consideration_create' %}" class="home-mobile-link">
+                홈
+            </a>
+
+            <a href="#" class="home-mobile-link">
+                소비로그
+            </a>
+
+            <a href="#" class="home-mobile-link">
+                초이지 리포트
+            </a>
+
+            <a href="{% url 'accounts:profile' %}" class="home-mobile-link">
+                마이페이지
+            </a>
+
+            <a href="{% url 'accounts:login' %}" class="home-mobile-link">
+                로그인
+            </a>
+
+        </nav>
+
+    </header>
+
+
+
+    <!-- =========================
+        MAIN
+    ========================== -->
+    <main class="home-main">
+
+
+        <!-- =========================
+            HERO SECTION
+        ========================== -->
+        <section class="home-hero">
+
+
+            <!-- 왼쪽 소개 영역 -->
+            <div class="home-hero-content">
+
+                <h1 class="home-title">
+                    CHOEZY
+                </h1>
+
+
+                <p class="home-description">
+                    사용자의 소비 가치관과 구매 목적을 반영하여,<br>
+                    구매 선택으로 인해 포기하는 대안을 비교하고 더 나은 소비 결정을 돕는 서비스
+                </p>
+
+
+                <!-- CTA 버튼 -->
+                <div class="home-actions">
+
+                    <a href="{% url 'accounts:signup' %}" class="home-button home-button-primary">
+                        <span>회원가입하기</span>
+                        <span class="home-button-arrow"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-in-icon lucide-log-in"><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg></span>
+                    </a>
+
+
+                    <a href="#" class="home-button home-button-secondary">
+
+                        <span>Contact Us</span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =========================
+                서비스 진행 과정
+            ========================== -->
+            <div class="home-process">
+
+                <div class="home-process-line"></div>
+
+
+                <!-- STEP 1 -->
+                <div class="home-process-item">
+
+                    <div class="home-process-number">
+                        1
+                    </div>
+
+                    <p class="home-process-text">
+                        구매 고민 중인<br>
+                        상품 입력
+                    </p>
+
+                </div>
+
+
+                <!-- STEP 2 -->
+                <div class="home-process-item">
+
+                    <div class="home-process-number">
+                        2
+                    </div>
+
+                    <p class="home-process-text">
+                        분야별 대안 생성
+                    </p>
+
+                </div>
+
+
+                <!-- STEP 3 -->
+                <div class="home-process-item">
+
+                    <div class="home-process-number">
+                        3
+                    </div>
+
+                    <p class="home-process-text">
+                        기회비용 시각화
+                    </p>
+
+                </div>
+
+
+                <!-- STEP 4 -->
+                <div class="home-process-item">
+
+                    <div class="home-process-number">
+                        4
+                    </div>
+
+                    <p class="home-process-text">
+                        구매 의사결정 지원
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="{% static 'js/main.js' %}"></script>
+
+</body>
+
+</html>

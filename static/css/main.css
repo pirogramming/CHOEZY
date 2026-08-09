@@ -1,0 +1,410 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+/* =========================
+   RESET & VARIABLES
+========================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+:root {
+    --brand: #20CD8D;
+    --brand-dark: #0EA672;
+    --brand-deep: #0A7F58;
+    --brand-light: #6FE3B4;
+    --ink: #16241F;
+    --muted: #4B5A55;
+    --white: #FFFFFF;
+    --nav-height: 76px;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+/* =========================
+NAVIGATION
+========================== */
+.home-nav {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: var(--nav-height);
+    background: var(--white);
+    border-bottom: 1px solid #EEF2F0;
+}
+
+.home-nav-inner {
+    max-width: 1280px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.home-logo {
+    display: flex;
+    align-items: center;
+    width: 230px;
+    transform: translateX(-90px);
+}
+
+.home-logo img {
+    width: 230px;
+    height: 58px;
+    object-fit: contain;
+}
+
+.home-nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.home-nav-link {
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: background .15s ease, color .15s ease;
+}
+
+.home-nav-link:hover {
+    background: #F0FAF5;
+    color: var(--brand-deep);
+}
+
+.home-nav-link.active {
+    color: var(--brand-deep);
+    font-weight: 700;
+}
+
+/* 모바일 메뉴 버튼 (햄버거) */
+.home-menu-button {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    padding: 0;
+}
+
+.home-menu-button:hover {
+    background: #F0FAF5;
+}
+
+.home-menu-button span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--ink);
+    border-radius: 2px;
+    transition: transform .25s ease, opacity .25s ease;
+}
+
+.home-menu-button[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.home-menu-button[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+}
+
+.home-menu-button[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* 모바일 네비게이션 드롭다운 */
+.home-mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: var(--white);
+    border-bottom: 1px solid #EEF2F0;
+    padding: 8px 20px 16px;
+}
+
+.home-mobile-menu.is-open {
+    display: flex;
+}
+
+.home-mobile-link {
+    padding: 13px 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    border-bottom: 1px solid #F2F5F3;
+}
+
+.home-mobile-link:last-child {
+    border-bottom: none;
+}
+
+/* =========================
+   HERO SECTION
+========================== */
+.home-main {
+    width: 100%;
+}
+
+.home-hero {
+    position: relative;
+    min-height: calc(100vh - var(--nav-height));
+    background: linear-gradient(150deg, #2BD69A 0%, var(--brand) 55%, #17B67F 100%);
+    display: flex;
+    align-items: center;
+    padding: 64px 80px;
+    overflow: hidden;
+}
+
+.home-hero-content {
+    max-width: 620px;
+    position: relative;
+    z-index: 2;
+    transform: translateX(60px);
+    
+}
+
+.home-title {
+    margin: 0 0 20px;
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -1px;
+    line-height: 1.05;
+}
+
+.home-description {
+    margin: 0 0 40px;
+    font-size: 18px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 500;
+}
+
+/* CTA 버튼 */
+.home-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.home-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 54px;
+    padding: 0 26px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    background: var(--white);
+    color: var(--brand-deep);
+    box-shadow: 0 10px 24px -12px rgba(6, 40, 27, 0.35);
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.home-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -12px rgba(6, 40, 27, 0.4);
+}
+
+.home-button:active {
+    transform: translateY(0);
+}
+
+.home-button-primary {
+    background: var(--white);
+    color: var(--brand-deep);
+}
+
+.home-button-arrow {
+    display: inline-block;
+    transition: transform .2s ease;
+}
+
+.home-button-arrow svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.home-button-primary:hover .home-button-arrow {
+    transform: translateX(4px);
+}
+
+.home-button-secondary {
+    background: var(--white);
+    color: var(--brand-deep);
+    border: 1.5px solid #E3F2EA;
+    box-shadow: 0 6px 16px -10px rgba(6, 40, 27, 0.3);
+}
+
+.home-button-secondary svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    flex-shrink: 0;
+}
+
+/* =========================
+   서비스 진행 과정 (프로세스 타임라인)
+========================== */
+.home-process {
+    position: absolute;
+    top: 50%;
+    right: 180px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 70px;
+    z-index: 2;
+}
+
+.home-process-line {
+    position: absolute;
+    top: 25px;
+    bottom: 25px;
+    left: 24px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.home-process-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.home-process-number {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.28);
+    color: var(--white);
+    font-size: 20px;
+    font-weight: 700;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.home-process-text {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--white);
+    white-space: nowrap;
+}
+
+/* =========================
+   RESPONSIVE
+========================== */
+@media (max-width: 1080px) {
+    .home-process {
+        right: 40px;
+    }
+
+    .home-title {
+        font-size: 52px;
+    }
+}
+
+@media (max-width: 860px) {
+    .home-nav-menu {
+        display: none;
+    }
+
+    .home-menu-button {
+        display: flex;
+    }
+
+    .home-process {
+        display: none;
+    }
+
+    .home-hero {
+        padding: 56px 28px;
+        min-height: auto;
+        padding-bottom: 80px;
+    }
+
+    .home-title {
+        font-size: 42px;
+    }
+
+    .home-description br {
+        display: none;
+    }
+
+    .home-description {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-nav-inner {
+        padding: 0 16px;
+    }
+
+    .home-title {
+        font-size: 34px;
+    }
+
+    .home-button {
+        height: 48px;
+        padding: 0 20px;
+        font-size: 15px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .home-button,
+    .home-button-arrow,
+    .home-menu-button span {
+        transition: none !important;
+    }
+}
