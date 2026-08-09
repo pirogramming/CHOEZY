@@ -10,27 +10,29 @@ body {
 }
 
 .navbar__inner {
-  max-width: 1200px;
+  width: 100%;
+  margin: 0;
   height: 100%;
-  margin: 0 auto;
   padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  box-sizing: border-box;
 }
 
-.navbar__logo {
-  font-size: 26px;
-  font-weight: 800;
-  color: #ffffff;
-  text-decoration: none;
-  letter-spacing: 0.5px;
+.navbar__logo img {
+  width: 160px;
+  height: auto;
+  display: block;
 }
+
+
 
 .navbar__right {
   display: flex;
   align-items: center;
   gap: 40px;
+  margin-right: 45px;
 }
 
 .navbar__menu {
