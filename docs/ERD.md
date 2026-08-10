@@ -58,8 +58,9 @@ erDiagram
     CONSIDERATION ||--o| FINAL_CHOICE : "최종 선택"
     ALTERNATIVE ||--o| FINAL_CHOICE : "대안을 골랐을 경우"
     CONSIDERATION ||--o{ LLM_REQUEST_LOG : "AI 호출 로그"
-    USER ||--o{ SPENDING_RECORD : "소비 기록 (후순위)"
-    FINAL_CHOICE ||--o| SPENDING_RECORD : "실제 지출 연결"
+    USER ||--o{ SPENDING_RECORD : "소비 결정 기록"
+    CONSIDERATION ||--o| SPENDING_RECORD : "고민·AI 분석 연결"
+    FINAL_CHOICE ||--o| SPENDING_RECORD : "최종 선택 연결 (선택)"
 
     USER {
         bigint id PK
@@ -181,11 +182,17 @@ erDiagram
     SPENDING_RECORD {
         bigint id PK
         bigint user_id FK
-        bigint final_choice_id FK "고민→지출 연결"
-        date spent_on "날짜"
+        bigint consideration_id FK "고민·AI 분석 직접 연결"
+        bigint final_choice_id FK "최종 선택 연결, 선택"
+        varchar purchase_status "PURCHASED/DEFERRED/NOT_PURCHASED"
+        date recorded_on "기록 날짜"
+        date purchased_on "구매일, 구매 확정 시 필수"
+        smallint satisfaction "만족도 1~5, 구매 확정 시 필수"
         varchar category "카테고리"
-        varchar item_name "상품명"
-        int amount "금액, 1원 이상"
+        varchar product_name "상품명 스냅샷"
+        int product_price "상품 가격 스냅샷, 1원 이상"
+        varchar product_url "상품 URL"
+        varchar image_url "상품 이미지 URL"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -258,11 +265,14 @@ erDiagram
 - `FinalChoice`
 대안을 선택한 경우에만 `alternative_id`를 저장합니다.
 
-### 4.7 소비 기록 (후순위)
+### 4.7 소비 기록
 
 **필요한 데이터**
-- 날짜 / 카테고리 / 상품명 / 금액
+- 구매 확정 / 구매 보류 / 구매 안 함 중 하나
+- 구매 확정 시 구매일과 만족도 1~5점
+- 기록 당시 카테고리·상품명·상품 가격·URL·이미지
 - 월별·카테고리별 소비 차트
+- 기존 AI 분석과 최종 선택 결과
 
 **사용하는 테이블**
 - `SpendingRecord`
@@ -569,24 +579,44 @@ Gemini 응답 파싱이나 API 호출은 실패할 수 있습니다.
 
 민감정보가 프롬프트에 포함되지 않도록 서비스 레이어에서 입력 데이터를 제한해야 합니다.
 
-### 5.9 SpendingRecord — 소비 기록 (후순위)
+### 5.9 SpendingRecord — 소비 결정 기록
 
-날짜 · 카테고리 · 상품명 · 금액을 저장합니다.
+구매 결정 상태와 기록 당시 상품 정보를 저장합니다.
 
-`final_choice_id`로 "고민 → 실제 지출"을 연결하면 개인화 분석의 재료가 됩니다.
+`consideration_id`로 `Consideration → Decision`을 따라가면 구매 당시의 고민과
+AI 분석 결과를 소비 기록과 함께 조회할 수 있습니다. `final_choice_id`는 상품이나
+대안을 최종 선택한 경우에 추가로 연결합니다. 따라서 구매 안 함 기록도 분석 결과와
+끊기지 않습니다.
+상품 정보와 당시 입력 조건은 이후 원본 정보가 변경되어도 기록이 변하지 않도록
+스냅샷으로 저장합니다.
 
 | 필드 | 설명 |
 |---|---|
 | `user_id` | 누구의 소비 기록인지 |
-| `final_choice_id` | 어떤 고민의 최종 선택에서 발생한 지출인지 |
-| `spent_on` | 실제 지출 날짜 |
+| `consideration_id` | 어떤 고민과 AI 분석에서 이어진 기록인지 |
+| `final_choice_id` | 최종 선택 결과가 있는 경우 연결 |
+| `purchase_status` | `PURCHASED` 구매 확정 / `DEFERRED` 구매 보류 / `NOT_PURCHASED` 구매 안 함 |
+| `recorded_on` | 구매 결정을 기록한 날짜 |
+| `purchased_on` | 실제 구매일 — 구매 확정일 때만 저장 |
+| `satisfaction` | 만족도 1~5점 — 구매 확정일 때만 저장 |
 | `category` | 지출 카테고리 |
-| `item_name` | 상품 또는 대안 이름 |
-| `amount` | 실제 지출 금액 |
+| `product_name` | 기록 당시 상품 또는 대안 이름 |
+| `product_price` | 기록 당시 상품 가격 |
+| `product_url` | 기록 당시 상품 URL |
+| `image_url` | 기록 당시 상품 이미지 URL |
+| `purpose_snapshot` | 기록 당시 구매 목적 코드 |
+| `purpose_detail_snapshot` | 기록 당시 직접 입력한 구매 목적 |
+| `compare_criteria_snapshot` | 기록 당시 선택한 중요 비교 기준 목록 |
+| `monthly_budget_snapshot` | 기록 당시 회원 소비 예산 구간 |
+| `budget_amount_snapshot` | 화면에서 사용한 정확한 당시 예산 금액 — 값이 있는 경우 |
 
-`amount`는 실제 지출 금액이므로 **1원 이상만 저장할 수 있도록 DB 제약을 둡니다.**
+`product_price`와 정확한 당시 예산 금액은 값이 있을 경우 **1원 이상**, 만족도는
+값이 있을 경우 **1~5점**만 저장할 수
+있도록 DB 제약을 둡니다. 구매 보류·구매 안 함에는 구매일과 만족도를 저장할 수
+없으며, 구매 확정에는 모델 검증에서 두 값을 모두 요구합니다.
 
-- INDEX: `(user_id, spent_on)` — 월별 집계용
+- INDEX: `(user_id, recorded_on)` — 기간별 조회·집계용
+- INDEX: `(user_id, purchase_status)` — 구매 상태 필터용
 - 월별 집계 테이블은 두지 않습니다.
 - 인덱스만 있으면 `TruncMonth` + `Sum`으로 충분합니다.
 
@@ -786,7 +816,7 @@ DB 제약으로 표현할 수 있는 조건은 `CheckConstraint`로 처리하고
 Consideration.product_price > 0
 AlternativeItem.average_price > 0
 Alternative.unit_price > 0
-SpendingRecord.amount > 0
+SpendingRecord.product_price > 0
 ```
 
 ### 6. 필드 변경 가능성
@@ -844,7 +874,7 @@ SpendingRecord
 Consideration.product_price > 0
 AlternativeItem.average_price > 0
 Alternative.unit_price > 0
-SpendingRecord.amount > 0
+SpendingRecord.product_price > 0
 
 Alternative.slot between 1 and 3
 

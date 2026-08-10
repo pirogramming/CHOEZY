@@ -1716,85 +1716,48 @@ self.fields["alternative"].queryset = Alternative.objects.filter(
 
 > **페이지 흐름에서는 409를 쓰지 않습니다.** 폼 화면은 `messages` + 리다이렉트로 안내합니다. `409 INVALID_STATUS`는 JSON API에만 해당합니다.
 
-### 8.4 소비 기록 (후순위)
+### 8.4 소비 기록 — 모델 구현 완료, API 구현 예정
 
-MVP 이후 구현 대상입니다. 인터페이스만 정의해 둡니다.
+1일차 작업으로 `SpendingRecord` 저장 구조까지 구현했습니다. 생성·수정·조회 및
+통계 API는 다음 작업에서 이 모델을 기준으로 정의합니다.
 
-#### `GET /api/analyses/spending/` — 목록
+| 모델 필드 | 타입 | 설명 |
+|---|---|---|
+| `user` | FK | 기록 소유자 |
+| `consideration` | OneToOne | 원래 구매 고민과 `Decision` 분석 결과 연결 |
+| `final_choice` | OneToOne, nullable | 최종 선택이 있는 경우 추가 연결 |
+| `purchase_status` | choice | `PURCHASED` / `DEFERRED` / `NOT_PURCHASED` |
+| `recorded_on` | date | 소비 결정을 기록한 날짜 |
+| `purchased_on` | date, nullable | 구매 확정 시 실제 구매일 |
+| `satisfaction` | int, nullable | 구매 확정 시 만족도 1~5점 |
+| `category` | string(50) | 기록 당시 카테고리 스냅샷 |
+| `product_name` | string(200) | 기록 당시 상품명 스냅샷 |
+| `product_price` | int | 기록 당시 가격, 1원 이상 |
+| `product_url` | URL | 기록 당시 상품 URL |
+| `image_url` | URL | 기록 당시 이미지 URL |
+| `purpose_snapshot` | string(30) | 기록 당시 구매 목적 코드 |
+| `purpose_detail_snapshot` | string(200) | 기록 당시 직접 입력한 구매 목적 |
+| `compare_criteria_snapshot` | string[] | 기록 당시 선택한 중요 비교 기준 |
+| `monthly_budget_snapshot` | string(20) | 기록 당시 회원 소비 예산 구간 |
+| `budget_amount_snapshot` | int, nullable | 화면에서 사용한 정확한 당시 예산 금액 |
 
-**쿼리 파라미터**: `year`, `month`, `category`, `page`, `page_size`
+**상태별 규칙**
 
-```json
-{
-  "count": 12,
-  "page": 1,
-  "page_size": 10,
-  "has_next": true,
-  "total_amount": 843000,
-  "results": [
-    {
-      "id": 55,
-      "spent_on": "2026-07-28",
-      "category": "운동(건강)",
-      "item_name": "헬스장 3개월 등록",
-      "amount": 480000,
-      "final_choice_id": 4,
-      "from_consideration": { "id": 12, "product_name": "Apple 맥북 에어 13 M4" }
-    }
-  ]
-}
-```
+| 구매 상태 | 구매일 | 만족도 |
+|---|---|---|
+| `PURCHASED` | 필수 | 필수, 1~5점 |
+| `DEFERRED` | 저장 불가 | 저장 불가 |
+| `NOT_PURCHASED` | 저장 불가 | 저장 불가 |
 
-`final_choice_id`가 있으면 "고민 → 실제 지출"이 연결된 기록입니다.
+소비 기록은 `consideration_id`로 `Consideration → Decision`을 직접 조회합니다.
+따라서 최종 선택이 없는 구매 안 함 기록도 기존 AI 분석과 연결됩니다. 상품 정보,
+구매 목적, 중요 기준, 회원 소비 예산 구간은 원본 데이터가 바뀌어도 과거 기록이
+달라지지 않도록 생성 시점 값을 복사해 저장합니다. 화면에서 정확한 당시 예산 금액을
+사용한 경우에는 `budget_amount_snapshot`에 별도로 저장합니다.
 
-#### `POST /api/analyses/spending/` — 생성
-
-```json
-{
-  "spent_on": "2026-07-28",
-  "category": "운동(건강)",
-  "item_name": "헬스장 3개월 등록",
-  "amount": 480000,
-  "final_choice_id": 4
-}
-```
-
-| 필드 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `spent_on` | date | ✔ | 지출 날짜 |
-| `category` | string(50) | ✔ | 자유 입력 문자열 |
-| `item_name` | string(200) | ✔ | 상품·대안 이름 |
-| `amount` | int | ✔ | **1 이상** |
-| `final_choice_id` | int | | 연결할 최종 선택 (내 것만, `OneToOne`이므로 중복 불가) |
-
-**에러**: `amount <= 0` → `VALIDATION_ERROR`, 이미 연결된 `final_choice_id` → `ALREADY_EXISTS`
-
-> `SpendingRecord.category`는 FK가 아니라 자유 문자열입니다. 소비 기록은 대안 카테고리 6개에 들어맞지 않는 지출(식비, 교통비 등)도 담아야 하기 때문입니다. (ERD §5.9)
-
-#### `PATCH /api/analyses/spending/<int:pk>/` · `DELETE /api/analyses/spending/<int:pk>/`
-
-수정은 `spent_on`, `category`, `item_name`, `amount`. 삭제는 `204`.
-
-#### `GET /api/analyses/spending/summary/` — 집계 (차트)
-
-**쿼리 파라미터**: `year`(필수), `month`(선택)
-
-```json
-{
-  "year": 2026,
-  "monthly": [
-    { "month": "2026-01", "amount": 620000 },
-    { "month": "2026-07", "amount": 843000 }
-  ],
-  "by_category": [
-    { "category": "운동(건강)", "amount": 480000, "ratio": 0.569 },
-    { "category": "문화(여가)", "amount": 363000, "ratio": 0.431 }
-  ],
-  "total_amount": 843000
-}
-```
-
-`(user, spent_on)` 인덱스 위에서 `TruncMonth` + `Sum`으로 계산합니다. **월별 집계 테이블은 두지 않습니다.**
+- INDEX: `(user_id, recorded_on)` — 기간별 조회·월별 집계
+- INDEX: `(user_id, purchase_status)` — 구매 상태 필터
+- 집계 금액에는 `purchase_status=PURCHASED`인 기록만 포함해야 합니다.
 
 ---
 
