@@ -7,18 +7,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=2">
 </head>
 <body>
   <header class="navbar">
     <div class="navbar__inner">
-      <a href="{% url 'core:home' %}" class="navbar__logo">CHOEZY</a>
+      <a href="{% url 'core:home' %}" class="navbar__logo">
+        <img src="{% static 'images/choezy_logo_white.png' %}">
+      </a>
 
       <div class="navbar__right">
         <nav class="navbar__menu">
           <a href="{% url 'core:home' %}" class="navbar__link">홈</a>
-          <a href="#" class="navbar__link">추가기능 1</a>
-          <a href="#" class="navbar__link">추가기능 2</a>
+          <a href="#" class="navbar__link">소비로그</a>
+          <a href="#" class="navbar__link">초이지 리포트</a>
           <a href="{% url 'accounts:profile' %}" class="navbar__link">마이페이지</a>
         </nav>
 
