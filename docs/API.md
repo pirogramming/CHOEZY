@@ -1572,10 +1572,11 @@ def is_calculable(item: AlternativeItem, product_price: int) -> bool:
 
 ---
 
-## 8. analyses — 의사결정 · 최종 선택 · 소비 기록 (후속 계획)
+## 8. analyses — 의사결정 · 최종 선택 · 소비 기록
 
-> 이 절의 페이지와 API는 현재 `analyses` URL에 등록되어 있지 않은 후속
-> 설계입니다. 현재 구현 API 목록에는 포함하지 않습니다.
+> 이 절의 구현 상태는 항목마다 다릅니다. **AI 의사결정(§8.1, §8.2)은 페이지와
+> API가 모두 등록되어 있습니다.** 최종 선택 폼(§8.3)은 미구현이고, 소비
+> 기록(§8.4~§8.8)은 모델까지 구현된 상태에서 API 스펙이 확정된 단계입니다.
 
 ### 8.1 `POST /api/analyses/considerations/<int:pk>/decision/` — AI 의사결정 생성 ★
 
@@ -1716,10 +1717,11 @@ self.fields["alternative"].queryset = Alternative.objects.filter(
 
 > **페이지 흐름에서는 409를 쓰지 않습니다.** 폼 화면은 `messages` + 리다이렉트로 안내합니다. `409 INVALID_STATUS`는 JSON API에만 해당합니다.
 
-### 8.4 소비 기록 — 모델 구현 완료, API 구현 예정
+### 8.4 소비 기록 — 모델 구현 완료, API 스펙 확정
 
-1일차 작업으로 `SpendingRecord` 저장 구조까지 구현했습니다. 생성·수정·조회 및
-통계 API는 다음 작업에서 이 모델을 기준으로 정의합니다.
+1일차 작업으로 `SpendingRecord` 저장 구조까지 구현했습니다. 생성·수정·조회
+API는 아래 스펙(§8.5~§8.8)을 기준으로 구현합니다. 소비 패턴 리포트(집계) API는
+다음 작업입니다.
 
 | 모델 필드 | 타입 | 설명 |
 |---|---|---|
@@ -1759,6 +1761,248 @@ self.fields["alternative"].queryset = Alternative.objects.filter(
 - INDEX: `(user_id, purchase_status)` — 구매 상태 필터
 - 집계 금액에는 `purchase_status=PURCHASED`인 기록만 포함해야 합니다.
 
+**서버가 채우는 값** — 요청 본문으로 받지 않습니다.
+
+| 필드 | 출처 |
+|---|---|
+| `user` | `request.user` |
+| `consideration` | URL의 `<pk>` |
+| `final_choice` | `consideration.final_choice`가 있으면 연결, 없으면 `null` |
+| `recorded_on` | 오늘 (`timezone.localdate()`) |
+| `purchased_on` | `PURCHASED`일 때 오늘, 나머지는 `null` |
+| `category` | `consideration.exclude_category.name`, 비었으면 `"기타"` |
+| `product_*`, `image_url` | `Consideration`의 같은 이름 필드 |
+| `purpose_snapshot` 외 스냅샷 | `SpendingRecord.capture_snapshots()` |
+| `budget_amount_snapshot` | `BUDGET_RANGES[user.monthly_budget]`의 하한 |
+
+> **`final_choice`를 요청에서 받지 않는 이유**: 클라이언트가 다른 고민의
+> `FinalChoice` id를 보내는 경로를 아예 만들지 않습니다. 모델 `clean()`이
+> 막긴 하지만(ERD §8.4) 서버가 `consideration`에서 따라가면 검증이 필요
+> 없습니다. 구매 결정 팝업에는 최종 선택 폼(§8.3)이 없으므로 실제로는 대부분
+> `null`입니다.
+
+> **`category`의 출처가 `exclude_category`인 이유**: 이 FK가 곧 "상품 자체
+> 카테고리"입니다. (ERD §5.4) 대안 후보에서 같은 분야를 빼는 데 쓰이지만 값
+> 자체는 고민 상품의 분야이고, 구매 결정 팝업에는 카테고리 입력란이 없습니다.
+> FK가 nullable이므로 비어 있으면 `"기타"`로 저장합니다. 여기서 409를 주면
+> 사용자 여정의 마지막 단계에서 기록 자체를 잃습니다.
+
+> **구매일을 서버가 채우는 이유**: 구매 확정 팝업에는 별점만 있고 날짜
+> 입력란이 없습니다. `SpendingRecord.clean()`은 `PURCHASED`에 `purchased_on`을
+> 요구하므로, 서버가 채우지 않으면 화면의 모든 구매 확정 요청이 400이 됩니다.
+
+### 8.5 `POST /api/analyses/considerations/<int:pk>/spending-record/` — 소비 기록 생성 ★
+
+구매 의사결정 화면의 **구매 결정 팝업**이 호출합니다. 탭 3개가 그대로
+`purchase_status`이고, 나머지 필드는 서버가 채웁니다.
+
+**요청**
+
+```json
+{ "purchase_status": "PURCHASED", "satisfaction": 4 }
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `purchase_status` | choice | ✔ | `PURCHASED` / `DEFERRED` / `NOT_PURCHASED` |
+| `satisfaction` | int | △ | `PURCHASED`일 때 **필수**, 1~5. 나머지는 **보내면 400** |
+
+**전제 조건**: `status`가 `GENERATED` 또는 `DECIDED`. `Decision`은 없어도
+됩니다 — AI 의사결정 생성이 실패해도 소비 기록은 남길 수 있어야 합니다.
+
+**201 Created** — 본문은 §8.6과 같습니다.
+
+저장에 성공하면 `Consideration.status`가 `DECIDED`로 바뀝니다.
+
+**에러**
+
+| 상황 | code | status |
+|---|---|---|
+| 없거나 내 고민이 아님 | `NOT_FOUND` | 404 |
+| `status = DRAFT` (대안 생성 전) | `INVALID_STATUS` | 409 |
+| 이미 소비 기록이 있음 | `ALREADY_EXISTS` | 409 |
+| 만족도 누락·범위 밖, 비구매에 만족도 포함 | `VALIDATION_ERROR` | 400 |
+
+> **`ALREADY_EXISTS` 검사는 `select_for_update()` 안에서 합니다.** (§2.11)
+> `SpendingRecord.consideration`은 `OneToOneField`라, 팝업 더블클릭으로 두
+> 요청이 겹치면 UNIQUE 제약에 걸려 409가 아니라 **500**이 납니다.
+
+> **서비스 레이어에서 `full_clean()`을 반드시 호출합니다.** `save()`는
+> `capture_snapshots()`만 부르고 검증은 하지 않습니다. 건너뛰면 DB
+> `CheckConstraint`가 `IntegrityError`를 던져 400이 아니라 500이 됩니다.
+> `ValidationError`는 `VALIDATION_ERROR` + `details`로 변환합니다.
+
+> **`DEFERRED`도 `DECIDED`로 전이시키는 이유**: "나중에 다시 결정" 흐름은
+> 상태를 되돌리는 대신 §8.7 수정 API로 처리합니다. 보류 → 구매 확정으로
+> 바꿀 때마다 `Consideration.status`를 왕복시키면 전이 규칙(§9)이 두 배로
+> 복잡해지고, 소비 기록이 이미 존재한다는 사실은 어느 쪽이든 같습니다.
+
+### 8.6 `GET /api/analyses/considerations/<int:pk>/spending-record/` — 소비 기록 상세
+
+소비로그 목록에서 카드를 눌렀을 때 뜨는 **상세 팝업**이 씁니다. 화면의 3개 열이
+그대로 응답 구조입니다.
+
+**200 OK**
+
+```json
+{
+  "id": 4,
+  "consideration_id": 12,
+  "final_choice_id": null,
+  "purchase_status": "PURCHASED",
+  "purchase_status_display": "구매함",
+  "recorded_on": "2026-07-29",
+  "recorded_on_display": "2026.07.29",
+  "purchased_on": "2026-07-29",
+  "satisfaction": 3,
+  "satisfaction_display": "3점",
+  "category": "디지털 전자기기",
+  "product_name": "MacBook Air",
+  "product_price": 2200000,
+  "product_price_display": "2,200,000원",
+  "product_url": "https://example.com/macbook-air",
+  "image_url": "https://example.com/macbook-air.jpg",
+  "purpose": "SELF_DEVELOPMENT",
+  "purpose_display": "자기계발",
+  "purpose_detail": "공부용 개발 장비",
+  "compare_criteria": ["PRICE", "DURATION"],
+  "compare_criteria_display": ["가격", "지속 가능 기간"],
+  "monthly_budget": "OVER_2M",
+  "monthly_budget_display": "200만원 이상",
+  "budget_amount": 2000000,
+  "budget_amount_display": "2,000,000원",
+  "created_at": "2026-07-29T14:12:44+09:00",
+  "decision": null
+}
+```
+
+| 화면 위치 | 필드 |
+|---|---|
+| 구매 시 선택한 사항 · 목적 | `purpose_display` (+ `purpose_detail`) |
+| 구매 시 선택한 사항 · 중요 기준 | `compare_criteria_display` |
+| 구매 시 선택한 사항 · 당시 예산 | `budget_amount_display` |
+| 상품 결정 결과 · 최종 결정 배지 | `purchase_status_display` |
+| 상품 결정 결과 · 상품 가격 | `product_price_display` |
+| 상품 결정 결과 · 기록 날짜 | `recorded_on_display` |
+| 상품 결정 결과 · 만족도 | `satisfaction` (별 개수), `satisfaction_display` |
+| CHOEZY 분석 · 게이지와 요약 | `decision` |
+
+`decision`은 **§8.1 응답을 그대로 중첩**합니다. `analyses/serializers.py`의
+`serialize_decision()`을 재사용하므로 게이지 `angle_deg`·막대 `score`·색
+매핑이 의사결정 화면과 항상 같습니다. AI 의사결정이 없으면 `null`이고, 프론트는
+"CHOEZY 분석" 열을 비웁니다.
+
+> **응답 필드명에서 `_snapshot`을 뗍니다.** 스냅샷인지 아닌지는 저장 구조의
+> 관심사이고, 화면 입장에서는 "그 기록의 목적·기준·예산"일 뿐입니다. 모델
+> 필드명(`purpose_snapshot`)과 응답 키(`purpose`)의 대응은 직렬화 함수 한
+> 곳에만 둡니다.
+
+빈 값은 서버가 `"—"`로 바꿔서 내려보냅니다. (§2.10) `satisfaction`이 `null`이면
+`satisfaction_display`는 `"—"`이고, 프론트는 별을 0개 그립니다.
+
+**에러**: 소비 기록이 없거나 내 고민이 아니면 `NOT_FOUND` 404.
+
+### 8.7 `PATCH /api/analyses/considerations/<int:pk>/spending-record/` — 소비 기록 수정
+
+상세 팝업의 **"구매 기록 수정하기"** 버튼이 구매 결정 팝업을 다시 열고
+호출합니다. 요청·응답은 §8.5, §8.6과 같습니다.
+
+**수정 가능한 필드는 `purchase_status`와 `satisfaction` 둘뿐입니다.** 상품
+정보와 스냅샷은 기록 당시 값이므로 바뀌지 않습니다.
+
+**상태 전이별 서버 처리**
+
+| 변경 | `purchased_on` | `satisfaction` |
+|---|---|---|
+| → `PURCHASED` | 비어 있으면 오늘로 채움 | 요청에 필수 |
+| → `DEFERRED` / `NOT_PURCHASED` | 서버가 `null`로 지움 | 서버가 `null`로 지움 |
+
+> **지우는 일을 서버가 하는 이유**: `PURCHASED` → `DEFERRED`로 바꿀 때
+> `purchased_on`과 `satisfaction`이 남아 있으면
+> `spending_status_fields_consistent` 제약에 걸려 500이 납니다. 프론트가
+> 명시적으로 `null`을 보내주기를 기대하지 않습니다. 이 정리 로직은 서비스
+> 레이어 한 곳에 두고, 생성과 수정이 같은 함수를 씁니다.
+
+**에러**: §8.5와 같습니다. (`ALREADY_EXISTS`는 해당 없음)
+
+### 8.8 `GET /api/analyses/spending-records/` — 소비 기록 목록
+
+**소비로그 화면**의 목록 영역입니다. 상단 요약 카드 4개는 이 응답에 넣지 않고
+별도 통계 API(§8.9)로 뺍니다.
+
+**쿼리 파라미터**
+
+| 이름 | 예시 | 설명 |
+|---|---|---|
+| `purchase_status` | `PURCHASED` 또는 `DEFERRED,NOT_PURCHASED` | 콤마 구분 다중 값. 생략하면 전체 |
+| `category` | `여행` | 분야 드롭다운 |
+| `purpose` | `TRAVEL` | 목적 드롭다운 (`purpose_snapshot` 기준) |
+| `date_from` / `date_to` | `2026-07-01` / `2026-07-31` | 기간 드롭다운 (`recorded_on` 기준, 양끝 포함) |
+| `page` / `page_size` | `1` / `10` | §2.9. 기본 `page_size=10`, 최대 50 |
+
+> **`purchase_status`를 다중 값으로 받는 이유**: 탭 하나가 상태 하나에
+> 대응하지 않습니다. 구매 보류 기록도 목록에 함께 노출하기로 했으므로
+> 프론트가 탭마다 필요한 상태를 조합해 보냅니다. 탭 구성이 바뀌어도 API는
+> 그대로입니다.
+
+**`purchase_status`를 생략하면 보류를 포함한 전체 기록**이 내려갑니다. 보류
+기록은 `satisfaction`이 `null`이고 `satisfaction_display`가 `"—"`이므로
+프론트는 별을 0개 그립니다.
+
+**200 OK**
+
+```json
+{
+  "count": 38,
+  "page": 1,
+  "page_size": 10,
+  "has_next": true,
+  "results": [
+    {
+      "id": 4,
+      "consideration_id": 12,
+      "purchase_status": "PURCHASED",
+      "purchase_status_display": "구매함",
+      "recorded_on": "2026-06-03",
+      "recorded_on_display": "2026.06.03",
+      "satisfaction": 4,
+      "satisfaction_display": "4점",
+      "category": "디지털 전자기기",
+      "purpose_display": "자기계발",
+      "product_name": "MacBook Air",
+      "product_price": 1390000,
+      "product_price_display": "1,390,000원",
+      "image_url": "https://example.com/macbook-air.jpg"
+    }
+  ]
+}
+```
+
+`results` 항목은 카드에 필요한 필드만 담습니다. `decision`과 스냅샷 전체는
+상세(§8.6)에서만 내려갑니다. 목록 30건마다 게이지 데이터를 만들 이유가 없습니다.
+
+### 8.9 소비 기록 통계 — 스펙 예정
+
+소비로그 상단 요약 카드와 초이지 리포트 화면이 쓰는 집계 API입니다. **§8.5~§8.8
+다음 작업**이며 아래 항목을 다룹니다.
+
+| 화면 | 계산 |
+|---|---|
+| 이번 달 소비 금액 | 이번 달 `PURCHASED` 기록의 `product_price` 합 |
+| 분야별 소비 | `category`별 금액 합 (리포트 도넛 차트) |
+| 평균 만족도 | `satisfaction` 평균 |
+| 구매 확정률 | 전체 기록 중 `PURCHASED` 비율 |
+| 목적별 만족도 | `purpose_snapshot`별 `satisfaction` 평균 |
+| 만족도 3점 이하 소비 | "다시 생각해볼 소비" 카드 |
+
+> **요약을 목록 응답에 넣지 않는 이유**: 소비로그 카드 문구가 "이번 달 소비"로
+> 고정인데 목록은 기간·분야·목적으로 필터됩니다. 한 응답에 담으면 필터를 바꿀
+> 때 요약이 따라 움직여야 하는지가 매번 애매해집니다. 집계축(분야·목적·만족도)이
+> 리포트 화면과 같으므로 §8.9 한 곳에 모읍니다.
+
+> 집계 금액에는 `purchase_status=PURCHASED`인 기록만 포함하고,
+> 구매 확정률의 분모만 전체 기록(확정+보류+안 함)입니다.
+
 ---
 
 ## 9. 상태 전이
@@ -1788,8 +2032,26 @@ DRAFT ──POST /api/alternatives/considerations/<id>/generate/──▶ GENERA
 }
 ```
 
-`DECIDED`, `CLOSED` 값은 모델에 존재하지만 이를 만드는 의사결정·최종 선택
-API는 현재 미구현입니다. 해당 후속 설계는 §8을 참고합니다.
+`DECIDED`, `CLOSED` 값은 모델에 존재하지만 이를 만드는 API는 현재
+미구현입니다. 해당 후속 설계는 §8을 참고합니다.
+
+**소비 기록 API(§8.5~§8.8) 구현 후 추가되는 전이**
+
+```text
+GENERATED ──POST /api/analyses/considerations/<id>/spending-record/──▶ DECIDED
+```
+
+| 엔드포인트 | `DRAFT` | `GENERATED` | `DECIDED` | `CLOSED` |
+|---|:---:|:---:|:---:|:---:|
+| 소비 기록 생성 `POST .../spending-record/` | ✘ | ✔ | ✔ | ✘ |
+| 소비 기록 조회·수정 `GET/PATCH .../spending-record/` | ✔ | ✔ | ✔ | ✔ |
+
+> `DECIDED`에서도 생성이 ✔인 이유: 최종 선택 폼(§8.3)이 `DECIDED`로 먼저
+> 바꿔놓을 수 있고, 그 경우에도 소비 기록은 아직 없습니다. 중복 생성은
+> `status`가 아니라 `ALREADY_EXISTS`(§8.5)가 막습니다.
+
+> `CLOSED`를 만드는 API는 없습니다. 소비 기록이 생겨도 만족도를 다시 고칠 수
+> 있으므로(§8.7) 고민을 닫지 않습니다.
 
 ---
 
@@ -1805,6 +2067,8 @@ API는 현재 미구현입니다. 해당 후속 설계는 §8을 참고합니다
 | 카테고리별 대안 | `/alternatives/considerations/<id>/` | - | `POST /api/alternatives/considerations/<id>/generate/`<br>`GET /api/alternatives/considerations/<id>/`<br>`POST /api/alternatives/<id>/regenerate/` |
 | 비교표·기회비용 | `/products/comparison/<id>/` | - | `GET /api/alternatives/considerations/<id>/comparison/` |
 | 기회비용 시각화 | `/products/opportunity-cost/<id>/` | - | - (서버 사이드 렌더링, §5.5) |
+| 구매 의사결정 · 구매 결정 팝업 | `/analyses/considerations/<id>/decision/` | - | `POST /api/analyses/considerations/<id>/decision/`<br>`POST /api/analyses/considerations/<id>/spending-record/` |
+| 소비로그 · 상세 팝업 | `/analyses/spending-records/` | - | `GET /api/analyses/spending-records/`<br>`GET /api/analyses/considerations/<id>/spending-record/`<br>`PATCH /api/analyses/considerations/<id>/spending-record/` |
 
 **"제출" 열과 "화면 안 동작" 열에 같은 동작이 동시에 나오지 않습니다.** (§1)
 
@@ -1965,3 +2229,11 @@ GET /api/alternatives/tasks/<task_id>/
 ### `FINANCE` 탭의 "가격" 열
 
 `columns`가 탭별이 아니라 최상위에 한 벌만 있어 재정 탭은 가격 열 전체가 `—`가 됩니다. MVP에서는 유지하고, 화면이 어색하면 `columns`를 탭 안으로 옮깁니다. (§6.5 알려진 제약)
+
+### 소비 기록의 `category` 값
+
+`Consideration.exclude_category.name`을 그대로 스냅샷하므로 분야 필터는
+`"디지털·전자기기"` 같은 **한글 이름**으로 조회합니다. 카테고리 이름이
+나중에 바뀌면 과거 기록의 `category`는 옛 이름으로 남습니다. 스냅샷의
+의도가 그렇긴 하지만, 리포트(§8.9)에서 같은 분야가 두 조각으로 갈릴 수
+있으므로 집계 기준을 코드(`Category.code`)로 바꿀지 검토가 필요합니다.

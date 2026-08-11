@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import MONTHLY_BUDGET_RANGES
 from core.responses import service_error_response
 
 from .models import Alternative
@@ -34,14 +35,9 @@ COMPARISON_COLUMNS = {
     },
 }
 
-BUDGET_RANGES = {
-    "UNDER_100K": (0, 100_000),
-    "100K_300K": (100_000, 300_000),
-    "300K_500K": (300_000, 500_000),
-    "500K_1M": (500_000, 1_000_000),
-    "1M_2M": (1_000_000, 2_000_000),
-    "OVER_2M": (2_000_000, None),
-}
+# 소비 기록의 당시 예산 스냅샷(docs/API.md §8.4)도 같은 구간을 쓰므로
+# 정의는 accounts에 두고 여기서는 가져다 씁니다.
+BUDGET_RANGES = MONTHLY_BUDGET_RANGES
 
 
 # 금액 표기는 기회비용 시각화 페이지와 같은 규칙을 써야 합니다.

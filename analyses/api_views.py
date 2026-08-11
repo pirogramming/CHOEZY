@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -5,8 +6,32 @@ from rest_framework.views import APIView
 from core.responses import error_response, service_error_response
 
 from .models import Decision
-from .serializers import serialize_decision
-from .services import DecisionServiceError, create_decision
+from .serializers import (
+    SpendingRecordFilterSerializer,
+    SpendingRecordWriteSerializer,
+    serialize_decision,
+    serialize_spending_record,
+    serialize_spending_record_item,
+)
+from .services import (
+    DecisionServiceError,
+    SpendingRecordServiceError,
+    create_decision,
+    create_spending_record,
+    filter_spending_records,
+    get_spending_record,
+    update_spending_record,
+)
+
+
+def _validation_error(serializer):
+    """DRF 검증 실패를 §2.6 형식으로 바꾼다."""
+    return error_response(
+        "VALIDATION_ERROR",
+        "입력값을 확인해주세요.",
+        serializer.errors,
+        status=400,
+    )
 
 
 class DecisionAPIView(APIView):
@@ -36,3 +61,89 @@ class DecisionAPIView(APIView):
         except DecisionServiceError as exc:
             return service_error_response(exc)
         return Response(serialize_decision(decision), status=201)
+
+
+class SpendingRecordAPIView(APIView):
+    """소비 기록 생성·조회·수정 (docs/API.md §8.5~§8.7).
+
+    구매 의사결정 화면의 구매 결정 팝업이 POST를, 소비로그 상세 팝업이
+    GET과 PATCH를 씁니다. 요청 본문은 구매 상태와 만족도뿐이고 나머지
+    필드는 서버가 채웁니다. (§8.4)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            record = get_spending_record(pk, request.user)
+        except SpendingRecordServiceError as exc:
+            return service_error_response(exc)
+        return Response(serialize_spending_record(record))
+
+    def post(self, request, pk):
+        serializer = SpendingRecordWriteSerializer(data=request.data)
+        if not serializer.is_valid():
+            return _validation_error(serializer)
+
+        try:
+            record = create_spending_record(
+                pk,
+                request.user,
+                **serializer.validated_data,
+            )
+        except SpendingRecordServiceError as exc:
+            return service_error_response(exc)
+
+        return Response(serialize_spending_record(record), status=201)
+
+    def patch(self, request, pk):
+        serializer = SpendingRecordWriteSerializer(data=request.data)
+        if not serializer.is_valid():
+            return _validation_error(serializer)
+
+        try:
+            record = update_spending_record(
+                pk,
+                request.user,
+                **serializer.validated_data,
+            )
+        except SpendingRecordServiceError as exc:
+            return service_error_response(exc)
+
+        return Response(serialize_spending_record(record))
+
+
+class SpendingRecordListAPIView(APIView):
+    """소비로그 목록 (docs/API.md §8.8).
+
+    상단 요약 카드는 이 응답에 없습니다. 집계는 통계 API(§8.9)에서
+    따로 내려보냅니다.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = SpendingRecordFilterSerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return _validation_error(serializer)
+
+        filters = serializer.validated_data
+        queryset = filter_spending_records(request.user, filters)
+
+        paginator = Paginator(queryset, filters["page_size"])
+        # 범위를 벗어난 page는 빈 목록으로 돌려줍니다. "더보기"를 연타해
+        # 마지막 페이지를 넘겨도 404가 뜨지 않아야 합니다.
+        page = paginator.get_page(min(filters["page"], paginator.num_pages))
+
+        return Response(
+            {
+                "count": paginator.count,
+                "page": page.number,
+                "page_size": filters["page_size"],
+                "has_next": page.has_next(),
+                "results": [
+                    serialize_spending_record_item(record)
+                    for record in page.object_list
+                ],
+            }
+        )

@@ -138,3 +138,17 @@ class User(AbstractUser, TimeStampedModel):
 
     def __str__(self):
         return self.username
+
+
+# 월 소비 예산 구간 → (하한, 상한). 상한 None은 "이상"입니다.
+# 비교표의 "가용 예산" 열(docs/API.md §6.5)과 소비 기록의 당시 예산
+# 스냅샷(§8.4)이 같은 값을 써야 화면끼리 숫자가 어긋나지 않으므로
+# 구간 정의는 여기 한 곳에만 둡니다.
+MONTHLY_BUDGET_RANGES = {
+    User.MonthlyBudget.UNDER_100K: (0, 100_000),
+    User.MonthlyBudget.FROM_100K_TO_300K: (100_000, 300_000),
+    User.MonthlyBudget.FROM_300K_TO_500K: (300_000, 500_000),
+    User.MonthlyBudget.FROM_500K_TO_1M: (500_000, 1_000_000),
+    User.MonthlyBudget.FROM_1M_TO_2M: (1_000_000, 2_000_000),
+    User.MonthlyBudget.OVER_2M: (2_000_000, None),
+}
