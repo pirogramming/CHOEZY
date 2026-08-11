@@ -1,0 +1,369 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/consumption_log.css' %}">
+
+<div class="consumption-page">
+
+    <!-- ==============================
+         페이지 상단
+    =============================== -->
+    <section class="consumption-header">
+
+        <div class="consumption-header-text">
+            <h1>나의 소비 기록</h1>
+            <p>내가 고민하고 구매했던 상품들을 한눈에 확인해보세요</p>
+        </div>
+
+        <!-- 소비로그 캐릭터 이미지 -->
+        <div class="consideration-character">
+
+            <img src="{% static 'images/consumption_log.png' %}">
+
+        </div>
+
+    </section>
+
+
+    <!-- ==============================
+         소비 요약
+    =============================== -->
+    <section class="consumption-summary">
+
+        <!-- 이번 달 소비 -->
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-dollar-sign-icon lucide-circle-dollar-sign"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg></span>
+            </div>
+
+            <div class="summary-content">
+                <span class="summary-label">이번 달 소비</span>
+                <strong id="monthly-spending">XXX 원</strong>
+            </div>
+
+        </div>
+
+
+        <!-- 가장 많이 소비 -->
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hand-coins-icon lucide-hand-coins"><path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"/><path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/><path d="m2 16 6 6"/><circle cx="16" cy="9" r="2.9"/><circle cx="6" cy="5" r="3"/></svg></span>
+            </div>
+
+            <div class="summary-content">
+                <span class="summary-label">가장 많이 소비</span>
+                <strong id="most-spent-category">여행</strong>
+            </div>
+
+        </div>
+
+
+        <!-- 평균 만족도 -->
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-check-icon lucide-star-check"><path d="m19.06 12.501 2.78-2.707a.53.53 0 0 0-.294-.905l-5.166-.755a2.1 2.1 0 0 1-1.595-1.16l-2.31-4.68a.53.53 0 0 0-.95.001L9.216 6.974a2.1 2.1 0 0 1-1.597 1.16l-5.165.755a.53.53 0 0 0-.294.906l3.736 3.637a2.1 2.1 0 0 1 .611 1.879l-.88 5.139a.53.53 0 0 0 .769.56l4.617-2.428.027-.014"/><path d="m15 18 2 2 4-4"/></svg></span>
+            </div>
+
+            <div class="summary-content">
+                <span class="summary-label">평균 만족도</span>
+                <strong id="average-satisfaction">X 점</strong>
+            </div>
+
+        </div>
+
+
+        <!-- 구매 확정률 -->
+        <div class="summary-card">
+
+            <div class="summary-icon">
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-big-icon lucide-square-check-big"><path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344"/><path d="m9 11 3 3L22 4"/></svg></span>
+            </div>
+
+            <div class="summary-content">
+                <span class="summary-label">구매 확정률</span>
+                <strong id="purchase-rate">X %</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==============================
+         필터 영역
+    =============================== -->
+    <section class="consumption-filter">
+
+        <!-- 구매 상태 -->
+        <div class="status-filter">
+
+            <button
+                type="button"
+                class="status-button active"
+                data-status="all"
+            >
+                전체
+            </button>
+
+            <button
+                type="button"
+                class="status-button"
+                data-status="purchased"
+            >
+                구매함
+            </button>
+
+            <button
+                type="button"
+                class="status-button"
+                data-status="pending"
+            >
+                구매 보류
+            </button>
+
+            <button
+                type="button"
+                class="status-button"
+                data-status="not_purchased"
+            >
+                구매 안 함
+            </button>
+
+        </div>
+
+
+        <!-- 상세 필터 -->
+        <div class="detail-filter">
+
+            <!-- 분야 -->
+            <select id="category-filter" class="filter-select">
+                <option value="all">분야 전체</option>
+                <option value="digital">전자기기</option>
+                <option value="travel">여행</option>
+                <option value="fashion">패션</option>
+                <option value="culture">문화</option>
+                <option value="living">생활</option>
+                <option value="finance">금융</option>
+            </select>
+
+
+            <!-- 목적 -->
+            <select id="purpose-filter" class="filter-select">
+                <option value="all">목적 전체</option>
+                <option value="study">공부/자기계발</option>
+                <option value="travel">여행</option>
+                <option value="daily">일상</option>
+                <option value="hobby">취미/여가</option>
+                <option value="gift">선물</option>
+            </select>
+
+
+            <!-- 기간 -->
+            <div class="date-filter">
+
+                <input
+                    type="date"
+                    id="date-filter"
+                    aria-label="기간 선택"
+                >
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==============================
+         소비 기록
+    =============================== -->
+    <section class="consumption-list-section">
+
+        <div
+            class="consumption-list"
+            id="consumption-list"
+        >
+            <!-- JS에서 소비 기록 생성 -->
+        </div>
+
+
+        <!-- 소비 기록 없음 -->
+        <div
+            class="empty-state hidden"
+            id="empty-state"
+        >
+            <div class="empty-icon">📝</div>
+
+            <h3>아직 소비 기록이 없어요</h3>
+
+            <p>
+                초이지에서 고민했던 상품을 기록해보세요.
+            </p>
+        </div>
+
+
+        <!-- 더보기 -->
+        <button
+            type="button"
+            class="load-more-button"
+            id="load-more-button"
+        >
+            <span>더보기</span>
+            <span class="load-more-arrow"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down-icon lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg></span>
+        </button>
+
+    </section>
+
+</div>
+
+
+<!-- ==============================
+     소비 상세 팝업
+=============================== -->
+<div
+    class="consumption-modal hidden"
+    id="consumption-modal"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-overlay"
+        id="modal-overlay"
+    ></div>
+
+
+    <div
+        class="consumption-modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-product-name"
+    >
+
+        <!-- 팝업 헤더 -->
+        <div class="modal-header">
+
+            <h2>소비 상세</h2>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="modal-close"
+                aria-label="팝업 닫기"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- 상품 정보 -->
+        <div class="modal-product">
+
+            <div
+                class="modal-product-image"
+                id="modal-product-image"
+            >
+                💻
+            </div>
+
+            <div class="modal-product-info">
+
+                <span
+                    class="modal-category"
+                    id="modal-category"
+                >
+                    전자기기
+                </span>
+
+                <h3 id="modal-product-name">
+                    MacBook Air
+                </h3>
+
+                <strong id="modal-price">
+                    1,390,000원
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- 상세 정보 -->
+        <div class="modal-detail-list">
+
+            <div class="modal-detail-item">
+                <span>기록 날짜</span>
+                <strong id="modal-record-date">
+                    2026.08.03
+                </strong>
+            </div>
+
+            <div class="modal-detail-item">
+                <span>구매 여부</span>
+                <strong
+                    id="modal-status"
+                    class="modal-status purchased"
+                >
+                    구매함
+                </strong>
+            </div>
+
+            <div class="modal-detail-item">
+                <span>실제 가격</span>
+                <strong id="modal-real-price">
+                    1,390,000원
+                </strong>
+            </div>
+
+            <div class="modal-detail-item">
+                <span>목적</span>
+                <strong id="modal-purpose">
+                    공부/자기계발
+                </strong>
+            </div>
+
+        </div>
+
+
+        <!-- 만족도 -->
+        <div class="modal-satisfaction">
+
+            <span>만족도</span>
+
+            <div
+                class="satisfaction-stars"
+                id="modal-satisfaction-stars"
+            >
+                ★★★★★
+            </div>
+
+        </div>
+
+
+        <!-- 초이지 분석 -->
+        <div class="modal-analysis">
+
+            <div class="analysis-title">
+                <span>초이지 분석</span>
+            </div>
+
+            <p id="modal-analysis-text">
+                구매 전 여러 대안을 비교하고
+                기회비용을 확인한 소비예요.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="{% static 'js/consumption_log.js' %}"></script>
+
+{% endblock %}
