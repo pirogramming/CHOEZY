@@ -9,8 +9,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const MAX_HEIGHT = 450;
 
 
+    const PALETTE = [
+        "#A8E6CF",
+        "#BFD8B8",
+        "#9FD8D2",
+        "#A7D8F0",
+        "#B8CFE5",
+        "#FFD8A8",
+        "#F9E7A1",
+        "#F6B8C8",
+        "#F7C7A3",
+    ];
 
-    bars.forEach(bar => {
+
+
+    bars.forEach((bar, index) => {
 
 
         const count = Number(
@@ -19,6 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         if (!count) return;
+
+
+        const color = PALETTE[index] || PALETTE[PALETTE.length - 1];
 
 
 
@@ -53,6 +69,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 `${blockHeight}px`;
 
 
+            block.style.background = color;
+
+
             bar.appendChild(block);
 
 
@@ -79,6 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             block.style.height =
                 `${blockHeight * decimalPart}px`;
+
+
+            block.style.background = color;
 
 
             bar.appendChild(block);
