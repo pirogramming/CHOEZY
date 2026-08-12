@@ -5,6 +5,20 @@ function getCookie(name) {
 
 const csrftoken = getCookie("csrftoken");
 
+const CATEGORY_ICON_MAP = {
+  TRAVEL: "travel",
+  HEALTH: "health",
+  CULTURE: "culture",
+  DIGITAL: "digital",
+  FINANCE: "finance",
+  LIVING: "living",
+};
+
+function categoryIconUrl(category) {
+  const key = CATEGORY_ICON_MAP[category.code];
+  return key ? `/static/images/icon-${key}.svg` : "";
+}
+
 async function apiGet(url) {
   const res = await fetch(url, { credentials: "same-origin" });
   const body = await res.json().catch(() => ({}));
@@ -54,7 +68,7 @@ function renderCategory(category) {
   <div class="alt-card" data-category-id="${category.id}">
     <div class="alt-card__header">
       <div class="alt-card__icon-wrap">
-        <span class="icon-category">${category.emoji}</span>
+        <img src="${categoryIconUrl(category)}" alt="" class="icon-category">
       </div>
       <div class="alt-card__title">${category.name}</div>
     </div>
