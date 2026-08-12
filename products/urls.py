@@ -25,5 +25,11 @@ urlpatterns = [
         opportunity_cost_view,
         name="opportunity_cost"
     ),
+    
+    path(
+        "consumption-log/",
+        views.consumption_log,
+        name="consumption_log",
+    ),
 
 ]
