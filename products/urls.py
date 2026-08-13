@@ -32,4 +32,10 @@ urlpatterns = [
         name="consumption_log",
     ),
 
+    path(
+        "report/",
+        views.choezy_report,
+        name="choezy_report",
+    ),
+
 ]
