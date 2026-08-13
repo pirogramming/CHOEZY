@@ -139,8 +139,9 @@
 }
 
 .icon-category {
-  font-size: 28px;
-  line-height: 1;
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
 }
 
 .alt-card__title {

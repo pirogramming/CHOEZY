@@ -63,3 +63,7 @@ def opportunity_cost_view(request, pk):
         "products/opportunity_cost.html",
         context,
     )
+
+@login_required
+def consumption_log(request):
+    return render(request, "products/consumption_log.html")

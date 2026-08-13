@@ -5,6 +5,8 @@
 `chart`에 담습니다. (§2.10)
 """
 
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
@@ -304,3 +306,124 @@ class SpendingRecordFilterSerializer(serializers.Serializer):
                 {"date_to": "종료일이 시작일보다 빠릅니다."}
             )
         return attrs
+
+
+def _satisfaction_display(score):
+    return f"{score}점" if score is not None else EMPTY_DISPLAY
+
+
+def _ratio_display(ratio):
+    return f"{ratio}%"
+
+
+def _category_stat(row):
+    return {
+        "name": row["name"],
+        "code": row["code"],
+        "amount": row["amount"],
+        "amount_display": format_won(row["amount"]),
+        "count": row["count"],
+        "ratio": row["ratio"],
+        "ratio_display": _ratio_display(row["ratio"]),
+    }
+
+
+def _purpose_stat(row):
+    purpose = row["purpose"]
+    return {
+        "purpose": purpose,
+        "purpose_display": (
+            Consideration.Purpose(purpose).label if purpose else EMPTY_DISPLAY
+        ),
+        "count": row["count"],
+        "average_satisfaction": row["average_satisfaction"],
+        "average_satisfaction_display": _satisfaction_display(
+            row["average_satisfaction"]
+        ),
+    }
+
+
+def _donut_slice(row):
+    payload = {
+        "name": row["name"],
+        "code": row["code"],
+        "ratio": row["ratio"],
+        "ratio_display": _ratio_display(row["ratio"]),
+        "is_others": row["is_others"],
+    }
+    if row["is_others"]:
+        payload["items"] = [
+            {
+                "name": item["name"],
+                "code": item["code"],
+                "ratio": item["ratio"],
+                "ratio_display": _ratio_display(item["ratio"]),
+            }
+            for item in row["items"]
+        ]
+    return payload
+
+
+def serialize_spending_stats(stats):
+    """소비 기록 통계 (§8.9).
+
+    `build_spending_stats()`가 만든 숫자에 화면용 문자열을 입힙니다.
+    집계와 표기를 나눠 두는 이유는 소비 패턴 분석(4일차)이 숫자 쪽만
+    프롬프트에 쓰기 때문입니다.
+    """
+    average = stats["average_satisfaction"]
+    top_category = stats["top_category"]
+    highest = stats["highest_satisfaction_purpose"]
+    lowest = stats["lowest_satisfaction_purpose"]
+    low = stats["low_satisfaction"]
+
+    return {
+        "period": stats["period"],
+        "total_count": stats["total_count"],
+        "purchased_count": stats["purchased_count"],
+        "total_spent": stats["total_spent"],
+        "total_spent_display": format_won(stats["total_spent"]),
+        "purchase_rate": stats["purchase_rate"],
+        "purchase_rate_display": _ratio_display(stats["purchase_rate"]),
+        "average_satisfaction": average,
+        "average_satisfaction_display": _satisfaction_display(average),
+        "top_category": (
+            _category_stat(top_category) if top_category else None
+        ),
+        "by_category": [
+            _category_stat(row) for row in stats["by_category"]
+        ],
+        "chart": {
+            "slices": [
+                _donut_slice(row) for row in stats["donut_slices"]
+            ],
+        },
+        "by_purpose": [_purpose_stat(row) for row in stats["by_purpose"]],
+        "highest_satisfaction_purpose": (
+            _purpose_stat(highest) if highest else None
+        ),
+        "lowest_satisfaction_purpose": (
+            _purpose_stat(lowest) if lowest else None
+        ),
+        "low_satisfaction": {
+            "threshold": low["threshold"],
+            "count": low["count"],
+            "amount": low["amount"],
+            "amount_display": format_won(low["amount"]),
+        },
+    }
+
+
+class SpendingStatsFilterSerializer(serializers.Serializer):
+    """소비 기록 통계 파라미터 (§8.9)."""
+
+    month = serializers.CharField(required=False)
+
+    def validate_month(self, value):
+        """`"2026-08"` → 그 달 1일. 형식이 틀리면 400입니다."""
+        try:
+            return datetime.strptime(value, "%Y-%m").date()
+        except ValueError:
+            raise serializers.ValidationError(
+                "YYYY-MM 형식이어야 합니다."
+            ) from None
