@@ -4,8 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
     ========================================= */
 
     const LIST_API = "/api/analyses/spending-records/";
+
     const DETAIL_API = (considerationId) =>
         `/api/analyses/considerations/${considerationId}/spending-record/`;
+
+    const STATS_API = "/api/analyses/spending-records/stats/";
 
 
     /* =========================================
@@ -158,7 +161,117 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-    API 요청
+    상단 요약 통계 API
+    ========================================= */
+
+    async function fetchSpendingStats() {
+        try {
+            const currentDate = new Date();
+
+            const year =
+                currentDate.getFullYear();
+
+            const month =
+                String(currentDate.getMonth() + 1)
+                    .padStart(2, "0");
+
+            const response = await fetch(
+                `${STATS_API}?month=${year}-${month}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                }
+            );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    `통계 API 요청 실패: ${response.status}`
+                );
+            }
+
+
+            const data =
+                await response.json();
+
+
+            renderSummary(data);
+
+        } catch (error) {
+            console.error(
+                "소비 통계 API 요청 실패:",
+                error
+            );
+
+            renderSummaryError();
+        }
+    }
+
+
+    /* =========================================
+    상단 요약 카드 출력
+    ========================================= */
+
+    function renderSummary(data) {
+
+        /* 이번 달 소비 금액 */
+
+        if (monthlySpending) {
+            monthlySpending.textContent =
+                data.total_spent_display || "0원";
+        }
+
+
+        /* 가장 많이 소비한 분야 */
+
+        if (mostSpentCategory) {
+            mostSpentCategory.textContent =
+                data.top_category?.name || "—";
+        }
+
+
+        /* 평균 만족도 */
+
+        if (averageSatisfaction) {
+            averageSatisfaction.textContent =
+                data.average_satisfaction_display || "—";
+        }
+
+
+        /* 구매 확정률 */
+
+        if (purchaseRate) {
+            purchaseRate.textContent =
+                data.purchase_rate_display || "0%";
+        }
+    }
+
+
+    function renderSummaryError() {
+
+        if (monthlySpending) {
+            monthlySpending.textContent = "—";
+        }
+
+        if (mostSpentCategory) {
+            mostSpentCategory.textContent = "—";
+        }
+
+        if (averageSatisfaction) {
+            averageSatisfaction.textContent = "—";
+        }
+
+        if (purchaseRate) {
+            purchaseRate.textContent = "—";
+        }
+    }
+
+
+    /* =========================================
+    소비 기록 목록 API
     ========================================= */
 
     async function fetchSpendingRecords({
@@ -184,7 +297,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /* 분야 */
 
-        if (categoryFilter.value !== "all") {
+        if (
+            categoryFilter &&
+            categoryFilter.value !== "all"
+        ) {
             params.set(
                 "category",
                 categoryFilter.value
@@ -194,7 +310,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /* 목적 */
 
-        if (purposeFilter.value !== "all") {
+        if (
+            purposeFilter &&
+            purposeFilter.value !== "all"
+        ) {
             params.set(
                 "purpose",
                 purposeFilter.value
@@ -204,7 +323,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /* 날짜 */
 
-        if (dateFilter.value) {
+        if (
+            dateFilter &&
+            dateFilter.value
+        ) {
             params.set(
                 "date_from",
                 dateFilter.value
@@ -237,7 +359,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
 
             if (append) {
@@ -246,22 +369,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     ...data.results,
                 ];
             } else {
-                consumptionData = data.results;
+                consumptionData =
+                    data.results;
             }
 
 
-            currentPage = data.page;
-            hasNext = data.has_next;
+            currentPage =
+                data.page;
+
+            hasNext =
+                data.has_next;
+
 
             renderList();
 
         } catch (error) {
+
             console.error(
                 "소비 기록 API 요청 실패:",
                 error
             );
 
             consumptionData = [];
+
+            hasNext = false;
 
             renderList();
         }
@@ -275,12 +406,20 @@ document.addEventListener("DOMContentLoaded", () => {
     function createConsumptionCard(item) {
 
         const statusClass =
-            getStatusClass(item.purchase_status);
+            getStatusClass(
+                item.purchase_status
+            );
 
 
-        const imageContent = item.image_url
-            ? `<img src="${item.image_url}" alt="${item.product_name}">`
-            : "🛍️";
+        const imageContent =
+            item.image_url
+                ? `
+                    <img
+                        src="${item.image_url}"
+                        alt="${item.product_name}"
+                    >
+                `
+                : "🛍️";
 
 
         return `
@@ -322,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div class="item-info-value">
-                        ${item.recorded_on_display}
+                        ${item.recorded_on_display || "—"}
                     </div>
 
                 </div>
@@ -335,14 +474,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div class="item-info-value">
-                        ${item.product_price_display}
+                        ${item.product_price_display || "—"}
                     </div>
 
                 </div>
 
 
                 <div class="purchase-status ${statusClass}">
-                    ${item.purchase_status_display}
+                    ${item.purchase_status_display || "—"}
                 </div>
 
 
@@ -382,15 +521,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (consumptionData.length === 0) {
 
-            consumptionList.style.display = "none";
+            consumptionList.style.display =
+                "none";
 
-            emptyState.classList.remove("hidden");
+            emptyState.classList.remove(
+                "hidden"
+            );
 
         } else {
 
-            consumptionList.style.display = "grid";
+            consumptionList.style.display =
+                "grid";
 
-            emptyState.classList.add("hidden");
+            emptyState.classList.add(
+                "hidden"
+            );
         }
 
 
@@ -435,7 +580,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     const considerationId =
                         card.dataset.considerationId;
 
-                    openModal(considerationId);
+                    openModal(
+                        considerationId
+                    );
                 }
             );
 
@@ -468,7 +615,9 @@ document.addEventListener("DOMContentLoaded", () => {
     상세 API
     ========================================= */
 
-    async function openModal(considerationId) {
+    async function openModal(
+        considerationId
+    ) {
 
         try {
 
@@ -497,7 +646,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             renderModal(item);
 
-            modal.classList.remove("hidden");
+
+            modal.classList.remove(
+                "hidden"
+            );
 
             modal.setAttribute(
                 "aria-hidden",
@@ -540,7 +692,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         } else {
 
-            modalProductImage.textContent = "🛍️";
+            modalProductImage.textContent =
+                "🛍️";
         }
 
 
@@ -606,7 +759,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function closeModal() {
 
-        modal.classList.add("hidden");
+        modal.classList.add(
+            "hidden"
+        );
 
         modal.setAttribute(
             "aria-hidden",
@@ -637,7 +792,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (
                 event.key === "Escape" &&
-                !modal.classList.contains("hidden")
+                !modal.classList.contains(
+                    "hidden"
+                )
             ) {
                 closeModal();
             }
@@ -663,7 +820,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-                button.classList.add("active");
+                button.classList.add(
+                    "active"
+                );
 
 
                 currentStatus =
@@ -688,63 +847,72 @@ document.addEventListener("DOMContentLoaded", () => {
     분야 필터
     ========================================= */
 
-    categoryFilter.addEventListener(
-        "change",
-        () => {
+    if (categoryFilter) {
 
-            currentPage = 1;
+        categoryFilter.addEventListener(
+            "change",
+            () => {
 
-            consumptionData = [];
+                currentPage = 1;
+
+                consumptionData = [];
 
 
-            fetchSpendingRecords({
-                page: 1,
-                append: false,
-            });
-        }
-    );
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
+            }
+        );
+    }
 
 
     /* =========================================
     목적 필터
     ========================================= */
 
-    purposeFilter.addEventListener(
-        "change",
-        () => {
+    if (purposeFilter) {
 
-            currentPage = 1;
+        purposeFilter.addEventListener(
+            "change",
+            () => {
 
-            consumptionData = [];
+                currentPage = 1;
+
+                consumptionData = [];
 
 
-            fetchSpendingRecords({
-                page: 1,
-                append: false,
-            });
-        }
-    );
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
+            }
+        );
+    }
 
 
     /* =========================================
     날짜 필터
     ========================================= */
 
-    dateFilter.addEventListener(
-        "change",
-        () => {
+    if (dateFilter) {
 
-            currentPage = 1;
+        dateFilter.addEventListener(
+            "change",
+            () => {
 
-            consumptionData = [];
+                currentPage = 1;
+
+                consumptionData = [];
 
 
-            fetchSpendingRecords({
-                page: 1,
-                append: false,
-            });
-        }
-    );
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
+            }
+        );
+    }
 
 
     /* =========================================
@@ -772,9 +940,10 @@ document.addEventListener("DOMContentLoaded", () => {
     초기 실행
     ========================================= */
 
+    fetchSpendingStats();
+
     fetchSpendingRecords({
         page: 1,
         append: false,
     });
-
 });
