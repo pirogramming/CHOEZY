@@ -4,6 +4,7 @@ from .api_views import (
     DecisionAPIView,
     SpendingRecordAPIView,
     SpendingRecordListAPIView,
+    SpendingStatsAPIView,
 )
 
 
@@ -24,5 +25,10 @@ urlpatterns = [
         "spending-records/",
         SpendingRecordListAPIView.as_view(),
         name="spending_record_list",
+    ),
+    path(
+        "spending-records/stats/",
+        SpendingStatsAPIView.as_view(),
+        name="spending_record_stats",
     ),
 ]

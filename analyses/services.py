@@ -7,15 +7,17 @@ Decision이 없다"고 판단해 통과하고, `OneToOneField`의 UNIQUE 제약�
 더블클릭에서 같은 일이 벌어집니다.
 """
 
+import calendar
 import json
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Avg, Count, Sum
 from django.utils import timezone
 
 from accounts.models import MONTHLY_BUDGET_RANGES
-from alternatives.models import Alternative, LLMRequestLog
+from alternatives.models import Alternative, Category, LLMRequestLog
 from products.models import Consideration
 
 from .ai_service import (
@@ -441,3 +443,216 @@ def filter_spending_records(user, filters):
         queryset = queryset.filter(recorded_on__lte=date_to)
 
     return queryset
+
+
+# --------------------------------------------------------------------------
+# 소비 기록 통계 (docs/API.md §8.9)
+# --------------------------------------------------------------------------
+
+
+# "다시 생각해볼 소비" 기준 점수입니다.
+LOW_SATISFACTION_THRESHOLD = 3
+
+# 리포트 도넛 차트에 이름을 그대로 노출하는 조각 수입니다. 나머지는
+# "기타" 한 조각으로 묶습니다.
+DONUT_TOP_SLICE_COUNT = 3
+
+OTHERS_SLICE_NAME = "기타"
+
+
+def _month_bounds(month_start):
+    """`date(2026, 8, 1)` → 그 달의 1일과 말일."""
+    last_day = calendar.monthrange(month_start.year, month_start.month)[1]
+    return month_start, month_start.replace(day=last_day)
+
+
+def _period(month_start):
+    if month_start is None:
+        return {
+            "month": None,
+            "label": "전체 기간",
+            "date_from": None,
+            "date_to": None,
+        }
+
+    date_from, date_to = _month_bounds(month_start)
+    return {
+        "month": month_start.strftime("%Y-%m"),
+        "label": f"{month_start.year}년 {month_start.month}월",
+        "date_from": date_from.isoformat(),
+        "date_to": date_to.isoformat(),
+    }
+
+
+def _category_codes():
+    """카테고리 이름 → 코드.
+
+    `SpendingRecord.category`는 이름 문자열 스냅샷이라 코드가 없습니다.
+    프론트가 분야별 색을 코드로 고정할 수 있도록 6행짜리 마스터에서
+    찾아 붙입니다. 이름이 바뀐 뒤의 옛 기록은 `None`입니다.
+    """
+    return dict(Category.objects.values_list("name", "code"))
+
+
+def _percentages(amounts):
+    """금액 목록 → 정수 백분율 목록.
+
+    반올림 때문에 합이 100에서 어긋나면 **가장 큰 조각이 차이를 흡수**해
+    도넛에 빈틈이나 겹침이 생기지 않게 합니다. (§8.9)
+    """
+    total = sum(amounts)
+    if not total:
+        return [0] * len(amounts)
+
+    ratios = [round(amount * 100 / total) for amount in amounts]
+    gap = 100 - sum(ratios)
+    if gap:
+        largest = max(range(len(ratios)), key=lambda index: amounts[index])
+        ratios[largest] += gap
+    return ratios
+
+
+def _by_category(purchased):
+    rows = list(
+        purchased.values("category")
+        .annotate(amount=Sum("product_price"), count=Count("id"))
+        .order_by("-amount", "category")
+    )
+    codes = _category_codes() if rows else {}
+    ratios = _percentages([row["amount"] for row in rows])
+
+    return [
+        {
+            "name": row["category"],
+            "code": codes.get(row["category"]),
+            "amount": row["amount"],
+            "count": row["count"],
+            "ratio": ratio,
+        }
+        for row, ratio in zip(rows, ratios)
+    ]
+
+
+def _donut_slices(by_category):
+    """상위 3개 + 나머지를 묶은 "기타" 한 조각. (§8.9)"""
+    if len(by_category) <= DONUT_TOP_SLICE_COUNT:
+        return [
+            {
+                "name": row["name"],
+                "code": row["code"],
+                "ratio": row["ratio"],
+                "is_others": False,
+            }
+            for row in by_category
+        ]
+
+    top = by_category[:DONUT_TOP_SLICE_COUNT]
+    rest = by_category[DONUT_TOP_SLICE_COUNT:]
+    slices = [
+        {
+            "name": row["name"],
+            "code": row["code"],
+            "ratio": row["ratio"],
+            "is_others": False,
+        }
+        for row in top
+    ]
+    slices.append(
+        {
+            "name": OTHERS_SLICE_NAME,
+            "code": None,
+            # 상위 조각을 뺀 나머지로 계산해 합을 정확히 100으로 맞춥니다.
+            "ratio": 100 - sum(row["ratio"] for row in top),
+            "is_others": True,
+            "items": [
+                {
+                    "name": row["name"],
+                    "code": row["code"],
+                    "ratio": row["ratio"],
+                }
+                for row in rest
+            ],
+        }
+    )
+    return slices
+
+
+def _by_purpose(rated):
+    rows = list(
+        rated.values("purpose_snapshot")
+        .annotate(
+            count=Count("id"),
+            average_satisfaction=Avg("satisfaction"),
+        )
+        .order_by("-average_satisfaction", "purpose_snapshot")
+    )
+
+    return [
+        {
+            "purpose": row["purpose_snapshot"],
+            "count": row["count"],
+            "average_satisfaction": round(row["average_satisfaction"], 1),
+        }
+        for row in rows
+    ]
+
+
+def build_spending_stats(user, month_start=None):
+    """소비 기록 통계 (§8.9).
+
+    소비로그 상단 카드와 초이지 리포트가 같은 응답을 씁니다. `month_start`가
+    없으면 전체 기간입니다.
+
+    표시 문자열이 아닌 **숫자만** 담아 돌려줍니다. 소비 패턴 분석(4일차)이
+    이 값을 그대로 프롬프트 근거로 쓰기 때문입니다.
+    """
+    records = SpendingRecord.objects.filter(user=user)
+    if month_start is not None:
+        date_from, date_to = _month_bounds(month_start)
+        records = records.filter(recorded_on__range=(date_from, date_to))
+
+    purchased = records.filter(
+        purchase_status=SpendingRecord.PurchaseStatus.PURCHASED
+    )
+    rated = records.filter(satisfaction__isnull=False)
+
+    totals = records.aggregate(total_count=Count("id"))
+    purchased_totals = purchased.aggregate(
+        purchased_count=Count("id"),
+        total_spent=Sum("product_price"),
+    )
+    satisfaction_totals = rated.aggregate(average=Avg("satisfaction"))
+    low = records.filter(
+        satisfaction__lte=LOW_SATISFACTION_THRESHOLD
+    ).aggregate(count=Count("id"), amount=Sum("product_price"))
+
+    total_count = totals["total_count"]
+    purchased_count = purchased_totals["purchased_count"]
+    average = satisfaction_totals["average"]
+
+    by_category = _by_category(purchased)
+    by_purpose = _by_purpose(rated)
+
+    return {
+        "period": _period(month_start),
+        "total_count": total_count,
+        "purchased_count": purchased_count,
+        "total_spent": purchased_totals["total_spent"] or 0,
+        # 기록이 0건이면 0으로 나누게 되므로 분모를 먼저 확인합니다.
+        "purchase_rate": (
+            round(purchased_count * 100 / total_count) if total_count else 0
+        ),
+        "average_satisfaction": round(average, 1) if average else None,
+        "by_category": by_category,
+        "top_category": by_category[0] if by_category else None,
+        "donut_slices": _donut_slices(by_category),
+        "by_purpose": by_purpose,
+        # `_by_purpose()`가 만족도 내림차순이라 양 끝이 최고·최저입니다.
+        "highest_satisfaction_purpose": by_purpose[0] if by_purpose else None,
+        "lowest_satisfaction_purpose": by_purpose[-1] if by_purpose else None,
+        "low_satisfaction": {
+            "threshold": LOW_SATISFACTION_THRESHOLD,
+            "count": low["count"],
+            "amount": low["amount"] or 0,
+        },
+    }
