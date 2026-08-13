@@ -9,13 +9,16 @@ from .models import Decision
 from .serializers import (
     SpendingRecordFilterSerializer,
     SpendingRecordWriteSerializer,
+    SpendingStatsFilterSerializer,
     serialize_decision,
     serialize_spending_record,
     serialize_spending_record_item,
+    serialize_spending_stats,
 )
 from .services import (
     DecisionServiceError,
     SpendingRecordServiceError,
+    build_spending_stats,
     create_decision,
     create_spending_record,
     filter_spending_records,
@@ -147,3 +150,24 @@ class SpendingRecordListAPIView(APIView):
                 ],
             }
         )
+
+
+class SpendingStatsAPIView(APIView):
+    """소비 기록 통계 (docs/API.md §8.9).
+
+    소비로그 상단 요약 카드(`?month=2026-08`)와 초이지 리포트(전체 기간)가
+    같은 응답을 씁니다.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = SpendingStatsFilterSerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return _validation_error(serializer)
+
+        stats = build_spending_stats(
+            request.user,
+            serializer.validated_data.get("month"),
+        )
+        return Response(serialize_spending_stats(stats))

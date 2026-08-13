@@ -1981,27 +1981,175 @@ API는 아래 스펙(§8.5~§8.8)을 기준으로 구현합니다. 소비 패턴
 `results` 항목은 카드에 필요한 필드만 담습니다. `decision`과 스냅샷 전체는
 상세(§8.6)에서만 내려갑니다. 목록 30건마다 게이지 데이터를 만들 이유가 없습니다.
 
-### 8.9 소비 기록 통계 — 스펙 예정
+### 8.9 `GET /api/analyses/spending-records/stats/` — 소비 기록 통계 ★
 
-소비로그 상단 요약 카드와 초이지 리포트 화면이 쓰는 집계 API입니다. **§8.5~§8.8
-다음 작업**이며 아래 항목을 다룹니다.
+소비로그 상단 요약 카드와 초이지 리포트 화면이 함께 씁니다.
 
-| 화면 | 계산 |
+**쿼리 파라미터**
+
+| 이름 | 예시 | 설명 |
+|---|---|---|
+| `month` | `2026-08` | 해당 월 1일~말일. 생략하면 **전체 기간** |
+
+> **엔드포인트를 하나로 두는 이유**: 소비로그 카드는 "이번 달 소비"이고
+> 리포트는 "총 소비 기록 38건"이라 모집단만 다를 뿐 계산이 같습니다.
+> 프론트는 응답 파싱 로직을 한 벌만 두고 `month`만 붙였다 뗐다 하면 됩니다.
+
+**200 OK**
+
+```json
+{
+  "period": {
+    "month": "2026-08",
+    "label": "2026년 8월",
+    "date_from": "2026-08-01",
+    "date_to": "2026-08-31"
+  },
+  "total_count": 38,
+  "purchased_count": 24,
+  "total_spent": 8450000,
+  "total_spent_display": "8,450,000원",
+  "purchase_rate": 63,
+  "purchase_rate_display": "63%",
+  "average_satisfaction": 4.2,
+  "average_satisfaction_display": "4.2점",
+  "top_category": {
+    "name": "디지털·전자기기",
+    "code": "DIGITAL",
+    "amount": 3200000,
+    "amount_display": "3,200,000원",
+    "count": 6,
+    "ratio": 38,
+    "ratio_display": "38%"
+  },
+  "by_category": [
+    {
+      "name": "디지털·전자기기",
+      "code": "DIGITAL",
+      "amount": 3200000,
+      "amount_display": "3,200,000원",
+      "count": 6,
+      "ratio": 38,
+      "ratio_display": "38%"
+    }
+  ],
+  "chart": {
+    "slices": [
+      { "name": "디지털·전자기기", "code": "DIGITAL", "ratio": 38, "ratio_display": "38%", "is_others": false },
+      { "name": "여행", "code": "TRAVEL", "ratio": 27, "ratio_display": "27%", "is_others": false },
+      { "name": "문화·여가", "code": "CULTURE", "ratio": 21, "ratio_display": "21%", "is_others": false },
+      { "name": "기타", "code": null, "ratio": 14, "ratio_display": "14%", "is_others": true,
+        "items": [
+          { "name": "생활·편의", "code": "LIVING", "ratio": 9, "ratio_display": "9%" },
+          { "name": "운동·건강", "code": "HEALTH", "ratio": 5, "ratio_display": "5%" }
+        ] }
+    ]
+  },
+  "by_purpose": [
+    {
+      "purpose": "SELF_DEVELOPMENT",
+      "purpose_display": "자기계발",
+      "count": 7,
+      "average_satisfaction": 4.6,
+      "average_satisfaction_display": "4.6점"
+    }
+  ],
+  "highest_satisfaction_purpose": {
+    "purpose": "SELF_DEVELOPMENT",
+    "purpose_display": "자기계발",
+    "count": 7,
+    "average_satisfaction": 4.6,
+    "average_satisfaction_display": "4.6점"
+  },
+  "lowest_satisfaction_purpose": {
+    "purpose": "CONVENIENCE",
+    "purpose_display": "일상 편의",
+    "count": 4,
+    "average_satisfaction": 2.5,
+    "average_satisfaction_display": "2.5점"
+  },
+  "low_satisfaction": {
+    "threshold": 3,
+    "count": 5,
+    "amount": 740000,
+    "amount_display": "740,000원"
+  }
+}
+```
+
+**화면 ↔ 필드 매핑**
+
+| 화면 | 필드 |
 |---|---|
-| 이번 달 소비 금액 | 이번 달 `PURCHASED` 기록의 `product_price` 합 |
-| 분야별 소비 | `category`별 금액 합 (리포트 도넛 차트) |
-| 평균 만족도 | `satisfaction` 평균 |
-| 구매 확정률 | 전체 기록 중 `PURCHASED` 비율 |
-| 목적별 만족도 | `purpose_snapshot`별 `satisfaction` 평균 |
-| 만족도 3점 이하 소비 | "다시 생각해볼 소비" 카드 |
+| 소비로그 · 이번 달 소비 | `total_spent_display` |
+| 소비로그 · 가장 많이 소비 | `top_category.name` |
+| 소비로그 · 평균 만족도 | `average_satisfaction_display` |
+| 소비로그 · 구매 확정률 | `purchase_rate_display` |
+| 리포트 · 총 소비 기록 | `total_count` |
+| 리포트 · 도넛 차트 | `chart.slices` |
+| 리포트 · 가장 많이 소비하는 분야 | `top_category` |
+| 리포트 · 만족도 높은 소비 | `highest_satisfaction_purpose` |
+| 리포트 · 다시 생각해볼 소비 | `lowest_satisfaction_purpose` |
 
-> **요약을 목록 응답에 넣지 않는 이유**: 소비로그 카드 문구가 "이번 달 소비"로
-> 고정인데 목록은 기간·분야·목적으로 필터됩니다. 한 응답에 담으면 필터를 바꿀
-> 때 요약이 따라 움직여야 하는지가 매번 애매해집니다. 집계축(분야·목적·만족도)이
-> 리포트 화면과 같으므로 §8.9 한 곳에 모읍니다.
+**집계 규칙**
 
-> 집계 금액에는 `purchase_status=PURCHASED`인 기록만 포함하고,
-> 구매 확정률의 분모만 전체 기록(확정+보류+안 함)입니다.
+| 항목 | 모집단 | 계산 |
+|---|---|---|
+| `total_count` | 전체 (확정+보류+안 함) | 건수 |
+| `purchased_count` | `PURCHASED` | 건수 |
+| `total_spent` | `PURCHASED` | `product_price` 합 |
+| `purchase_rate` | 분모 전체, 분자 `PURCHASED` | 백분율, 정수 반올림 |
+| `average_satisfaction` | `satisfaction`이 있는 기록 | 평균, 소수 첫째 자리 |
+| `by_category` | `PURCHASED` | `category`별 금액 합, 내림차순 |
+| `by_purpose` | `satisfaction`이 있는 기록 | `purpose_snapshot`별 평균 만족도 |
+| `low_satisfaction` | `satisfaction <= 3` | 건수와 금액 합 |
+
+> 금액 집계는 `PURCHASED`만 포함합니다. 사지 않은 물건 값을 이번 달 소비에
+> 더하면 안 됩니다. 반대로 `purchase_rate`의 **분모만** 전체 기록입니다.
+
+> `satisfaction`은 `PURCHASED`에만 저장되므로(§8.4) 만족도 집계는 자연히
+> 구매 확정 기록만 대상이 됩니다. 별도 필터를 걸지 않습니다.
+
+**도넛 차트의 `chart.slices`**
+
+상위 3개 분야 + 나머지를 묶은 `"기타"` 한 조각입니다. 묶인 세부 분야는
+`items`에 담기므로 "기타 영역을 클릭하면 세부 영역을 확인할 수 있어요"를
+추가 요청 없이 그릴 수 있습니다.
+
+> **서버가 잘라서 내려보내는 이유**: 프론트가 정렬해서 앞 3개를 자르면
+> 동점 처리와 반올림이 화면마다 달라집니다. (§2.10) 분야가 3개 이하이면
+> `기타` 조각은 만들지 않습니다.
+
+**비율(`ratio`) 계산**
+
+`PURCHASED` 금액 합계 대비 백분율이고 정수로 반올림합니다. 반올림 때문에
+합이 100이 되지 않을 수 있으므로, **가장 큰 조각에 차이를 흡수시켜 합을
+정확히 100으로 맞춥니다.** 도넛이 한 조각 비거나 넘치면 눈에 띕니다.
+
+**기록이 없을 때**
+
+| 필드 | 값 |
+|---|---|
+| `total_count`, `total_spent`, `purchase_rate` | `0` |
+| `average_satisfaction` | `null`, `_display`는 `"—"` |
+| `top_category`, `highest_satisfaction_purpose`, `lowest_satisfaction_purpose` | `null` |
+| `by_category`, `by_purpose`, `chart.slices` | `[]` |
+
+> 신규 가입자는 기록이 0건입니다. 평균과 비율이 모두 0으로 나누기가 되므로
+> **분모가 0인 경우를 모든 계산에서 먼저 처리합니다.**
+
+**에러**
+
+| 상황 | code | status |
+|---|---|---|
+| `month` 형식이 `YYYY-MM`이 아님 | `VALIDATION_ERROR` | 400 |
+
+> **요약을 목록 응답(§8.8)에 넣지 않는 이유**: 소비로그 카드 문구가 "이번 달
+> 소비"로 고정인데 목록은 기간·분야·목적으로 필터됩니다. 한 응답에 담으면
+> 필터를 바꿀 때 요약이 따라 움직여야 하는지가 매번 애매해집니다.
+
+> **서비스 함수가 dict를 반환합니다.** 소비 패턴 분석(4일차)이 이 숫자를
+> 그대로 프롬프트 근거로 씁니다. 뷰에서 집계하면 재사용할 수 없습니다.
 
 ---
 
