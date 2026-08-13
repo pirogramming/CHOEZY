@@ -206,26 +206,26 @@
           margin-bottom: 22px;
         }
         .decide-popup__mascot {
-          width: 150px;
+          width: 100px;
           flex-shrink: 0;
-          margin-left: -8px;
+          margin-left: -16px;
           margin-top: 24px;
         }
         .decide-popup__bubble {
           flex: 1;
           background: #EAFBF4;
           border-radius: 18px;
-          padding: 24px 26px;
-          margin-left: -12px;
+          padding: 34px 36px;
+          margin-left: -16px;
         }
         .decide-popup__bubble-title {
-          font-size: 20px;
+          font-size: 24px;
           font-weight: 700;
           color: #222;
           margin: 0 0 12px;
         }
         .decide-popup__bubble-text {
-          font-size: 17px;
+          font-size: 20px;
           color: #444;
           line-height: 1.7;
           margin: 0;
@@ -358,9 +358,76 @@
         });
       });
 
-      // TODO: '결정' 버튼에 실제 저장 API 연결 필요
+      function getCookie(name) {
+        const match = document.cookie.match("(^|;)\\s*" + name + "\\s*=\\s*([^;]+)");
+        return match ? decodeURIComponent(match[2]) : null;
+      }
+
+      const considerationIdEl = document.getElementById("consideration-id");
+      const considerationId = considerationIdEl
+        ? JSON.parse(considerationIdEl.textContent)
+        : null;
+
+      async function submitDecision(purchaseStatus, satisfaction, method = "POST") {
+        const csrftoken = getCookie("csrftoken");
+        const res = await fetch(
+          `/api/analyses/considerations/${considerationId}/spending-record/`,
+          {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrftoken,
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              purchase_status: purchaseStatus,
+              satisfaction: satisfaction,
+            }),
+          }
+        );
+
+        if (res.status === 409 && method === "POST") {
+          return submitDecision(purchaseStatus, satisfaction, "PATCH");
+        }
+
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            body.error?.message || body.message || "저장에 실패했습니다."
+          );
+        }
+        return body;
+      }
+
+      const purchaseStatusMap = {
+        confirm: "PURCHASED",
+        hold: "DEFERRED",
+        cancel: "NOT_PURCHASED",
+      };
+
       popup.querySelectorAll(".decide-popup__submit").forEach((btn) => {
-        btn.addEventListener("click", closePopup);
+        btn.addEventListener("click", async () => {
+          const decisionKey = btn.dataset.decision;
+          const purchaseStatus = purchaseStatusMap[decisionKey];
+
+          if (decisionKey === "confirm" && selectedRating === 0) {
+            alert("만족도를 선택해주세요.");
+            return;
+          }
+
+          btn.disabled = true;
+          try {
+            await submitDecision(
+              purchaseStatus,
+              decisionKey === "confirm" ? selectedRating : null
+            );
+            closePopup();
+          } catch (err) {
+            alert(err.message);
+          } finally {
+            btn.disabled = false;
+          }
+        });
       });
     })();
   </script>
