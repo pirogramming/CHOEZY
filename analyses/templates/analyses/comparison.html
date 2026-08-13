@@ -20,7 +20,12 @@
       <div class="decision-card decision-card--gauge">
         <div class="gauge-wrap">
           <svg id="gauge-svg" width="320" height="200" viewBox="0 0 320 200" data-angle="{{ decision_data.chart.gauge.angle_deg }}">
-            <path d="M30,170 A130,130 0 0,1 290,170" stroke="{{ decision_data.chart.gauge.color }}" stroke-width="24" fill="none" stroke-linecap="round"/>
+            <path d="M30,170 A130,130 0 0,1 68.08,78.08" stroke="#F0454F" stroke-width="24" fill="none" stroke-linecap="butt"/>
+            <path d="M68.08,78.08 A130,130 0 0,1 160,40" stroke="#FF9F43" stroke-width="24" fill="none" stroke-linecap="butt"/>
+            <path d="M160,40 A130,130 0 0,1 251.92,78.08" stroke="#FFD93D" stroke-width="24" fill="none" stroke-linecap="butt"/>
+            <path d="M251.92,78.08 A130,130 0 0,1 290,170" stroke="#20CD8D" stroke-width="24" fill="none" stroke-linecap="butt"/>
+            <path d="M30,170 A130,130 0 0,1 31.98,147.43" stroke="#F0454F" stroke-width="24" fill="none" stroke-linecap="round"/>
+            <path d="M288.02,147.43 A130,130 0 0,1 290,170" stroke="#20CD8D" stroke-width="24" fill="none" stroke-linecap="round"/>
             <g id="gauge-needle">
               <line x1="160" y1="170" x2="160" y2="40" stroke="#333" stroke-width="6" stroke-linecap="round"/>
             </g>
@@ -45,10 +50,207 @@
     </div>
 
     <div class="decision-col">
-      <div class="decision-col__title-row">
-        <img src="{% static 'images/icon-bar.png' %}" alt="" class="decision-card__icon-img">
-        <span class="decision-card__title">구매 의사결정 지원</span>
+      <div class="decision-col__title-row" style="display:flex; align-items:center; justify-content:space-between; position:relative; width:100%; box-sizing:border-box;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <img src="{% static 'images/icon-bar.png' %}" alt="" class="decision-card__icon-img">
+          <span class="decision-card__title">구매 의사결정 지원</span>
+        </span>
+        <button type="button" id="purchase-decide-btn" style="display:flex; align-items:center; gap:6px; background:#39D39C; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-size:15px; font-weight:600; cursor:pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          구매 결정하기
+        </button>
+
+        <div id="decide-backdrop" class="decide-backdrop" hidden></div>
+        <div id="decide-popup" class="decide-popup" hidden>
+          <div class="decide-popup__tabs">
+            <button type="button" class="decide-tab is-active" data-tab="confirm">
+              <svg class="decide-tab__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
+              구매 확정
+            </button>
+            <button type="button" class="decide-tab" data-tab="hold">
+              <svg class="decide-tab__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L22 20 L2 20 Z"/><line x1="12" y1="9" x2="12" y2="14"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              구매 보류
+            </button>
+            <button type="button" class="decide-tab" data-tab="cancel">
+              <svg class="decide-tab__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              구매 안함
+            </button>
+            <button type="button" id="decide-popup-close" class="decide-popup__close" aria-label="닫기">✕</button>
+          </div>
+
+          <div class="decide-popup__panel" data-panel="confirm">
+            <p class="decide-popup__label">고민한 상품의 구매 만족도</p>
+            <div class="decide-stars" id="decide-stars">
+              <span class="decide-star" data-value="1">★</span>
+              <span class="decide-star" data-value="2">★</span>
+              <span class="decide-star" data-value="3">★</span>
+              <span class="decide-star" data-value="4">★</span>
+              <span class="decide-star" data-value="5">★</span>
+              <span class="decide-stars__count" id="decide-stars-count">0/5점</span>
+            </div>
+            <button type="button" class="decide-popup__submit" data-decision="confirm">결정</button>
+          </div>
+
+          <div class="decide-popup__panel" data-panel="hold" hidden>
+            <div class="decide-popup__message">
+              <img src="{% static 'images/mascot-lightbulb.png' %}" alt="" class="decide-popup__mascot">
+              <div class="decide-popup__bubble">
+                <p class="decide-popup__bubble-title">조금 더 고민해도 좋아요</p>
+                <p class="decide-popup__bubble-text">구매 결정은 기록해둘게요.<br>나중에 다시 확인하고 결정할 수 있어요.</p>
+              </div>
+            </div>
+            <button type="button" class="decide-popup__submit" data-decision="hold">결정</button>
+          </div>
+
+          <div class="decide-popup__panel" data-panel="cancel" hidden>
+            <div class="decide-popup__message">
+              <img src="{% static 'images/mascot-lightbulb.png' %}" alt="" class="decide-popup__mascot">
+              <div class="decide-popup__bubble">
+                <p class="decide-popup__bubble-title">이번에는 구매하지 않을게요</p>
+                <p class="decide-popup__bubble-text">다음에 다른 상품을 고민할 때 더 나은 결정을 내릴 수 있도록<br>CHOEZY가 이 기록을 남겨둘게요.</p>
+              </div>
+            </div>
+            <button type="button" class="decide-popup__submit" data-decision="cancel">결정</button>
+          </div>
+
+          <p class="decide-popup__footnote">소비로그에서 확인 및 수정이 가능합니다</p>
+        </div>
       </div>
+
+      <style>
+        .decide-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.35);
+          z-index: 19;
+        }
+        .decide-popup {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 20;
+          width: 640px;
+          max-width: 90vw;
+          background: #fff;
+          border: 2px solid #39D39C;
+          border-radius: 20px;
+          box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+          padding: 28px 32px 24px;
+        }
+        .decide-popup__tabs {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        .decide-tab {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          border: 1.5px solid #ddd;
+          background: #fff;
+          color: #888;
+          border-radius: 999px;
+          padding: 10px 18px;
+          font-size: 19px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .decide-tab.is-active {
+          border-color: #39D39C;
+          color: #fff;
+          background: #39D39C;
+        }
+        .decide-popup__close {
+          margin-left: auto;
+          border: none;
+          background: none;
+          font-size: 24px;
+          color: #999;
+          cursor: pointer;
+        }
+        .decide-popup__label {
+          display: inline-block;
+          font-size: 19px;
+          color: #17A47A;
+          background: #EAFBF4;
+          padding: 8px 18px;
+          border-radius: 999px;
+          margin: 0 0 22px;
+        }
+        .decide-stars {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          margin-bottom: 26px;
+        }
+        .decide-star {
+          font-size: 54px;
+          color: #E0E0E0;
+          cursor: pointer;
+        }
+        .decide-star.is-selected {
+          color: #FFC940;
+        }
+        .decide-stars__count {
+          margin-left: 10px;
+          font-size: 19px;
+          color: #999;
+        }
+        .decide-popup__message {
+          display: flex;
+          align-items: flex-end;
+          gap: 8px;
+          margin-bottom: 22px;
+        }
+        .decide-popup__mascot {
+          width: 150px;
+          flex-shrink: 0;
+          margin-left: -8px;
+          margin-top: 24px;
+        }
+        .decide-popup__bubble {
+          flex: 1;
+          background: #EAFBF4;
+          border-radius: 18px;
+          padding: 24px 26px;
+          margin-left: -12px;
+        }
+        .decide-popup__bubble-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: #222;
+          margin: 0 0 12px;
+        }
+        .decide-popup__bubble-text {
+          font-size: 17px;
+          color: #444;
+          line-height: 1.7;
+          margin: 0;
+        }
+        .decide-popup__submit {
+          display: block;
+          margin-left: auto;
+          background: #39D39C;
+          color: #fff;
+          border: none;
+          border-radius: 12px;
+          padding: 12px 30px;
+          font-size: 20px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .decide-popup__footnote {
+          position: absolute;
+          left: 32px;
+          bottom: 26px;
+          margin: 0;
+          font-size: 16px;
+          color: #39D39C;
+        }
+      </style>
 
       <div class="decision-card decision-card--bar">
         <span class="decision-legend"><span class="legend-dot"></span>높을수록 적합해요</span>
@@ -92,6 +294,74 @@
         const rotation = angle - 90;
         needle.setAttribute("transform", "rotate(" + rotation + " 160 170)");
       }
+    })();
+
+    (function () {
+      const openBtn = document.getElementById("purchase-decide-btn");
+      const popup = document.getElementById("decide-popup");
+      const backdrop = document.getElementById("decide-backdrop");
+      const closeBtn = document.getElementById("decide-popup-close");
+      const tabs = popup ? popup.querySelectorAll(".decide-tab") : [];
+      const panels = popup ? popup.querySelectorAll(".decide-popup__panel") : [];
+      const stars = popup ? popup.querySelectorAll(".decide-star") : [];
+      const starsCount = document.getElementById("decide-stars-count");
+
+      if (!openBtn || !popup) return;
+
+      function openPopup() {
+        popup.hidden = false;
+        if (backdrop) backdrop.hidden = false;
+      }
+
+      function closePopup() {
+        popup.hidden = true;
+        if (backdrop) backdrop.hidden = true;
+      }
+
+      openBtn.addEventListener("click", () => {
+        if (popup.hidden) openPopup();
+        else closePopup();
+      });
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", closePopup);
+      }
+
+      if (backdrop) {
+        backdrop.addEventListener("click", closePopup);
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.classList.remove("is-active"));
+          tab.classList.add("is-active");
+          const target = tab.dataset.tab;
+          panels.forEach((panel) => {
+            panel.hidden = panel.dataset.panel !== target;
+          });
+        });
+      });
+
+      let selectedRating = 0;
+      stars.forEach((star) => {
+        star.addEventListener("click", () => {
+          selectedRating = Number(star.dataset.value);
+          stars.forEach((s) => {
+            s.classList.toggle(
+              "is-selected",
+              Number(s.dataset.value) <= selectedRating
+            );
+          });
+          if (starsCount) {
+            starsCount.textContent = selectedRating + "/5점";
+          }
+        });
+      });
+
+      // TODO: '결정' 버튼에 실제 저장 API 연결 필요
+      popup.querySelectorAll(".decide-popup__submit").forEach((btn) => {
+        btn.addEventListener("click", closePopup);
+      });
     })();
   </script>
 
