@@ -34,7 +34,7 @@ class DecisionAPITests(TestCase):
             user=self.user,
             product_name="테스트 노트북",
             product_price=1_200_000,
-            purpose=Consideration.Purpose.STUDY,
+            purpose=Consideration.Purpose.SELF_DEVELOPMENT,
             status=Consideration.Status.GENERATED,
         )
         self.consideration.categories.add(self.category)
@@ -355,7 +355,8 @@ class DecisionPageTests(TestCase):
         # 화면에 하드코딩된 값이 아니라 실제 데이터가 렌더되는지 확인한다
         self.assertContains(response, "근거 1")
         self.assertContains(response, "종합 설명")
-        self.assertContains(response, "rotate(99.0, 160, 170)")
+        # 바늘 회전은 브라우저 JS가 data-angle을 읽어 계산한다
+        self.assertContains(response, 'data-angle="99.0"')
         self.assertContains(response, "height:55%")
         self.assertContains(response, "height:88%")
         self.assertNotContains(response, "현재 사용자는 업무 생산성을")
