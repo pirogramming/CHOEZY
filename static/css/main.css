@@ -76,7 +76,7 @@ NAVIGATION
     display: flex;
     align-items: center;
     width: 230px;
-    transform: translateX(-90px);
+    transform: translateX(-110px);
 }
 
 .home-logo img {
@@ -88,7 +88,8 @@ NAVIGATION
 .home-nav-menu {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
+    transform: translateX(27px);
 }
 
 .home-nav-link {
