@@ -2013,6 +2013,9 @@ API는 아래 스펙(§8.5~§8.8)을 기준으로 구현합니다. 소비 패턴
   "purchase_rate_display": "63%",
   "average_satisfaction": 4.2,
   "average_satisfaction_display": "4.2점",
+  "purposeful_count": 21,
+  "purposeful_rate": 88,
+  "purposeful_rate_display": "88%",
   "top_category": {
     "name": "디지털·전자기기",
     "code": "DIGITAL",
@@ -2088,8 +2091,14 @@ API는 아래 스펙(§8.5~§8.8)을 기준으로 구현합니다. 소비 패턴
 | 리포트 · 총 소비 기록 | `total_count` |
 | 리포트 · 도넛 차트 | `chart.slices` |
 | 리포트 · 가장 많이 소비하는 분야 | `top_category` |
+| 리포트 · 소비 목적 | `purposeful_rate_display` |
 | 리포트 · 만족도 높은 소비 | `highest_satisfaction_purpose` |
 | 리포트 · 다시 생각해볼 소비 | `lowest_satisfaction_purpose` |
+
+> **"목적형 소비"의 정의**: 구매 목적을 `ETC`(기타)로 두거나 비워 둔 기록만
+> 제외합니다. 목적 항목이 나중에 늘어나도 규칙을 고칠 필요가 없습니다.
+> 회원가입에서 고르는 소비 성향(`SpendingType`)과는 무관합니다 — 그쪽은
+> 사용자당 고정값이라 비율로 계산할 수 있는 값이 아닙니다.
 
 **집계 규칙**
 
@@ -2100,6 +2109,7 @@ API는 아래 스펙(§8.5~§8.8)을 기준으로 구현합니다. 소비 패턴
 | `total_spent` | `PURCHASED` | `product_price` 합 |
 | `purchase_rate` | 분모 전체, 분자 `PURCHASED` | 백분율, 정수 반올림 |
 | `average_satisfaction` | `satisfaction`이 있는 기록 | 평균, 소수 첫째 자리 |
+| `purposeful_rate` | 분모 `PURCHASED` | 구매 목적이 `ETC`·빈 값이 아닌 비율 |
 | `by_category` | `PURCHASED` | `category`별 금액 합, 내림차순 |
 | `by_purpose` | `satisfaction`이 있는 기록 | `purpose_snapshot`별 평균 만족도 |
 | `low_satisfaction` | `satisfaction <= 3` | 건수와 금액 합 |
@@ -2148,8 +2158,112 @@ API는 아래 스펙(§8.5~§8.8)을 기준으로 구현합니다. 소비 패턴
 > 소비"로 고정인데 목록은 기간·분야·목적으로 필터됩니다. 한 응답에 담으면
 > 필터를 바꿀 때 요약이 따라 움직여야 하는지가 매번 애매해집니다.
 
-> **서비스 함수가 dict를 반환합니다.** 소비 패턴 분석(4일차)이 이 숫자를
+> **서비스 함수가 dict를 반환합니다.** 소비 패턴 분석(§8.10)이 이 숫자를
 > 그대로 프롬프트 근거로 씁니다. 뷰에서 집계하면 재사용할 수 없습니다.
+
+### 8.10 `POST/GET /api/analyses/spending-records/pattern/` — AI 소비 패턴 분석 ★
+
+초이지 리포트 상단의 **"목적이 분명한 소비일수록 만족도가 높고, 신중하게
+비교한 후 구매하는 경향이 있어요"** 문장을 만듭니다.
+
+| 메서드 | 용도 |
+|---|---|
+| `GET` | 저장된 최신 분석 조회. 없으면 404 |
+| `POST` | 새로 분석해서 저장 (201) |
+
+**요청**
+
+```json
+{}
+```
+
+본문이 필요 없습니다. 근거는 모두 서버가 §8.9로 계산합니다.
+
+**201 Created / 200 OK**
+
+```json
+{
+  "id": 3,
+  "summary": "목적이 분명한 소비일수록 만족도가 높고, 신중하게 비교한 후 구매하는 경향이 있어요",
+  "record_count": 38,
+  "current_record_count": 41,
+  "is_stale": true,
+  "stats_snapshot": {
+    "총_소비_기록_수": 38,
+    "구매_확정률_퍼센트": 63,
+    "평균_만족도": 4.2,
+    "목적형_소비_비율_퍼센트": 88,
+    "가장_많이_소비한_분야": "디지털·전자기기",
+    "만족도가_높은_구매_목적": "자기계발",
+    "만족도가_낮은_구매_목적": "일상 편의"
+  },
+  "ai_model": "gemini-2.5-flash",
+  "created_at": "2026-08-14T14:12:44+09:00",
+  "created_at_display": "2026.08.14"
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `summary` | 화면 상단 문장. **200자 이하** |
+| `record_count` | 분석 시점의 소비 기록 수 |
+| `current_record_count` | 지금 기록 수 |
+| `is_stale` | 두 값이 다르면 `true` — 화면이 "다시 분석하기"를 띄웁니다 |
+| `stats_snapshot` | AI에게 근거로 넘긴 숫자 |
+
+> **`is_stale`을 서버가 계산해 주는 이유**: 프론트가 건수 두 개를 비교해
+> 판단하게 두면 "몇 건부터 다시 분석할지" 규칙이 화면마다 달라집니다.
+> (§2.10) 지금은 한 건이라도 늘면 `true`입니다.
+
+**화면 흐름**
+
+```text
+리포트 진입 → GET
+  ├─ 404          → POST로 첫 분석
+  ├─ is_stale=true → 문장은 그대로 보여주고 "다시 분석하기" 노출
+  └─ is_stale=false → 그대로 표시
+```
+
+> **분석 결과를 저장하는 이유**: Gemini 호출은 수 초가 걸립니다. 리포트
+> 화면을 열 때마다 부르면 매번 그만큼 기다려야 합니다. `Decision`(§8.1)과
+> 같은 이유입니다.
+
+> **덮어쓰지 않고 이력으로 쌓습니다.** 소비 기록이 늘면 분석도 달라지므로
+> 과거 분석을 남겨 두는 편이 자연스럽고, 조회는 항상 가장 최근 것입니다.
+
+**에러**
+
+| 상황 | code | status |
+|---|---|---|
+| 분석이 아직 없음 (`GET`) | `NOT_FOUND` | 404 |
+| 소비 기록 3건 미만 | `NOT_ENOUGH_RECORDS` | 409 |
+| AI 실패 / 응답 형식 오류 | `AI_REQUEST_FAILED` | 502 |
+| AI 타임아웃 | `AI_TIMEOUT` | 504 |
+
+> **3건 미만이면 분석하지 않습니다.** 한두 건으로 "소비 습관"을 말하면
+> 근거 없는 단정이 됩니다. Gemini를 호출하기 전에 막으므로 비용도 들지
+> 않습니다.
+
+**AI 응답 계약**
+
+```json
+{ "summary": "..." }
+```
+
+**문장 하나만 받습니다.** 비율·만족도·금액은 §8.9가 이미 계산했으므로
+프롬프트에 근거로 넣되 응답 스키마에서는 제외합니다. AI가 새 숫자를
+만들어 화면의 다른 카드와 어긋나는 일을 원천적으로 막습니다. (§8.1과
+같은 원칙)
+
+프롬프트에는 이렇게 지시합니다.
+
+- 제공된 숫자만 인용하고 새로운 수치를 만들지 말 것
+- 비율·점수를 문장에 직접 쓰지 말고 경향을 설명할 것
+- 사용자를 탓하지 말고 관찰한 경향을 담백하게 쓸 것
+
+> 두 번째 규칙이 필요한 이유: 화면에는 이미 "디지털 분야의 소비가 88%"
+> 같은 카드가 따로 있습니다. 문장에서 같은 숫자를 반복하면 카드와 중복되고,
+> 재분석 시점에 따라 문장 속 숫자만 낡을 수 있습니다.
 
 ---
 
@@ -2216,7 +2330,8 @@ GENERATED ──POST /api/analyses/considerations/<id>/spending-record/──▶
 | 비교표·기회비용 | `/products/comparison/<id>/` | - | `GET /api/alternatives/considerations/<id>/comparison/` |
 | 기회비용 시각화 | `/products/opportunity-cost/<id>/` | - | - (서버 사이드 렌더링, §5.5) |
 | 구매 의사결정 · 구매 결정 팝업 | `/analyses/considerations/<id>/decision/` | - | `POST /api/analyses/considerations/<id>/decision/`<br>`POST /api/analyses/considerations/<id>/spending-record/` |
-| 소비로그 · 상세 팝업 | `/analyses/spending-records/` | - | `GET /api/analyses/spending-records/`<br>`GET /api/analyses/considerations/<id>/spending-record/`<br>`PATCH /api/analyses/considerations/<id>/spending-record/` |
+| 소비로그 · 상세 팝업 | `/analyses/spending-records/` | - | `GET /api/analyses/spending-records/`<br>`GET /api/analyses/spending-records/stats/?month=`<br>`GET /api/analyses/considerations/<id>/spending-record/`<br>`PATCH /api/analyses/considerations/<id>/spending-record/` |
+| 초이지 리포트 | `/analyses/report/` | - | `GET /api/analyses/spending-records/stats/`<br>`GET /api/analyses/spending-records/pattern/`<br>`POST /api/analyses/spending-records/pattern/` |
 
 **"제출" 열과 "화면 안 동작" 열에 같은 동작이 동시에 나오지 않습니다.** (§1)
 

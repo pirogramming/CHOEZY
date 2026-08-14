@@ -13,7 +13,7 @@ import json
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from accounts.models import MONTHLY_BUDGET_RANGES
@@ -22,10 +22,16 @@ from products.models import Consideration
 
 from .ai_service import (
     GeminiDecisionAdvisor,
+    GeminiPatternAnalyst,
     GeminiRequestError,
     GeminiTimeoutError,
 )
-from .models import DECISION_KEY_POINT_COUNT, Decision, SpendingRecord
+from .models import (
+    DECISION_KEY_POINT_COUNT,
+    Decision,
+    SpendingPatternReport,
+    SpendingRecord,
+)
 
 
 KEY_POINT_MAX_LENGTH = (
@@ -620,6 +626,14 @@ def build_spending_stats(user, month_start=None):
     purchased_totals = purchased.aggregate(
         purchased_count=Count("id"),
         total_spent=Sum("product_price"),
+        # 목적이 분명한 소비 — 구매 목적을 "기타"로 두거나 비워 둔 기록만
+        # 제외합니다. 목적 항목이 늘어도 이 규칙은 그대로입니다. (§8.9)
+        purposeful_count=Count(
+            "id",
+            filter=~Q(
+                purpose_snapshot__in=["", Consideration.Purpose.ETC]
+            ),
+        ),
     )
     satisfaction_totals = rated.aggregate(average=Avg("satisfaction"))
     low = records.filter(
@@ -628,6 +642,7 @@ def build_spending_stats(user, month_start=None):
 
     total_count = totals["total_count"]
     purchased_count = purchased_totals["purchased_count"]
+    purposeful_count = purchased_totals["purposeful_count"]
     average = satisfaction_totals["average"]
 
     by_category = _by_category(purchased)
@@ -643,6 +658,13 @@ def build_spending_stats(user, month_start=None):
             round(purchased_count * 100 / total_count) if total_count else 0
         ),
         "average_satisfaction": round(average, 1) if average else None,
+        "purposeful_count": purposeful_count,
+        # 분모는 구매 확정 건수입니다. 사지 않은 기록은 "소비"가 아닙니다.
+        "purposeful_rate": (
+            round(purposeful_count * 100 / purchased_count)
+            if purchased_count
+            else 0
+        ),
         "by_category": by_category,
         "top_category": by_category[0] if by_category else None,
         "donut_slices": _donut_slices(by_category),
@@ -656,3 +678,163 @@ def build_spending_stats(user, month_start=None):
             "amount": low["amount"] or 0,
         },
     }
+
+
+# --------------------------------------------------------------------------
+# 소비 패턴 분석 (docs/API.md §8.10)
+# --------------------------------------------------------------------------
+
+
+# 분석 문장을 만들 만한 최소 기록 수입니다. 한두 건으로 "소비 습관"을
+# 말하면 근거 없는 단정이 됩니다.
+PATTERN_MIN_RECORD_COUNT = 3
+
+SUMMARY_MAX_LENGTH = 200
+
+
+class SpendingPatternServiceError(Exception):
+    def __init__(self, code, message, status_code, details=None):
+        self.code = code
+        self.message = message
+        self.status_code = status_code
+        self.details = details or {}
+        super().__init__(message)
+
+
+def _pattern_evidence(stats):
+    """프롬프트에 넣을 근거. 이미 계산된 숫자만 골라 담습니다."""
+    top_category = stats["top_category"]
+    highest = stats["highest_satisfaction_purpose"]
+    lowest = stats["lowest_satisfaction_purpose"]
+
+    def purpose_label(row):
+        if not row or not row["purpose"]:
+            return None
+        return Consideration.Purpose(row["purpose"]).label
+
+    return {
+        "총_소비_기록_수": stats["total_count"],
+        "구매_확정_건수": stats["purchased_count"],
+        "구매_확정률_퍼센트": stats["purchase_rate"],
+        "평균_만족도": stats["average_satisfaction"],
+        "목적형_소비_비율_퍼센트": stats["purposeful_rate"],
+        "가장_많이_소비한_분야": (
+            top_category["name"] if top_category else None
+        ),
+        "가장_많이_소비한_분야_비율_퍼센트": (
+            top_category["ratio"] if top_category else None
+        ),
+        "분야별_소비_비율": {
+            row["name"]: row["ratio"] for row in stats["by_category"]
+        },
+        "만족도가_높은_구매_목적": purpose_label(highest),
+        "만족도가_높은_구매_목적_점수": (
+            highest["average_satisfaction"] if highest else None
+        ),
+        "만족도가_낮은_구매_목적": purpose_label(lowest),
+        "만족도가_낮은_구매_목적_점수": (
+            lowest["average_satisfaction"] if lowest else None
+        ),
+        "만족도_3점_이하_건수": stats["low_satisfaction"]["count"],
+    }
+
+
+def _build_pattern_prompt(user, evidence):
+    profile = {
+        "소비_성향": [
+            dict(user.SpendingType.choices).get(value, value)
+            for value in user.spending_type
+        ],
+        "중요_가치_기준": [
+            dict(user.ValueCriterion.choices).get(value, value)
+            for value in user.value_criteria
+        ],
+        "월_소비_예산": user.get_monthly_budget_display(),
+    }
+    return (
+        "당신은 사용자의 소비 습관을 분석하는 상담가입니다. 아래 이미 "
+        "계산된 소비 통계와 소비 프로필을 근거로, 이 사람의 소비 습관을 "
+        "설명하는 한국어 문장을 두 문장 이내로 쓰세요.\n"
+        "규칙:\n"
+        "- 제공된 숫자만 인용하고 새로운 수치를 만들지 마세요.\n"
+        "- 비율이나 점수를 문장에 직접 쓰지 말고 경향을 설명하세요.\n"
+        "- 사용자를 탓하지 말고 관찰한 경향을 담백하게 쓰세요.\n"
+        f"- 전체 {SUMMARY_MAX_LENGTH}자를 넘기지 마세요.\n"
+        "예시: \"목적이 분명한 소비일수록 만족도가 높고, 신중하게 비교한 "
+        "후 구매하는 경향이 있어요\"\n"
+        + json.dumps(
+            {"소비_통계": evidence, "소비_프로필": profile},
+            ensure_ascii=False,
+        )
+    )
+
+
+def _validate_pattern_response(response):
+    if not isinstance(response, dict):
+        raise GeminiRequestError("Gemini 응답 형식이 올바르지 않습니다.")
+
+    summary = response.get("summary")
+    if not isinstance(summary, str) or not summary.strip():
+        raise GeminiRequestError("summary가 필요합니다.")
+    return summary.strip()[:SUMMARY_MAX_LENGTH]
+
+
+def create_spending_pattern_report(user, analyst=None):
+    """소비 패턴 분석 생성 (§8.10).
+
+    §8.9 통계를 근거로 넣고 AI에게는 문장만 받습니다. 비율·만족도는 이미
+    계산되어 있으므로 AI가 숫자를 새로 만들 이유가 없습니다.
+    """
+    analyst = analyst or GeminiPatternAnalyst()
+    stats = build_spending_stats(user)
+
+    if stats["total_count"] < PATTERN_MIN_RECORD_COUNT:
+        raise SpendingPatternServiceError(
+            "NOT_ENOUGH_RECORDS",
+            "소비 기록이 충분하지 않아 분석할 수 없습니다.",
+            409,
+            {
+                "record_count": [
+                    f"현재 {stats['total_count']}건, "
+                    f"최소 {PATTERN_MIN_RECORD_COUNT}건 필요"
+                ]
+            },
+        )
+
+    evidence = _pattern_evidence(stats)
+    prompt = _build_pattern_prompt(user, evidence)
+
+    try:
+        response = analyst.analyze(prompt)
+        summary = _validate_pattern_response(response)
+    except GeminiTimeoutError as exc:
+        raise SpendingPatternServiceError(
+            "AI_TIMEOUT", "AI 응답 시간이 초과되었습니다.", 504
+        ) from exc
+    except GeminiRequestError as exc:
+        raise SpendingPatternServiceError(
+            "AI_REQUEST_FAILED", "소비 패턴 분석에 실패했습니다.", 502
+        ) from exc
+
+    return SpendingPatternReport.objects.create(
+        user=user,
+        summary=summary,
+        record_count=stats["total_count"],
+        stats_snapshot=evidence,
+        ai_model=settings.GEMINI_MODEL,
+    )
+
+
+def get_latest_spending_pattern_report(user):
+    """가장 최근 분석 (§8.10). `Meta.ordering`이 최신순입니다."""
+    report = SpendingPatternReport.objects.filter(user=user).first()
+    if report is None:
+        raise SpendingPatternServiceError(
+            "NOT_FOUND", "소비 패턴 분석을 찾을 수 없습니다.", 404
+        )
+    return report
+
+
+def count_spending_records(user):
+    """분석 신선도 판단용 현재 기록 수 (§8.10)."""
+    return SpendingRecord.objects.filter(user=user).count()
