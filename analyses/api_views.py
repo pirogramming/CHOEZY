@@ -11,17 +11,22 @@ from .serializers import (
     SpendingRecordWriteSerializer,
     SpendingStatsFilterSerializer,
     serialize_decision,
+    serialize_spending_pattern_report,
     serialize_spending_record,
     serialize_spending_record_item,
     serialize_spending_stats,
 )
 from .services import (
     DecisionServiceError,
+    SpendingPatternServiceError,
     SpendingRecordServiceError,
     build_spending_stats,
+    count_spending_records,
     create_decision,
+    create_spending_pattern_report,
     create_spending_record,
     filter_spending_records,
+    get_latest_spending_pattern_report,
     get_spending_record,
     update_spending_record,
 )
@@ -171,3 +176,37 @@ class SpendingStatsAPIView(APIView):
             serializer.validated_data.get("month"),
         )
         return Response(serialize_spending_stats(stats))
+
+
+class SpendingPatternAPIView(APIView):
+    """소비 패턴 분석 생성·조회 (docs/API.md §8.10).
+
+    초이지 리포트 상단의 AI 문장입니다. Gemini 호출이 수 초 걸리므로
+    화면 진입 때는 GET으로 저장된 결과를 보여주고, 기록이 늘어 다시
+    분석할 때만 POST를 부릅니다.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            report = get_latest_spending_pattern_report(request.user)
+        except SpendingPatternServiceError as exc:
+            return service_error_response(exc)
+
+        return Response(
+            serialize_spending_pattern_report(
+                report, count_spending_records(request.user)
+            )
+        )
+
+    def post(self, request):
+        try:
+            report = create_spending_pattern_report(request.user)
+        except SpendingPatternServiceError as exc:
+            return service_error_response(exc)
+
+        return Response(
+            serialize_spending_pattern_report(report, report.record_count),
+            status=201,
+        )

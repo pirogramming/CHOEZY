@@ -355,3 +355,46 @@ class SpendingRecord(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user.username} - {self.product_name}"
+
+
+class SpendingPatternReport(TimeStampedModel):
+    """초이지 리포트의 AI 소비 습관 문장 (docs/API.md §8.10).
+
+    Gemini 호출이 수 초 걸리므로 리포트 화면을 열 때마다 부르지 않고
+    생성 결과를 저장해 두고 씁니다. 소비 기록이 늘면 분석이 달라지므로
+    덮어쓰지 않고 이력으로 쌓고, 화면은 가장 최근 것을 보여줍니다.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="spending_pattern_reports",
+    )
+
+    summary = models.TextField()
+
+    # 생성 시점의 전체 소비 기록 수입니다. 지금 기록 수와 다르면 화면이
+    # "다시 분석하기"를 띄울 수 있도록 응답에 신선도를 실어 보냅니다.
+    record_count = models.PositiveIntegerField()
+
+    # 프롬프트 근거로 넣은 통계입니다. 나중에 "AI가 무엇을 보고 이 문장을
+    # 썼는가"를 확인할 수 있어야 합니다.
+    stats_snapshot = models.JSONField()
+
+    ai_model = models.CharField(
+        max_length=100,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(
+                fields=["user", "-created_at"],
+                name="pattern_user_created_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - 소비 패턴 분석"

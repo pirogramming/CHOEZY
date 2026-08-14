@@ -387,6 +387,9 @@ def serialize_spending_stats(stats):
         "purchase_rate_display": _ratio_display(stats["purchase_rate"]),
         "average_satisfaction": average,
         "average_satisfaction_display": _satisfaction_display(average),
+        "purposeful_count": stats["purposeful_count"],
+        "purposeful_rate": stats["purposeful_rate"],
+        "purposeful_rate_display": _ratio_display(stats["purposeful_rate"]),
         "top_category": (
             _category_stat(top_category) if top_category else None
         ),
@@ -411,6 +414,27 @@ def serialize_spending_stats(stats):
             "amount": low["amount"],
             "amount_display": format_won(low["amount"]),
         },
+    }
+
+
+def serialize_spending_pattern_report(report, current_record_count):
+    """소비 패턴 분석 (§8.10).
+
+    `is_stale`은 분석 이후 기록이 늘었는지입니다. 화면이 "다시 분석하기"를
+    띄울지 판단하는 데 씁니다 — 프론트가 건수를 비교하지 않아도 됩니다.
+    """
+    return {
+        "id": report.id,
+        "summary": report.summary,
+        "record_count": report.record_count,
+        "current_record_count": current_record_count,
+        "is_stale": current_record_count != report.record_count,
+        "stats_snapshot": report.stats_snapshot,
+        "ai_model": report.ai_model,
+        "created_at": timezone.localtime(report.created_at).isoformat(),
+        "created_at_display": timezone.localtime(report.created_at).strftime(
+            "%Y.%m.%d"
+        ),
     }
 
 
