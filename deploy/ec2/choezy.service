@@ -1,0 +1,27 @@
+[Unit]
+Description=CHOEZY Django application
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=www-data
+WorkingDirectory=/srv/choezy
+EnvironmentFile=/etc/choezy.env
+RuntimeDirectory=choezy
+RuntimeDirectoryMode=0750
+UMask=0007
+ExecStart=/srv/choezy/.venv/bin/gunicorn \
+    --workers 3 \
+    --timeout 60 \
+    --bind unix:/run/choezy/gunicorn.sock \
+    config.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=30
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
