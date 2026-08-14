@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.views.generic import CreateView
 
 from alternatives.visualization import build_opportunity_cost_context
+from analyses.services import build_spending_stats
 
 from .forms import ConsiderationForm
 from .models import Consideration
@@ -69,35 +70,79 @@ def consumption_log(request):
     return render(request, "products/consumption_log.html")
 
 
+DONUT_COLOR_PALETTE = ["#93B686", "#BFDCB4", "#C9C3BC", "#E3EEDD"]
+
+
 @login_required
 def choezy_report(request):
-    top3 = [
-        {"label": "여행", "percent": 38, "color": "#93B686"},
-        {"label": "생활", "percent": 27, "color": "#BFDCB4"},
-        {"label": "문화", "percent": 21, "color": "#C9C3BC"},
-        {"label": "기타", "percent": 14, "color": "#E3EEDD"},
+    stats = build_spending_stats(request.user)
+
+    slices = stats["donut_slices"]
+    colored_slices = [
+        {**slice_data, "color": DONUT_COLOR_PALETTE[i % len(DONUT_COLOR_PALETTE)]}
+        for i, slice_data in enumerate(slices)
     ]
 
     gradient_parts = []
     cum = 0
-    for item in top3:
+    for slice_data in colored_slices:
         start = cum
-        cum += item["percent"]
-        gradient_parts.append(f"{item['color']} {start}% {cum}%")
+        cum += slice_data["ratio"]
+        gradient_parts.append(f"{slice_data['color']} {start}% {cum}%")
+    donut_gradient = (
+        "conic-gradient(" + ", ".join(gradient_parts) + ")"
+        if gradient_parts
+        else "conic-gradient(#eee 0% 100%)"
+    )
 
-    donut_gradient = "conic-gradient(" + ", ".join(gradient_parts) + ")"
+    top_category = stats["top_category"]
+    highest = stats["highest_satisfaction_purpose"]
+    lowest = stats["lowest_satisfaction_purpose"]
+    purpose_labels = dict(Consideration.Purpose.choices)
+
+    stat_cards = [
+        {
+            "icon": "category",
+            "label": "가장 많이 소비하는 분야",
+            "value": (
+                f"{top_category['name']} 분야의 소비가 {top_category['ratio']}%"
+                if top_category
+                else "아직 소비 기록이 없어요"
+            ),
+        },
+        {
+            "icon": "target",
+            "label": "구매 확정 비율",
+            "value": f"확정 구매가 {stats['purchase_rate']}%",
+        },
+        {
+            "icon": "heart",
+            "label": "만족도가 높은 소비",
+            "value": (
+                f"{purpose_labels.get(highest['purpose'], highest['purpose'])} "
+                f"만족도가 {highest['average_satisfaction']}점"
+                if highest
+                else "아직 데이터가 없어요"
+            ),
+        },
+        {
+            "icon": "refresh",
+            "label": "다시 생각해볼 소비",
+            "value": (
+                f"{purpose_labels.get(lowest['purpose'], lowest['purpose'])} "
+                f"만족도가 {lowest['average_satisfaction']}점"
+                if lowest
+                else "아직 데이터가 없어요"
+            ),
+        },
+    ]
 
     report_data = {
-        "total_count": 38,
-        "top3": top3,
+        "total_count": stats["total_count"],
+        "top3": colored_slices,
         "donut_gradient": donut_gradient,
         "insight_message": "목적이 분명한 소비일수록 만족도가 높고, 신중하게 비교한 후 구매하는 경향이 있어요",
-        "stats": [
-            {"icon": "category", "label": "가장 많이 소비하는 분야", "value": "디지털 분야의 소비가 X%"},
-            {"icon": "target", "label": "소비 목적", "value": "목적형 소비가 X%"},
-            {"icon": "heart", "label": "만족도가 높은 소비", "value": "자기개발 만족도가 X점"},
-            {"icon": "refresh", "label": "다시 생각해볼 소비", "value": "일상/편의 만족도가 X점"},
-        ],
+        "stats": stat_cards,
     }
 
     return render(

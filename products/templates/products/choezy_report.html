@@ -29,7 +29,7 @@
           {% for item in report_data.top3 %}
           <li>
             <span class="report-legend__dot" style="background:{{ item.color }};"></span>
-            {{ item.label }} {{ item.percent }}%
+            {{ item.name }} {{ item.ratio }}%
           </li>
           {% endfor %}
         </ul>
