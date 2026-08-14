@@ -190,8 +190,6 @@
 
     background:#DCDCDC;
 
-    transform:translateY(-2px);
-
 }
 
 
@@ -199,8 +197,6 @@
 .comparison-next-btn:hover {
 
     background:#18B97D;
-
-    transform:translateY(-2px);
 
 }
 
