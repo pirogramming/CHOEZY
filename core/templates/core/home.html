@@ -49,9 +49,18 @@
                     마이페이지
                 </a>
 
-                <a href="{% url 'accounts:login' %}" class="home-nav-link">
-                    로그인
-                </a>
+                {% if user.is_authenticated %}
+                    <form action="{% url 'accounts:logout' %}" method="post" class="home-nav-logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="home-nav-link home-nav-logout">
+                            로그아웃
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="home-nav-link">
+                        로그인
+                    </a>
+                {% endif %}
 
             </nav>
 
@@ -79,7 +88,7 @@
                 홈
             </a>
 
-            <a href="#" class="home-mobile-link">
+            <a href="{% url 'products:consumption_log' %}" class="home-mobile-link">
                 소비로그
             </a>
 
@@ -91,10 +100,18 @@
                 마이페이지
             </a>
 
-            <a href="{% url 'accounts:login' %}" class="home-mobile-link">
-                로그인
-            </a>
-
+            {% if user.is_authenticated %}
+                <form action="{% url 'accounts:logout' %}" method="post" class="home-mobile-logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="home-mobile-link home-mobile-logout">
+                        로그아웃
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="home-mobile-link">
+                    로그인
+                </a>
+            {% endif %}
         </nav>
 
     </header>
