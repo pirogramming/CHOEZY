@@ -16,7 +16,7 @@ class ProductPreviewAPIView(APIView):
         try:
             preview = fetch_product_preview(serializer.validated_data["url"])
         except ProductPreviewError as error:
-            if error.code == "PRODUCT_INFO_NOT_FOUND":
+            if error.code in {"PRODUCT_INFO_NOT_FOUND", "SITE_ACCESS_BLOCKED"}:
                 response_status = status.HTTP_422_UNPROCESSABLE_ENTITY
             elif error.code == "PRODUCT_FETCH_FAILED":
                 response_status = status.HTTP_502_BAD_GATEWAY

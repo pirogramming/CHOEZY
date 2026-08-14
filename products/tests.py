@@ -15,6 +15,7 @@ from .models import Consideration
 from .services import (
     ProductPreviewError,
     extract_product_metadata,
+    normalize_url,
     validate_public_url,
 )
 
@@ -331,6 +332,15 @@ class ProductPreviewAPITests(TestCase):
 
 
 class ProductMetadataExtractionTests(TestCase):
+    def test_한글이_포함된_상품_URL을_인코딩한다(self):
+        result = normalize_url(
+            "https://www.nike.com/kr/t/나이키-에어-포스?색상=화이트"
+        )
+
+        self.assertNotIn("나이키", result)
+        self.assertIn("%EB%82%98%EC%9D%B4%ED%82%A4", result)
+        self.assertIn("%EC%83%89%EC%83%81=%ED%99%94%EC%9D%B4%ED%8A%B8", result)
+
     def test_내부망_URL은_거부한다(self):
         with self.assertRaises(ProductPreviewError) as context:
             validate_public_url("http://127.0.0.1:8000/admin/")
@@ -370,6 +380,104 @@ class ProductMetadataExtractionTests(TestCase):
 
         self.assertEqual(result["product_name"], "에어팟 4")
         self.assertEqual(result["product_price"], 199_000)
+
+    def test_JSON_LD_Offer_중첩가격을_상품명과_함께_추출한다(self):
+        html = """
+            <script type="application/ld+json">
+            {
+              "@type": "Product",
+              "name": "맥북 에어 M4",
+              "image": {"url": "/macbook.png"},
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "KRW",
+                "price": "1,590,000원"
+              }
+            }
+            </script>
+        """
+
+        result = extract_product_metadata(html, "https://shop.example.com/mac")
+
+        self.assertEqual(result["product_name"], "맥북 에어 M4")
+        self.assertEqual(result["product_price"], 1_590_000)
+        self.assertEqual(result["image_url"], "https://shop.example.com/macbook.png")
+
+    def test_일반_JSON의_쇼핑몰_상품정보를_추출한다(self):
+        html = """
+            <script type="application/json">
+            {
+              "page": {
+                "product": {
+                  "productId": 123,
+                  "productName": "무선 이어폰",
+                  "salePrice": 129000,
+                  "imageUrl": "https://cdn.example.com/earphone.jpg"
+                }
+              }
+            }
+            </script>
+        """
+
+        result = extract_product_metadata(html, "https://shop.example.com/item/123")
+
+        self.assertEqual(result["product_name"], "무선 이어폰")
+        self.assertEqual(result["product_price"], 129_000)
+
+    def test_마이크로데이터_상품정보를_추출한다(self):
+        html = """
+            <div itemscope itemtype="https://schema.org/Product">
+              <span itemprop="name">기계식 키보드</span>
+              <meta itemprop="price" content="89,000">
+              <meta itemprop="image" content="/keyboard.jpg">
+            </div>
+        """
+
+        result = extract_product_metadata(html, "https://shop.example.com/keyboard")
+
+        self.assertEqual(result["product_name"], "기계식 키보드")
+        self.assertEqual(result["product_price"], 89_000)
+
+    def test_서로_다른_JSON_객체의_이름과_가격을_섞지_않는다(self):
+        html = """
+            <meta property="og:title" content="상품 목록">
+            <script type="application/json">
+            [{"name": "사이트 설정"}, {"price": 1000}]
+            </script>
+        """
+
+        with self.assertRaises(ProductPreviewError) as context:
+            extract_product_metadata(html, "https://shop.example.com/list")
+
+        self.assertEqual(context.exception.code, "PRODUCT_INFO_NOT_FOUND")
+
+    def test_자바스크립트_초기상태의_단일상품을_추출한다(self):
+        html = """
+            <script>
+              window.__STATE__ = {
+                "productName": "게이밍 마우스",
+                "salePrice": "59,900"
+              };
+            </script>
+        """
+
+        result = extract_product_metadata(html, "https://shop.example.com/mouse")
+
+        self.assertEqual(result["product_name"], "게이밍 마우스")
+        self.assertEqual(result["product_price"], 59_900)
+
+    def test_목록페이지의_여러_내장상품은_임의선택하지_않는다(self):
+        html = """
+            <script>
+              const products = [
+                {"productName": "상품 A", "salePrice": 10000},
+                {"productName": "상품 B", "salePrice": 20000}
+              ];
+            </script>
+        """
+
+        with self.assertRaises(ProductPreviewError):
+            extract_product_metadata(html, "https://shop.example.com/products")
 
 
 class OpportunityCostViewTests(TestCase):
