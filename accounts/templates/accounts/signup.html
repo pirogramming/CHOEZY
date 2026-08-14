@@ -162,34 +162,30 @@
                     아이디
                 </label>
 
-
-
                 <div class="signup-inline">
 
-
                     <div class="signup-input-box">
-
                         <input 
                             type="text"
                             name="username"
+                            id="username"
                             value="{{ form.username.value|default:'' }}"
                             maxlength="150"
                             required
                         >
-
                     </div>
-
-
 
                     <button 
                         type="button"
                         class="signup-check-btn"
+                        id="usernameCheckButton"
                     >
                         중복 확인
                     </button>
 
-
                 </div>
+
+                <p id="usernameCheckMessage" class="username-check-message"></p>
 
 
                 <label>
@@ -313,4 +309,4 @@
     </form>
 
 
-</div>
+    <script src="{% static 'signup.js' %}"></script>
