@@ -1,113 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     /* =========================================
-       더미 소비 데이터
-       -----------------------------------------
-       추후 API 연결 시 이 부분을 fetch로 교체
+    API
     ========================================= */
 
-    const consumptionData = [
-        {
-            id: 1,
-            date: "2026.08.03",
-            name: "MacBook Air",
-            category: "digital",
-            categoryName: "전자기기",
-            purpose: "study",
-            purposeName: "공부/자기계발",
-            price: 1390000,
-            status: "purchased",
-            statusName: "구매함",
-            satisfaction: 4,
-            image: "💻",
-            analysis:
-                "구매 전 여러 대안을 비교하고 기회비용을 확인한 소비예요."
-        },
-        {
-            id: 2,
-            date: "2026.07.10",
-            name: "나이키 에어포스 1",
-            category: "fashion",
-            categoryName: "패션",
-            purpose: "daily",
-            purposeName: "일상",
-            price: 129000,
-            status: "purchased",
-            statusName: "구매함",
-            satisfaction: 4,
-            image: "👟",
-            analysis:
-                "필요성과 가격을 비교한 뒤 구매한 소비예요."
-        },
-        {
-            id: 3,
-            date: "2026.07.21",
-            name: "소니 ZV-1F 카메라",
-            category: "digital",
-            categoryName: "전자기기",
-            purpose: "hobby",
-            purposeName: "취미/여가",
-            price: 620000,
-            status: "not_purchased",
-            statusName: "구매 안 함",
-            satisfaction: null,
-            image: "📷",
-            analysis:
-                "비교 결과 현재 상황에서는 구매하지 않는 선택을 했어요."
-        },
-        {
-            id: 4,
-            date: "2026.06.28",
-            name: "소니 WH-1000XM5",
-            category: "digital",
-            categoryName: "전자기기",
-            purpose: "hobby",
-            purposeName: "취미/여가",
-            price: 499000,
-            status: "not_purchased",
-            statusName: "구매 안 함",
-            satisfaction: null,
-            image: "🎧",
-            analysis:
-                "기회비용을 확인한 뒤 구매하지 않기로 결정했어요."
-        },
-        {
-            id: 5,
-            date: "2026.06.20",
-            name: "제주도 여행",
-            category: "travel",
-            categoryName: "여행",
-            purpose: "travel",
-            purposeName: "여행",
-            price: 350000,
-            status: "purchased",
-            statusName: "구매함",
-            satisfaction: 5,
-            image: "✈️",
-            analysis:
-                "상품 구매 대신 여행을 선택한 소비 기록이에요."
-        },
-        {
-            id: 6,
-            date: "2026.06.15",
-            name: "온라인 Python 강의",
-            category: "culture",
-            categoryName: "문화",
-            purpose: "study",
-            purposeName: "공부/자기계발",
-            price: 200000,
-            status: "pending",
-            statusName: "구매 보류",
-            satisfaction: null,
-            image: "💻",
-            analysis:
-                "현재는 구매를 보류하고 추가로 고민하고 있는 상품이에요."
-        }
-    ];
+    const LIST_API = "/api/analyses/spending-records/";
+
+    const DETAIL_API = (considerationId) =>
+        `/api/analyses/considerations/${considerationId}/spending-record/`;
+
+    const STATS_API = "/api/analyses/spending-records/stats/";
 
 
     /* =========================================
-       DOM
+    DOM
     ========================================= */
 
     const consumptionList =
@@ -142,9 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const modalClose =
         document.getElementById("modal-close");
-
-
-    /* Modal contents */
 
     const modalProductImage =
         document.getElementById("modal-product-image");
@@ -193,30 +95,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-       상태
+    상태
     ========================================= */
 
     let currentStatus = "all";
-    let visibleCount = 4;
+    let currentPage = 1;
+    const pageSize = 10;
+
+    let consumptionData = [];
+    let hasNext = false;
 
 
     /* =========================================
-       금액 포맷
+    공통 함수
     ========================================= */
 
     function formatPrice(price) {
-        return `${price.toLocaleString("ko-KR")}원`;
+        if (price === null || price === undefined) {
+            return "—";
+        }
+
+        return `${Number(price).toLocaleString("ko-KR")}원`;
     }
 
 
-    /* =========================================
-       별점
-    ========================================= */
+    function getStatusClass(status) {
+        if (status === "PURCHASED") {
+            return "purchased";
+        }
+
+        if (status === "DEFERRED") {
+            return "pending";
+        }
+
+        return "not-purchased";
+    }
+
 
     function renderStars(score) {
-
-        if (!score) {
-            return `<span class="item-stars empty">-</span>`;
+        if (score === null || score === undefined) {
+            return `
+                <span class="item-stars empty">-</span>
+            `;
         }
 
         return `
@@ -229,8 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     function renderModalStars(score) {
-
-        if (!score) {
+        if (score === null || score === undefined) {
             return "-";
         }
 
@@ -242,109 +161,294 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-       상태 클래스
+    상단 요약 통계 API
     ========================================= */
 
-    function getStatusClass(status) {
+    async function fetchSpendingStats() {
+        try {
+            const currentDate = new Date();
 
-        if (status === "purchased") {
-            return "purchased";
-        }
+            const year =
+                currentDate.getFullYear();
 
-        if (status === "pending") {
-            return "pending";
-        }
+            const month =
+                String(currentDate.getMonth() + 1)
+                    .padStart(2, "0");
 
-        return "not-purchased";
-    }
-
-
-    /* =========================================
-       필터링
-    ========================================= */
-
-    function getFilteredData() {
-
-        const selectedCategory =
-            categoryFilter.value;
-
-        const selectedPurpose =
-            purposeFilter.value;
-
-        const selectedDate =
-            dateFilter.value;
+            const response = await fetch(
+                `${STATS_API}?month=${year}-${month}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                }
+            );
 
 
-        return consumptionData.filter((item) => {
-
-            const statusMatch =
-                currentStatus === "all" ||
-                item.status === currentStatus;
-
-
-            const categoryMatch =
-                selectedCategory === "all" ||
-                item.category === selectedCategory;
-
-
-            const purposeMatch =
-                selectedPurpose === "all" ||
-                item.purpose === selectedPurpose;
-
-
-            let dateMatch = true;
-
-            if (selectedDate) {
-
-                const normalizedDate =
-                    item.date.replaceAll(".", "-");
-
-                dateMatch =
-                    normalizedDate === selectedDate;
+            if (!response.ok) {
+                throw new Error(
+                    `통계 API 요청 실패: ${response.status}`
+                );
             }
 
 
-            return (
-                statusMatch &&
-                categoryMatch &&
-                purposeMatch &&
-                dateMatch
+            const data =
+                await response.json();
+
+
+            renderSummary(data);
+
+        } catch (error) {
+            console.error(
+                "소비 통계 API 요청 실패:",
+                error
             );
-        });
+
+            renderSummaryError();
+        }
     }
 
 
     /* =========================================
-       소비 카드 생성
+    상단 요약 카드 출력
+    ========================================= */
+
+    function renderSummary(data) {
+
+        /* 이번 달 소비 금액 */
+
+        if (monthlySpending) {
+            monthlySpending.textContent =
+                data.total_spent_display || "0원";
+        }
+
+
+        /* 가장 많이 소비한 분야 */
+
+        if (mostSpentCategory) {
+            mostSpentCategory.textContent =
+                data.top_category?.name || "—";
+        }
+
+
+        /* 평균 만족도 */
+
+        if (averageSatisfaction) {
+            averageSatisfaction.textContent =
+                data.average_satisfaction_display || "—";
+        }
+
+
+        /* 구매 확정률 */
+
+        if (purchaseRate) {
+            purchaseRate.textContent =
+                data.purchase_rate_display || "0%";
+        }
+    }
+
+
+    function renderSummaryError() {
+
+        if (monthlySpending) {
+            monthlySpending.textContent = "—";
+        }
+
+        if (mostSpentCategory) {
+            mostSpentCategory.textContent = "—";
+        }
+
+        if (averageSatisfaction) {
+            averageSatisfaction.textContent = "—";
+        }
+
+        if (purchaseRate) {
+            purchaseRate.textContent = "—";
+        }
+    }
+
+
+    /* =========================================
+    소비 기록 목록 API
+    ========================================= */
+
+    async function fetchSpendingRecords({
+        page = 1,
+        append = false,
+    } = {}) {
+
+        const params = new URLSearchParams();
+
+        params.set("page", page);
+        params.set("page_size", pageSize);
+
+
+        /* 구매 상태 */
+
+        if (currentStatus !== "all") {
+            params.set(
+                "purchase_status",
+                currentStatus
+            );
+        }
+
+
+        /* 분야 */
+
+        if (
+            categoryFilter &&
+            categoryFilter.value !== "all"
+        ) {
+            params.set(
+                "category",
+                categoryFilter.value
+            );
+        }
+
+
+        /* 목적 */
+
+        if (
+            purposeFilter &&
+            purposeFilter.value !== "all"
+        ) {
+            params.set(
+                "purpose",
+                purposeFilter.value
+            );
+        }
+
+
+        /* 날짜 */
+
+        if (
+            dateFilter &&
+            dateFilter.value
+        ) {
+            params.set(
+                "date_from",
+                dateFilter.value
+            );
+
+            params.set(
+                "date_to",
+                dateFilter.value
+            );
+        }
+
+
+        try {
+            const response = await fetch(
+                `${LIST_API}?${params.toString()}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                }
+            );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    `API 요청 실패: ${response.status}`
+                );
+            }
+
+
+            const data =
+                await response.json();
+
+
+            if (append) {
+                consumptionData = [
+                    ...consumptionData,
+                    ...data.results,
+                ];
+            } else {
+                consumptionData =
+                    data.results;
+            }
+
+
+            currentPage =
+                data.page;
+
+            hasNext =
+                data.has_next;
+
+
+            renderList();
+
+        } catch (error) {
+
+            console.error(
+                "소비 기록 API 요청 실패:",
+                error
+            );
+
+            consumptionData = [];
+
+            hasNext = false;
+
+            renderList();
+        }
+    }
+
+
+    /* =========================================
+    소비 카드 생성
     ========================================= */
 
     function createConsumptionCard(item) {
 
         const statusClass =
-            getStatusClass(item.status);
+            getStatusClass(
+                item.purchase_status
+            );
+
+
+        const imageContent =
+            item.image_url
+                ? `
+                    <img
+                        src="${item.image_url}"
+                        alt="${item.product_name}"
+                    >
+                `
+                : "🛍️";
 
 
         return `
             <article
                 class="consumption-item"
                 data-id="${item.id}"
+                data-consideration-id="${item.consideration_id}"
                 tabindex="0"
             >
 
                 <div class="product-thumbnail">
-                    ${item.image}
+                    ${imageContent}
                 </div>
 
 
                 <div class="product-main">
 
                     <div class="product-name">
-                        ${item.name}
+                        ${item.product_name}
                     </div>
 
                     <div class="product-meta">
-                        <span>${item.categoryName}</span>
-                        <span>${item.purposeName}</span>
+                        <span>
+                            ${item.category || "—"}
+                        </span>
+
+                        <span>
+                            ${item.purpose_display || "—"}
+                        </span>
                     </div>
 
                 </div>
@@ -357,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div class="item-info-value">
-                        ${item.date}
+                        ${item.recorded_on_display || "—"}
                     </div>
 
                 </div>
@@ -370,14 +474,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div class="item-info-value">
-                        ${formatPrice(item.price)}
+                        ${item.product_price_display || "—"}
                     </div>
 
                 </div>
 
 
                 <div class="purchase-status ${statusClass}">
-                    ${item.statusName}
+                    ${item.purchase_status_display || "—"}
                 </div>
 
 
@@ -402,28 +506,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-       리스트 렌더링
+    리스트 렌더링
     ========================================= */
 
     function renderList() {
 
-        const filteredData =
-            getFilteredData();
-
-
-        const visibleData =
-            filteredData.slice(0, visibleCount);
-
-
         consumptionList.innerHTML =
-            visibleData
+            consumptionData
                 .map(createConsumptionCard)
                 .join("");
 
 
         /* 빈 상태 */
 
-        if (filteredData.length === 0) {
+        if (consumptionData.length === 0) {
 
             consumptionList.style.display =
                 "none";
@@ -445,9 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         /* 더보기 */
 
-        if (
-            filteredData.length > visibleCount
-        ) {
+        if (hasNext) {
 
             loadMoreButton.classList.remove(
                 "hidden"
@@ -466,7 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-       카드 클릭 이벤트
+    카드 이벤트
     ========================================= */
 
     function bindConsumptionCards() {
@@ -483,18 +577,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 "click",
                 () => {
 
-                    const id =
-                        Number(card.dataset.id);
+                    const considerationId =
+                        card.dataset.considerationId;
 
-                    const item =
-                        consumptionData.find(
-                            (data) =>
-                                data.id === id
-                        );
-
-                    if (item) {
-                        openModal(item);
-                    }
+                    openModal(
+                        considerationId
+                    );
                 }
             );
 
@@ -510,18 +598,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         event.preventDefault();
 
-                        const id =
-                            Number(card.dataset.id);
+                        const considerationId =
+                            card.dataset.considerationId;
 
-                        const item =
-                            consumptionData.find(
-                                (data) =>
-                                    data.id === id
-                            );
-
-                        if (item) {
-                            openModal(item);
-                        }
+                        openModal(
+                            considerationId
+                        );
                     }
                 }
             );
@@ -530,65 +612,156 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-       상세 팝업 열기
+    상세 API
     ========================================= */
 
-    function openModal(item) {
+    async function openModal(
+        considerationId
+    ) {
 
-        modalProductImage.textContent =
-            item.image;
+        try {
 
-        modalCategory.textContent =
-            item.categoryName;
-
-        modalProductName.textContent =
-            item.name;
-
-        modalPrice.textContent =
-            formatPrice(item.price);
-
-        modalRecordDate.textContent =
-            item.date;
-
-        modalRealPrice.textContent =
-            formatPrice(item.price);
-
-        modalPurpose.textContent =
-            item.purposeName;
-
-        modalStatus.textContent =
-            item.statusName;
-
-        modalStatus.className =
-            `modal-status ${getStatusClass(item.status)}`;
-
-        modalSatisfactionStars.textContent =
-            renderModalStars(item.satisfaction);
-
-        modalAnalysisText.textContent =
-            item.analysis;
+            const response = await fetch(
+                DETAIL_API(considerationId),
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                }
+            );
 
 
-        modal.classList.remove("hidden");
+            if (!response.ok) {
+                throw new Error(
+                    `상세 API 요청 실패: ${response.status}`
+                );
+            }
 
-        modal.setAttribute(
-            "aria-hidden",
-            "false"
-        );
 
-        document.body.classList.add(
-            "modal-open"
-        );
+            const item =
+                await response.json();
+
+
+            renderModal(item);
+
+
+            modal.classList.remove(
+                "hidden"
+            );
+
+            modal.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+
+            document.body.classList.add(
+                "modal-open"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "소비 기록 상세 조회 실패:",
+                error
+            );
+        }
     }
 
 
     /* =========================================
-       상세 팝업 닫기
+    상세 팝업 데이터 출력
+    ========================================= */
+
+    function renderModal(item) {
+
+        if (item.image_url) {
+
+            modalProductImage.innerHTML = `
+                <img
+                    src="${item.image_url}"
+                    alt="${item.product_name}"
+                    style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    "
+                >
+            `;
+
+        } else {
+
+            modalProductImage.textContent =
+                "🛍️";
+        }
+
+
+        modalCategory.textContent =
+            item.category || "—";
+
+
+        modalProductName.textContent =
+            item.product_name || "—";
+
+
+        modalPrice.textContent =
+            item.product_price_display || "—";
+
+
+        modalRecordDate.textContent =
+            item.recorded_on_display || "—";
+
+
+        modalRealPrice.textContent =
+            item.product_price_display || "—";
+
+
+        modalPurpose.textContent =
+            item.purpose_display || "—";
+
+
+        modalStatus.textContent =
+            item.purchase_status_display || "—";
+
+
+        modalStatus.className =
+            `modal-status ${getStatusClass(
+                item.purchase_status
+            )}`;
+
+
+        modalSatisfactionStars.textContent =
+            renderModalStars(
+                item.satisfaction
+            );
+
+
+        /* 초이지 분석 */
+
+        if (item.decision) {
+
+            modalAnalysisText.textContent =
+                item.decision.summary ||
+                "초이지 AI가 분석한 소비 기록이에요.";
+
+        } else {
+
+            modalAnalysisText.textContent =
+                "이 소비 기록에는 아직 AI 의사결정 분석 결과가 없어요.";
+        }
+    }
+
+
+    /* =========================================
+    팝업 닫기
     ========================================= */
 
     function closeModal() {
 
-        modal.classList.add("hidden");
+        modal.classList.add(
+            "hidden"
+        );
 
         modal.setAttribute(
             "aria-hidden",
@@ -600,10 +773,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-
-    /* =========================================
-       팝업 이벤트
-    ========================================= */
 
     modalClose.addEventListener(
         "click",
@@ -623,7 +792,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (
                 event.key === "Escape" &&
-                !modal.classList.contains("hidden")
+                !modal.classList.contains(
+                    "hidden"
+                )
             ) {
                 closeModal();
             }
@@ -632,7 +803,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
-       구매 상태 필터
+    구매 상태 필터
     ========================================= */
 
     statusButtons.forEach((button) => {
@@ -648,199 +819,131 @@ document.addEventListener("DOMContentLoaded", () => {
                         )
                 );
 
+
                 button.classList.add(
                     "active"
                 );
 
+
                 currentStatus =
                     button.dataset.status;
 
-                visibleCount = 4;
 
-                renderList();
+                currentPage = 1;
+
+                consumptionData = [];
+
+
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
             }
         );
     });
 
 
     /* =========================================
-       상세 필터
+    분야 필터
     ========================================= */
 
-    categoryFilter.addEventListener(
-        "change",
-        () => {
+    if (categoryFilter) {
 
-            visibleCount = 4;
+        categoryFilter.addEventListener(
+            "change",
+            () => {
 
-            renderList();
-        }
-    );
+                currentPage = 1;
 
-
-    purposeFilter.addEventListener(
-        "change",
-        () => {
-
-            visibleCount = 4;
-
-            renderList();
-        }
-    );
+                consumptionData = [];
 
 
-    dateFilter.addEventListener(
-        "change",
-        () => {
-
-            visibleCount = 4;
-
-            renderList();
-        }
-    );
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
+            }
+        );
+    }
 
 
     /* =========================================
-       더보기
+    목적 필터
+    ========================================= */
+
+    if (purposeFilter) {
+
+        purposeFilter.addEventListener(
+            "change",
+            () => {
+
+                currentPage = 1;
+
+                consumptionData = [];
+
+
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
+            }
+        );
+    }
+
+
+    /* =========================================
+    날짜 필터
+    ========================================= */
+
+    if (dateFilter) {
+
+        dateFilter.addEventListener(
+            "change",
+            () => {
+
+                currentPage = 1;
+
+                consumptionData = [];
+
+
+                fetchSpendingRecords({
+                    page: 1,
+                    append: false,
+                });
+            }
+        );
+    }
+
+
+    /* =========================================
+    더보기
     ========================================= */
 
     loadMoreButton.addEventListener(
         "click",
         () => {
 
-            visibleCount += 4;
+            if (!hasNext) {
+                return;
+            }
 
-            renderList();
+
+            fetchSpendingRecords({
+                page: currentPage + 1,
+                append: true,
+            });
         }
     );
 
 
     /* =========================================
-       소비 요약 계산
+    초기 실행
     ========================================= */
 
-    function updateSummary() {
+    fetchSpendingStats();
 
-        const purchasedItems =
-            consumptionData.filter(
-                (item) =>
-                    item.status === "purchased"
-            );
-
-
-        /* 이번 달 소비 */
-
-        const totalSpending =
-            purchasedItems.reduce(
-                (total, item) =>
-                    total + item.price,
-                0
-            );
-
-
-        monthlySpending.textContent =
-            `${totalSpending.toLocaleString("ko-KR")} 원`;
-
-
-        /* 카테고리별 소비 횟수 */
-
-        const categoryCount = {};
-
-        consumptionData.forEach((item) => {
-
-            categoryCount[item.categoryName] =
-                (categoryCount[item.categoryName] || 0) +
-                1;
-        });
-
-
-        let mostCategory = "-";
-        let maxCount = 0;
-
-        Object.entries(categoryCount)
-            .forEach(([category, count]) => {
-
-                if (count > maxCount) {
-
-                    maxCount = count;
-                    mostCategory = category;
-                }
-            });
-
-
-        mostSpentCategory.textContent =
-            mostCategory;
-
-
-        /* 평균 만족도 */
-
-        const satisfactionItems =
-            consumptionData.filter(
-                (item) =>
-                    item.satisfaction !== null
-            );
-
-
-        if (satisfactionItems.length > 0) {
-
-            const totalSatisfaction =
-                satisfactionItems.reduce(
-                    (total, item) =>
-                        total + item.satisfaction,
-                    0
-                );
-
-
-            const average =
-                totalSatisfaction /
-                satisfactionItems.length;
-
-
-            averageSatisfaction.textContent =
-                `${average.toFixed(1)} 점`;
-
-        } else {
-
-            averageSatisfaction.textContent =
-                "-";
-        }
-
-
-        /* 구매 확정률 */
-
-        const completedItems =
-            consumptionData.filter(
-                (item) =>
-                    item.status === "purchased" ||
-                    item.status === "not_purchased"
-            );
-
-
-        if (completedItems.length > 0) {
-
-            const rate =
-                (
-                    purchasedItems.length /
-                    completedItems.length
-                ) * 100;
-
-
-            purchaseRate.textContent =
-                `${Math.round(rate)} %`;
-
-        } else {
-
-            purchaseRate.textContent =
-                "-";
-        }
-    }
-
-
-    /* =========================================
-       초기 실행
-    ========================================= */
-
-    updateSummary();
-    renderList();
-
+    fetchSpendingRecords({
+        page: 1,
+        append: false,
+    });
 });
