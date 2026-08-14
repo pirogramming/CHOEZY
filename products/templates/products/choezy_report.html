@@ -35,14 +35,14 @@
         </ul>
       </div>
 
-      <a href="#" class="report-card__footlink">
+      <span class="report-card__footlink">
         <img src="{% static 'images/Group 4.png' %}" alt="기타 영역을 클릭하면 세부 영역을 확인할 수 있어요" class="report-card__footlink-img">
-      </a>
+      </span>
     </div>
 
     <div class="report-side">
       <div class="report-insight">
-        <img src="{% static 'images/chatbot.png' %}" alt="" class="report-insight__icon">
+        <svg class="report-insight__icon" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#17A47A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6V2H8"/><path d="M15 11v2"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M20 16a2 2 0 0 1-2 2H8.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 4 20.286V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/><path d="M9 11v2"/></svg>
         <p class="report-insight__text">{{ report_data.insight_message }}</p>
       </div>
 
