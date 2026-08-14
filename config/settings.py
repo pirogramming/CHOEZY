@@ -17,18 +17,46 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
+def env_list(name, default=""):
+    """Return a comma-separated environment variable as a clean list."""
+    return [
+        value.strip()
+        for value in os.getenv(name, default).split(",")
+        if value.strip()
+    ]
+
+
+def env_bool(name, default=False):
+    return os.getenv(name, str(default)).lower() in {"1", "true", "yes", "on"}
+
+
 # Quick-start development settings
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
     "unsafe-development-key",
 )
 
-DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
+DEBUG = env_bool("DJANGO_DEBUG")
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-]
+ALLOWED_HOSTS = env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    "127.0.0.1,localhost",
+)
+
+CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
+
+# Nginx terminates HTTPS in the EC2 deployment. Enable these options only after
+# HTTPS is configured on the domain.
+USE_HTTPS = env_bool("DJANGO_USE_HTTPS")
+
+if USE_HTTPS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_HSTS_SECONDS", "3600"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = env_bool("DJANGO_HSTS_PRELOAD")
 
 
 # Gemini
@@ -110,8 +138,15 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST", "127.0.0.1"),
         "PORT": os.getenv("DB_PORT", "5432"),
+        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
+        "CONN_HEALTH_CHECKS": True,
     }
 }
+
+if os.getenv("DB_SSLMODE"):
+    DATABASES["default"]["OPTIONS"] = {
+        "sslmode": os.environ["DB_SSLMODE"],
+    }
 
 
 # Password validation
@@ -154,7 +189,9 @@ USE_TZ = True
 
 
 # Static files
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
@@ -162,7 +199,7 @@ STATICFILES_DIRS = [
 
 
 # Media files
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 
 MEDIA_ROOT = BASE_DIR / "media"
 
