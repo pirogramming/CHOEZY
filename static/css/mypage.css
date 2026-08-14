@@ -11,7 +11,7 @@
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .mypage-col {
@@ -23,7 +23,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 22px;
 }
 
 .mypage-card__title {
@@ -37,6 +37,13 @@
   border: 2px solid #7FE0BE;
   border-radius: 20px;
   padding: 32px;
+  height: 100%;
+}
+
+.mypage-card--profile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .info-list {
