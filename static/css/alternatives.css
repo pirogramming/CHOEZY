@@ -92,8 +92,9 @@
 }
 
 .alt-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 32px;
 }
 
@@ -102,16 +103,16 @@
   color: #999;
   font-size: 16px;
   padding: 60px 0;
-  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .alt-retry-btn {
-  grid-column: 1 / -1;
-  justify-self: center;
-  margin-top: -40px;
+  margin: -40px auto 0;
 }
 
 .alt-card {
+  flex: 0 1 calc((100% - 64px) / 3);
+  min-width: 300px;
   background: #ffffff;
   border: 3px solid #7FE0BE;
   border-radius: 20px;
@@ -204,7 +205,7 @@
 }
 
 @media (max-width: 900px) {
-  .alt-cards {
-    grid-template-columns: 1fr;
+  .alt-card {
+    flex: 1 1 100%;
   }
 }
