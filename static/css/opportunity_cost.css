@@ -479,6 +479,8 @@ Fixed Bar
 
     height:450px;
 
+    transform:translateY(-5px);
+
     flex-shrink:0;
 
     display:flex;
