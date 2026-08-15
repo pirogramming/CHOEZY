@@ -9,11 +9,11 @@
 
     min-height:calc(100vh - 90px);
 
-    padding:30px 70px;
+    padding:34px 80px;
 
     box-sizing:border-box;
 
-    background:white;
+    background:#ffffff;
 
 }
 
@@ -29,12 +29,13 @@
 
     display:flex;
 
+    align-items: center;
+
     justify-content:space-between;
-
-    align-items:flex-start;
-
-    margin-bottom:5px;
-
+    
+    min-height: 150px;
+    padding: 0 16px;
+    margin-bottom: 20px;
 
 }
 
@@ -42,7 +43,7 @@
 
 .comparison-title-area {
 
-
+    padding-left: 10px;
     transform:translateX(17px);
 
 
@@ -52,12 +53,13 @@
 
 .comparison-title-area h1 {
 
+    margin: 0 0 18px;
 
-    font-size:40px;
+    font-size:38px;
 
     font-weight:700;
 
-    color:#222;
+    color:#2D4048;
 
     margin-bottom:12px;
 
@@ -69,11 +71,11 @@
 .comparison-title-area p {
 
 
-    font-size:18px;
+    font-size:20px;
 
-    color:#7d7d7d;
+    color: #879298;
 
-
+    transform: translateY(-5px);
 }
 
 
