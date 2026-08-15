@@ -3,7 +3,7 @@
     width:100%;
     min-height:calc(100vh - 90px);
 
-    padding:55px 75px 120px;
+    padding:15px 75px 120px;
 
     box-sizing:border-box;
 
@@ -22,13 +22,15 @@ Header
 
 .opportunity-header {
 
-    position:relative;
-
     display:flex;
 
-    align-items:flex-start;
+    align-items:center;
 
-    margin-bottom:55px;
+    justify-content:space-between;
+
+    min-height:150px;
+
+    margin-bottom:30px;
 
 }
 
@@ -41,7 +43,7 @@ Header
 
     gap:35px;
 
-    margin-left: 10px;
+    margin-left: 30px;
 
 }
 
@@ -69,6 +71,8 @@ Header
     font-size:38px;
 
     font-weight:700;
+
+    color:#2D4048;
 
     margin:0;
 
@@ -217,12 +221,6 @@ Guide
 
 .opportunity-guide {
 
-    position:absolute;
-
-    right:145px;
-
-    top:2px;
-
     background:#E7F8F2;
 
     padding:14px 24px;
@@ -232,6 +230,10 @@ Guide
     font-size:18px;
 
     font-weight:600;
+
+    white-space:nowrap;
+
+    transform: translateX(110px)
 
 }
 
@@ -243,18 +245,14 @@ Guide
 
 .opportunity-character {
 
-    position:absolute;
-
-    right:-50px;
-
-    top:-76px;
+    line-height:0;
 
 }
 
 
 .opportunity-character img {
 
-    width:230px;
+    width:170px;
 
 }
 
