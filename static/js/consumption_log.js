@@ -82,6 +82,27 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("modal-analysis-text");
 
 
+    /* 수정 모드 */
+
+    const modalStatusSelect =
+        document.getElementById("modal-status-select");
+
+    const modalPurposeSelect =
+        document.getElementById("modal-purpose-select");
+
+    const modalSatisfactionEdit =
+        document.getElementById("modal-satisfaction-edit");
+
+    const modalEditButton =
+        document.getElementById("modal-edit-button");
+
+    const modalEditCancel =
+        document.getElementById("modal-edit-cancel");
+
+    const modalEditError =
+        document.getElementById("modal-edit-error");
+
+
     /* Summary */
 
     const monthlySpending =
@@ -107,6 +128,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let consumptionData = [];
     let hasNext = false;
+
+
+    /* 상세 팝업에 띄운 기록 */
+
+    let currentRecord = null;
+    let isEditing = false;
+
+    /* 수정 모드에서 고른 별점. 저장 전까지는 서버 값과 별개입니다. */
+    let editSatisfaction = null;
 
 
     /* =========================================
@@ -656,6 +686,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 await response.json();
 
 
+            /* 다른 기록을 열 때 이전 수정 상태가 남지 않도록 합니다. */
+
+            exitEditMode();
+
             renderModal(item);
 
 
@@ -687,6 +721,9 @@ document.addEventListener("DOMContentLoaded", () => {
     ========================================= */
 
     function renderModal(item) {
+
+        currentRecord = item;
+
 
         if (item.image_url) {
 
@@ -766,10 +803,392 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================
+    소비 기록 수정
+
+    바꿀 수 있는 값은 구매 여부와 만족도뿐입니다. 목적은 기록 당시
+    값(`purpose_snapshot`)이라 서버가 수정을 받지 않습니다. (API.md §8.7)
+    ========================================= */
+
+    function getCsrfToken() {
+
+        const input =
+            document.querySelector(
+                "[name=csrfmiddlewaretoken]"
+            );
+
+        return input ? input.value : "";
+    }
+
+
+    function showEditError(message) {
+
+        modalEditError.textContent = message;
+
+        modalEditError.classList.remove("hidden");
+    }
+
+
+    function hideEditError() {
+
+        modalEditError.textContent = "";
+
+        modalEditError.classList.add("hidden");
+    }
+
+
+    /* 셀렉트 글자색을 고른 상태에 맞춥니다. 읽기 전용 표시와 같은
+       클래스를 써서 색은 CSS 한 곳에서만 정의합니다. */
+
+    function applyStatusSelectColor() {
+
+        modalStatusSelect.classList.remove(
+            "purchased",
+            "pending",
+            "not-purchased"
+        );
+
+        modalStatusSelect.classList.add(
+            getStatusClass(
+                modalStatusSelect.value
+            )
+        );
+    }
+
+
+    /* 고른 점수까지 별을 채웁니다. */
+
+    function renderEditStars() {
+
+        const isPurchased =
+            modalStatusSelect.value === "PURCHASED";
+
+
+        modalSatisfactionEdit.classList.toggle(
+            "disabled",
+            !isPurchased
+        );
+
+
+        modalSatisfactionEdit
+            .querySelectorAll(".star-button")
+            .forEach((button) => {
+
+                const score =
+                    Number(button.dataset.score);
+
+
+                button.disabled = !isPurchased;
+
+                button.classList.toggle(
+                    "filled",
+                    isPurchased &&
+                    editSatisfaction !== null &&
+                    score <= editSatisfaction
+                );
+            });
+    }
+
+
+    function enterEditMode() {
+
+        if (!currentRecord) {
+            return;
+        }
+
+
+        isEditing = true;
+
+        hideEditError();
+
+
+        modalStatusSelect.value =
+            currentRecord.purchase_status;
+
+        editSatisfaction =
+            currentRecord.satisfaction ?? null;
+
+
+        /* 기록에 목적이 비어 있으면 어떤 항목도 고르지 않은 상태로
+           둡니다. 임의로 하나를 채우면 사용자가 고르지 않은 값이
+           저장됩니다. */
+
+        modalPurposeSelect.value =
+            currentRecord.purpose || "";
+
+
+        modalStatus.classList.add("hidden");
+
+        modalStatusSelect.classList.remove("hidden");
+
+
+        modalPurpose.classList.add("hidden");
+
+        modalPurposeSelect.classList.remove("hidden");
+
+
+        modalSatisfactionStars.classList.add("hidden");
+
+        modalSatisfactionEdit.classList.remove("hidden");
+
+
+        modalEditCancel.classList.remove("hidden");
+
+        modalEditButton.textContent = "저장";
+
+
+        applyStatusSelectColor();
+
+        renderEditStars();
+    }
+
+
+    function exitEditMode() {
+
+        isEditing = false;
+
+        editSatisfaction = null;
+
+        hideEditError();
+
+
+        modalStatus.classList.remove("hidden");
+
+        modalStatusSelect.classList.add("hidden");
+
+
+        modalPurpose.classList.remove("hidden");
+
+        modalPurposeSelect.classList.add("hidden");
+
+
+        modalSatisfactionStars.classList.remove("hidden");
+
+        modalSatisfactionEdit.classList.add("hidden");
+
+
+        modalEditCancel.classList.add("hidden");
+
+        modalEditButton.textContent = "수정";
+
+        modalEditButton.disabled = false;
+    }
+
+
+    async function saveRecord() {
+
+        const purchaseStatus =
+            modalStatusSelect.value;
+
+
+        /* 구매함은 만족도가 반드시 있어야 합니다. 서버도 같은 규칙으로
+           400을 주지만 먼저 걸러 왕복을 줄입니다. (API.md §8.7) */
+
+        const satisfaction =
+            purchaseStatus === "PURCHASED"
+                ? editSatisfaction
+                : null;
+
+
+        if (
+            purchaseStatus === "PURCHASED" &&
+            satisfaction === null
+        ) {
+            showEditError(
+                "구매함으로 저장하려면 만족도를 선택해주세요."
+            );
+
+            return;
+        }
+
+
+        const payload = {
+            purchase_status: purchaseStatus,
+            satisfaction: satisfaction,
+        };
+
+
+        /* 목적은 값이 있을 때만 보냅니다. 서버는 목적이 빠진 요청에서
+           기존 값을 그대로 둡니다. (API.md §8.7) */
+
+        if (modalPurposeSelect.value) {
+            payload.purpose = modalPurposeSelect.value;
+        }
+
+
+        hideEditError();
+
+        modalEditButton.disabled = true;
+
+        modalEditButton.textContent = "저장 중...";
+
+
+        try {
+
+            const response = await fetch(
+                DETAIL_API(
+                    currentRecord.consideration_id
+                ),
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken(),
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify(payload),
+                }
+            );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    `소비 기록 수정 실패: ${response.status}`
+                );
+            }
+
+
+            const item =
+                await response.json();
+
+
+            exitEditMode();
+
+            renderModal(item);
+
+
+            /* 목록 카드와 요약 카드(구매 확정률·평균 만족도)가 함께
+               달라지므로 둘 다 다시 부릅니다. */
+
+            reloadFromFirstPage();
+
+            fetchSpendingStats();
+
+        } catch (error) {
+
+            console.error(
+                "소비 기록 수정 실패:",
+                error
+            );
+
+            modalEditButton.disabled = false;
+
+            modalEditButton.textContent = "저장";
+
+            showEditError(
+                "저장하지 못했어요. 잠시 후 다시 시도해주세요."
+            );
+        }
+    }
+
+
+    if (modalEditButton) {
+
+        modalEditButton.addEventListener(
+            "click",
+            () => {
+
+                if (isEditing) {
+
+                    saveRecord();
+
+                } else {
+
+                    enterEditMode();
+                }
+            }
+        );
+    }
+
+
+    if (modalEditCancel) {
+
+        modalEditCancel.addEventListener(
+            "click",
+            () => {
+
+                exitEditMode();
+
+
+                /* 화면을 수정 전 값으로 돌려놓습니다. */
+
+                if (currentRecord) {
+                    renderModal(currentRecord);
+                }
+            }
+        );
+    }
+
+
+    if (modalStatusSelect) {
+
+        modalStatusSelect.addEventListener(
+            "change",
+            () => {
+
+                /* 구매 보류·구매 안 함으로 바꾸면 만족도는 저장할 수
+                   없으므로 고른 별점을 버립니다. */
+
+                if (modalStatusSelect.value !== "PURCHASED") {
+                    editSatisfaction = null;
+                }
+
+                hideEditError();
+
+                applyStatusSelectColor();
+
+                renderEditStars();
+            }
+        );
+    }
+
+
+    if (modalSatisfactionEdit) {
+
+        modalSatisfactionEdit.addEventListener(
+            "click",
+            (event) => {
+
+                const button =
+                    event.target.closest(".star-button");
+
+
+                if (!button || button.disabled) {
+                    return;
+                }
+
+
+                const score =
+                    Number(button.dataset.score);
+
+
+                /* 같은 별을 다시 누르면 선택을 해제합니다. */
+
+                editSatisfaction =
+                    editSatisfaction === score
+                        ? null
+                        : score;
+
+
+                hideEditError();
+
+                renderEditStars();
+            }
+        );
+    }
+
+
+    /* =========================================
     팝업 닫기
     ========================================= */
 
     function closeModal() {
+
+        /* 저장하지 않은 수정은 버립니다. 다시 열 때 서버 값을 새로
+           받아오므로 화면을 되돌릴 필요는 없습니다. */
+
+        exitEditMode();
+
 
         modal.classList.add(
             "hidden"

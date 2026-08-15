@@ -626,6 +626,33 @@
     background: #ffffff;
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
     animation: modalOpen 0.22s ease;
+
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #dfe4e6 transparent;
+}
+
+
+/* 모달 스크롤바. 기본 스크롤바는 폭이 넓고 화살표 버튼이 붙어 둥근
+   모서리와 어울리지 않습니다. */
+
+.consumption-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.consumption-modal-content::-webkit-scrollbar-track {
+    /* 둥근 모서리를 침범하지 않도록 위아래를 띄웁니다. */
+    margin: 16px 0;
+    background: transparent;
+}
+
+.consumption-modal-content::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #dfe4e6;
+}
+
+.consumption-modal-content::-webkit-scrollbar-thumb:hover {
+    background: #c6cfd2;
 }
 
 @keyframes modalOpen {
@@ -749,15 +776,25 @@
     font-weight: 700;
 }
 
-.modal-status.purchased {
+/* 수정 모드에서 읽기 전용 값을 감춥니다. */
+.modal-detail-item strong.hidden {
+    display: none;
+}
+
+/* 읽기 전용 표시와 수정 모드 셀렉트가 같은 색을 씁니다. */
+
+.modal-status.purchased,
+.modal-edit-field.purchased {
     color: #20b980;
 }
 
-.modal-status.pending {
+.modal-status.pending,
+.modal-edit-field.pending {
     color: #e6ae23;
 }
 
-.modal-status.not-purchased {
+.modal-status.not-purchased,
+.modal-edit-field.not-purchased {
     color: #ef7777;
 }
 
@@ -781,6 +818,10 @@
     color: #ffbd3d;
     font-size: 21px;
     letter-spacing: 1px;
+}
+
+.satisfaction-stars.hidden {
+    display: none;
 }
 
 
@@ -807,10 +848,102 @@
 }
 
 /* 수정 버튼*/
+/* 수정 모드 입력 요소 */
+
+.modal-edit-field {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d7d7d7;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #252d30;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 펼친 목록은 상태 색을 물려받지 않고 검정으로 둡니다. 색은 닫힌
+   셀렉트에만 씁니다. */
+.modal-edit-field option {
+    color: #252d30;
+}
+
+.modal-edit-field.hidden {
+    display: none;
+}
+
+.satisfaction-stars-edit {
+    display: flex;
+    gap: 2px;
+}
+
+.satisfaction-stars-edit.hidden {
+    display: none;
+}
+
+.star-button {
+    padding: 0 1px;
+    border: 0;
+    background: none;
+    color: #dcdfe1;
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.star-button.filled {
+    color: #ffbd3d;
+}
+
+/* 구매 보류·구매 안 함은 만족도를 저장할 수 없어 입력을 막습니다. */
+.satisfaction-stars-edit.disabled .star-button {
+    color: #eceff0;
+    cursor: not-allowed;
+}
+
+
 .modal-edit {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
+    gap: 10px;
     margin-top: 18px;
+}
+
+.modal-edit-error {
+    flex: 1;
+    margin: 0;
+    color: #ef7777;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.modal-edit-error.hidden {
+    display: none;
+}
+
+.modal-edit-cancel {
+    min-width: 70px;
+    height: 40px;
+    padding: 0 16px;
+    border: 1px solid #d7d7d7;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #69767b;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.modal-edit-cancel:hover {
+    border-color: #b9c0c3;
+    color: #34454c;
+}
+
+.modal-edit-cancel.hidden {
+    display: none;
 }
 
 .modal-edit-button {
@@ -835,6 +968,12 @@
 .modal-edit-button:hover {
     background: #19b97d;
     border-color: #19b97d;
+}
+
+.modal-edit-button:disabled {
+    background: #a8e3cb;
+    border-color: #a8e3cb;
+    cursor: default;
 }
 
 

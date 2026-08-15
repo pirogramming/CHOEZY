@@ -8,6 +8,7 @@ from core.responses import error_response, service_error_response
 from .models import Decision
 from .serializers import (
     SpendingRecordFilterSerializer,
+    SpendingRecordUpdateSerializer,
     SpendingRecordWriteSerializer,
     SpendingStatsFilterSerializer,
     serialize_decision,
@@ -75,8 +76,9 @@ class SpendingRecordAPIView(APIView):
     """소비 기록 생성·조회·수정 (docs/API.md §8.5~§8.7).
 
     구매 의사결정 화면의 구매 결정 팝업이 POST를, 소비로그 상세 팝업이
-    GET과 PATCH를 씁니다. 요청 본문은 구매 상태와 만족도뿐이고 나머지
-    필드는 서버가 채웁니다. (§8.4)
+    GET과 PATCH를 씁니다. POST 본문은 구매 상태와 만족도뿐이고 나머지
+    필드는 서버가 채웁니다. (§8.4) PATCH는 여기에 목적을 더 받습니다 —
+    상세 팝업에서 잘못 고른 목적을 고칠 수 있어야 합니다. (§8.7)
     """
 
     permission_classes = [IsAuthenticated]
@@ -105,7 +107,7 @@ class SpendingRecordAPIView(APIView):
         return Response(serialize_spending_record(record), status=201)
 
     def patch(self, request, pk):
-        serializer = SpendingRecordWriteSerializer(data=request.data)
+        serializer = SpendingRecordUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return _validation_error(serializer)
 

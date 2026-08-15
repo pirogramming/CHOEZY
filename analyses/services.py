@@ -381,11 +381,15 @@ def update_spending_record(
     user,
     purchase_status,
     satisfaction=None,
+    purpose=None,
 ):
     """구매 기록 수정 (§8.7).
 
-    바꿀 수 있는 값은 구매 상태와 만족도뿐입니다. 상품 정보와 스냅샷은
-    기록 당시 값이므로 건드리지 않습니다.
+    바꿀 수 있는 값은 구매 상태와 만족도, 목적입니다. 상품 정보와 나머지
+    스냅샷은 기록 당시 값이므로 건드리지 않습니다.
+
+    `purpose`가 `None`이면 목적을 그대로 둡니다. 요청에 목적이 없다고 해서
+    지우면 안 됩니다.
     """
     with transaction.atomic():
         try:
@@ -400,6 +404,10 @@ def update_spending_record(
             ) from exc
 
         _apply_purchase_status(record, purchase_status, satisfaction)
+
+        if purpose is not None:
+            record.purpose_snapshot = purpose
+
         _save_validated(record)
 
     return record

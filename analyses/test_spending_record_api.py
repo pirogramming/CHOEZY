@@ -319,6 +319,78 @@ class UpdateSpendingRecordTests(SpendingRecordAPITestCase):
         self.assertEqual(record.purchased_on, timezone.localdate())
         self.assertEqual(record.satisfaction, 2)
 
+    def test_updates_purpose(self):
+        """상세 팝업에서 잘못 고른 목적을 고칠 수 있습니다. (§8.7)"""
+        response = self._patch(
+            {
+                "purchase_status": "PURCHASED",
+                "satisfaction": 3,
+                "purpose": Consideration.Purpose.GIFT,
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            SpendingRecord.objects.get().purpose_snapshot,
+            Consideration.Purpose.GIFT,
+        )
+        self.assertEqual(response.json()["purpose_display"], "선물")
+
+    def test_keeps_purpose_when_omitted(self):
+        """목적을 안 보냈다고 지우면 안 됩니다. (§8.7)"""
+        self._patch(
+            {
+                "purchase_status": "PURCHASED",
+                "satisfaction": 3,
+                "purpose": Consideration.Purpose.GIFT,
+            }
+        )
+
+        self._patch({"purchase_status": "PURCHASED", "satisfaction": 4})
+
+        self.assertEqual(
+            SpendingRecord.objects.get().purpose_snapshot,
+            Consideration.Purpose.GIFT,
+        )
+
+    def test_rejects_unknown_purpose(self):
+        response = self._patch(
+            {
+                "purchase_status": "PURCHASED",
+                "satisfaction": 3,
+                "purpose": "TRAVELLING",
+            }
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            SpendingRecord.objects.get().purpose_snapshot,
+            Consideration.Purpose.SELF_DEVELOPMENT,
+        )
+
+    def test_creation_still_ignores_purpose(self):
+        """구매 결정 팝업(§8.5)은 목적을 받지 않습니다."""
+        consideration = self._create_consideration(
+            purpose=Consideration.Purpose.WORK
+        )
+
+        response = self._post(
+            {
+                "purchase_status": "PURCHASED",
+                "satisfaction": 3,
+                "purpose": Consideration.Purpose.GIFT,
+            },
+            consideration=consideration,
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            SpendingRecord.objects.get(
+                consideration=consideration
+            ).purpose_snapshot,
+            Consideration.Purpose.WORK,
+        )
+
     def test_does_not_touch_snapshots(self):
         self.consideration.product_name = "바뀐 상품"
         self.consideration.save()

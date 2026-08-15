@@ -211,6 +211,10 @@ class SpendingRecord(TimeStampedModel):
 
     # 소비 기록 생성 당시의 입력값을 보존합니다. 원본 고민이나 회원
     # 프로필이 나중에 수정되더라도 과거 기록의 내용은 바뀌지 않습니다.
+    #
+    # `purpose_snapshot`만 예외로 소비로그 상세 팝업에서 직접 고칠 수
+    # 있습니다. (§8.7) 보호하려는 대상은 원본 변경이 과거 기록에 번지는
+    # 일이지, 사용자가 자기 기록을 바로잡는 일이 아닙니다.
     purpose_snapshot = models.CharField(
         max_length=30,
         blank=True,
