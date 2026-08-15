@@ -80,6 +80,15 @@
 
 }
 
+/* 첫 단계에는 이전 버튼을 표시하지 않되 다음 버튼의 기존 위치는 유지 */
+.step-button-area::before {
+
+    content:"";
+    flex:0 0 144px;
+    height:55px;
+
+}
+
 
 
 .step-button-area button {
@@ -107,30 +116,6 @@
     cursor:pointer;
 
     transition:0.2s;
-
-}
-
-
-
-/* 이전 단계 */
-
-.prev-step {
-
-    background:#f3f3f3;
-
-    color:#8b8b8b;
-
-}
-
-.prev-step span {
-
-    transform: translateX(-5px);
-
-}
-
-.prev-step:hover {
-
-    background:#e9e9e9;
 
 }
 
@@ -614,6 +599,10 @@
     .step-button-area {
         width: 100%;
         margin-top: 20px;
+    }
+
+    .step-button-area::before {
+        flex: 1;
     }
 
     .step-button-area button {

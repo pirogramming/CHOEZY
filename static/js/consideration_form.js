@@ -202,11 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   categoryDetail.addEventListener("input", () => resetConfirmButton("category"));
 
-  document.querySelector(".prev-step")?.addEventListener("click", (event) => {
-    const previousUrl = event.currentTarget.dataset.previousUrl;
-    window.location.href = previousUrl || "/";
-  });
-
   form.addEventListener("submit", (event) => {
     if (!validProduct()) {
       event.preventDefault();
