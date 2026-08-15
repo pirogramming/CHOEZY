@@ -1,6 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
 
 
+    const decisionButton = document.getElementById(
+        "opportunity-decision-btn"
+    );
+
+
+    if (decisionButton) {
+
+
+        decisionButton.addEventListener("click", () => {
+            createDecisionAndContinue(decisionButton);
+        });
+
+
+    }
+
+
     const bars = document.querySelectorAll(
         ".opportunity-bar"
     );
@@ -114,3 +130,94 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 });
+
+
+async function createDecisionAndContinue(button) {
+
+
+    const considerationId = button.dataset.considerationId;
+    const decisionUrl = button.dataset.decisionUrl;
+    const originalContent = button.innerHTML;
+    const errorElement = document.getElementById(
+        "opportunity-decision-error"
+    );
+
+
+    button.disabled = true;
+    button.textContent = "AI가 분석하는 중...";
+
+
+    if (errorElement) {
+        errorElement.hidden = true;
+    }
+
+
+    try {
+
+
+        const response = await fetch(
+            `/api/analyses/considerations/${considerationId}/decision/`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken(),
+                },
+                body: JSON.stringify({}),
+            }
+        );
+
+
+        if (response.ok) {
+            window.location.assign(decisionUrl);
+            return;
+        }
+
+
+        const body = await response.json();
+
+
+        // 이미 생성된 결과라면 중간 화면을 다시 보여주지 않고 곧바로
+        // 기존 의사결정 결과로 이동합니다.
+        if (response.status === 409 && body.error?.code === "ALREADY_EXISTS") {
+            window.location.assign(decisionUrl);
+            return;
+        }
+
+
+        throw new Error(
+            body.error?.message ?? "AI 의사결정 생성에 실패했습니다."
+        );
+
+
+    } catch (error) {
+
+
+        console.error(error);
+
+
+        if (errorElement) {
+            errorElement.textContent = error.message
+                || "네트워크 오류로 요청하지 못했습니다.";
+            errorElement.hidden = false;
+        }
+
+
+        button.disabled = false;
+        button.innerHTML = originalContent;
+
+
+    }
+
+
+}
+
+
+function getCsrfToken() {
+
+
+    const input = document.querySelector("[name=csrfmiddlewaretoken]");
+    return input ? input.value : "";
+
+
+}

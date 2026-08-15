@@ -82,6 +82,13 @@ Header
 Buttons
 ========================= */
 
+.opportunity-step-area {
+
+    display:flex;
+    flex-direction:column;
+
+}
+
 
 .opportunity-step-buttons {
 
@@ -180,6 +187,22 @@ Buttons
 .opportunity-next-btn:hover {
 
     background:#2ec48d;
+
+}
+
+.opportunity-next-btn:disabled {
+
+    cursor:wait;
+    opacity:0.75;
+
+}
+
+.opportunity-decision-error {
+
+    margin:10px 0 0;
+    color:#d14343;
+    font-size:14px;
+    text-align:right;
 
 }
 
