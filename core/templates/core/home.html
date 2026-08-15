@@ -33,6 +33,9 @@
             <!-- PC 네비게이션 -->
             <nav class="home-nav-menu">
 
+                <a href="#" class="home-nav-link">
+                    Contact Us
+                </a>
             </nav>
 
 
@@ -55,6 +58,13 @@
         <!-- 모바일 네비게이션 -->
         <nav class="home-mobile-menu" id="homeMobileMenu">
 
+            <a href="#" class="home-mobile-link">
+                Contact Us
+            </a>
+
+            <a href="{% url 'accounts:login' %}" class="home-mobile-link">
+                로그인
+            </a>
 
         </nav>
     </header>
@@ -96,9 +106,9 @@
                     </a>
 
 
-                    <a href="#" class="home-button home-button-secondary">
+                    <a href="{% url 'accounts:login' %}" class="home-button home-button-secondary">
 
-                        <span>Contact Us</span>
+                        <span>로그인</span>
 
                     </a>
 
