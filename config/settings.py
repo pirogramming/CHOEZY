@@ -197,6 +197,20 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+# 배포 시 정적 파일 내용이 바뀌면 해시가 포함된 새 URL을 생성합니다.
+# Nginx와 브라우저가 이전 CSS/JS를 캐시하고 있어도 최신 파일을 사용합니다.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage."
+            "ManifestStaticFilesStorage"
+        ),
+    },
+}
+
 
 # Media files
 MEDIA_URL = "/media/"
