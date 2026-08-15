@@ -243,42 +243,73 @@
 }
 
 .date-filter {
-    width: 208px;
-    position: relative;
-}
-
-.date-filter::after {
-    content: "▣";
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #69767b;
-    font-size: 18px;
-    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    width: 300px;
+    padding: 0 12px;
 }
 
 .date-filter input {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: 100%;
-    padding: 0 42px 0 18px;
+    padding: 0;
     border: 0;
     outline: none;
     background: transparent;
     color: #222222;
     font-family: inherit;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     box-sizing: border-box;
 }
 
+/* 달력 아이콘을 입력칸마다 그대로 씁니다. 시작일·종료일이 각각 자기
+   달력을 열어야 해서 컨테이너에 아이콘 하나를 겹쳐 두던 방식은 쓸 수
+   없습니다. */
 .date-filter input::-webkit-calendar-picker-indicator {
-    opacity: 0;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    opacity: 0.5;
     cursor: pointer;
-    position: absolute;
-    right: 0;
-    width: 42px;
-    height: 100%;
+}
+
+.date-filter input::-webkit-calendar-picker-indicator:hover {
+    opacity: 0.85;
+}
+
+.date-filter-separator {
+    flex-shrink: 0;
+    padding: 0 2px;
+    color: #69767b;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.date-filter-reset {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-left: 2px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #eef1f2;
+    color: #69767b;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.date-filter-reset:hover {
+    background: #e0e4e6;
+    color: #222222;
+}
+
+.date-filter-reset.hidden {
+    display: none;
 }
 
 
@@ -850,7 +881,8 @@
     .detail-filter {
         width: 100%;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        /* 목적 + 기간 2칸입니다. 기간은 날짜 입력이 둘이라 더 넓게 둡니다. */
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
     }
 
     .filter-select,
