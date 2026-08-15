@@ -69,6 +69,48 @@
   justify-content: center;
   box-shadow: 0 0 0 1px #f0f0f0;
   margin-top: 16px;
+  position: relative;
+}
+
+.report-donut[data-other-start] {
+  cursor: pointer;
+}
+
+.report-donut-tooltip {
+  position: absolute;
+  z-index: 10;
+  min-width: 150px;
+  padding: 12px 14px;
+  border: 1px solid #d8e8d3;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(45 64 72 / 18%);
+  color: #2d4048;
+  font-size: 14px;
+  line-height: 1.5;
+  pointer-events: none;
+  text-align: left;
+}
+
+.report-donut-tooltip strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #222;
+}
+
+.report-donut-tooltip ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.report-legend__other {
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.report-legend__other:focus-visible {
+  outline: 2px solid #20cd8d;
+  outline-offset: 4px;
 }
 
 .report-donut__hole {

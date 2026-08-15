@@ -127,6 +127,17 @@ def choezy_report(request):
         names.append("기타")
         counts.append(sum(row["count"] for row in rest_rows))
 
+    other_details = [
+        {
+            "name": purpose_labels.get(
+                row["purpose"],
+                row["purpose"] or "기타",
+            ),
+            "count": row["count"],
+        }
+        for row in rest_rows
+    ]
+
     ratios = _percentages(counts)
     colored_slices = [
         {"name": name, "ratio": ratio, "color": DONUT_COLOR_PALETTE[i % len(DONUT_COLOR_PALETTE)]}
@@ -138,6 +149,8 @@ def choezy_report(request):
     for slice_data in colored_slices:
         start = cum
         cum += slice_data["ratio"]
+        slice_data["start"] = start
+        slice_data["end"] = cum
         gradient_parts.append(f"{slice_data['color']} {start}% {cum}%")
     donut_gradient = (
         "conic-gradient(" + ", ".join(gradient_parts) + ")"
@@ -196,6 +209,15 @@ def choezy_report(request):
     report_data = {
         "total_count": stats["purchased_count"],
         "top3": colored_slices,
+        "other_slice": next(
+            (
+                slice_data
+                for slice_data in colored_slices
+                if slice_data["name"] == "기타"
+            ),
+            None,
+        ),
+        "other_details": other_details,
         "donut_gradient": donut_gradient,
         "insight_message": _build_insight_message(stats, purpose_labels),
         "stats": stat_cards,

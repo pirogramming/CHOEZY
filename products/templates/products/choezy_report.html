@@ -18,16 +18,32 @@
       <div class="report-card__title">내가 가장 많이 소비하는 분야 top3</div>
 
       <div class="report-donut-wrap">
-        <div class="report-donut" style="background: {{ report_data.donut_gradient }};">
+        <div class="report-donut"
+             style="background: {{ report_data.donut_gradient }};"
+             {% if report_data.other_slice %}
+             data-other-start="{{ report_data.other_slice.start }}"
+             data-other-end="{{ report_data.other_slice.end }}"
+             {% endif %}>
           <div class="report-donut__hole">
             <span class="report-donut__label">총 소비 기록</span>
             <span class="report-donut__value">{{ report_data.total_count }} 건</span>
           </div>
+
+          {% if report_data.other_details %}
+          <div class="report-donut-tooltip" role="tooltip" hidden>
+            <strong>기타 소비 분야</strong>
+            <ul>
+              {% for detail in report_data.other_details %}
+              <li>{{ detail.name }} {{ detail.count }}건</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
         </div>
 
         <ul class="report-legend">
           {% for item in report_data.top3 %}
-          <li>
+          <li{% if item.name == "기타" %} class="report-legend__other" tabindex="0"{% endif %}>
             <span class="report-legend__dot" style="background:{{ item.color }};"></span>
             {{ item.name }} {{ item.ratio }}%
           </li>
@@ -68,4 +84,5 @@
     </div>
   </div>
 </div>
+<script src="{% static 'js/choezy_report.js' %}"></script>
 {% endblock %}

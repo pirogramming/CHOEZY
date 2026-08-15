@@ -765,10 +765,12 @@ class ChoezyReportViewTests(TestCase):
     ):
         only_purpose = {
             "purpose": Consideration.Purpose.HOBBY,
+            "count": 1,
             "average_satisfaction": 5.0,
         }
         build_stats.return_value = {
             "by_purpose": [only_purpose],
+            "total_count": 1,
             "highest_satisfaction_purpose": only_purpose,
             "lowest_satisfaction_purpose": only_purpose,
             "purchase_rate": 100,
@@ -782,3 +784,34 @@ class ChoezyReportViewTests(TestCase):
             response,
             "비교할 다른 구매 목적 데이터가 없어요",
         )
+
+    @patch("products.views.build_spending_stats")
+    def test_기타_도넛에_포함된_소비_분야를_전달한다(self, build_stats):
+        rows = [
+            {"purpose": Consideration.Purpose.TRAVEL, "count": 5},
+            {"purpose": Consideration.Purpose.GIFT, "count": 4},
+            {"purpose": Consideration.Purpose.CONVENIENCE, "count": 3},
+            {"purpose": Consideration.Purpose.WORK, "count": 2},
+            {"purpose": Consideration.Purpose.HOBBY, "count": 1},
+        ]
+        build_stats.return_value = {
+            "by_purpose": rows,
+            "total_count": 15,
+            "highest_satisfaction_purpose": None,
+            "lowest_satisfaction_purpose": None,
+            "purchase_rate": 80,
+            "purchased_count": 15,
+        }
+
+        response = self.client.get(reverse("products:choezy_report"))
+
+        self.assertEqual(
+            response.context["report_data"]["other_details"],
+            [
+                {"name": "업무", "count": 2},
+                {"name": "취미·여가", "count": 1},
+            ],
+        )
+        self.assertContains(response, "기타 소비 분야")
+        self.assertContains(response, "업무 2건")
+        self.assertContains(response, "취미·여가 1건")
