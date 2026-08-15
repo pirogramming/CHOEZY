@@ -148,6 +148,13 @@ def choezy_report(request):
     top_purpose = colored_slices[0] if colored_slices else None
     highest = stats["highest_satisfaction_purpose"]
     lowest = stats["lowest_satisfaction_purpose"]
+    has_distinct_lowest = (
+        lowest is not None
+        and (
+            highest is None
+            or lowest["purpose"] != highest["purpose"]
+        )
+    )
 
     stat_cards = [
         {
@@ -180,8 +187,8 @@ def choezy_report(request):
             "value": (
                 f"{purpose_labels.get(lowest['purpose'], lowest['purpose'])} "
                 f"만족도가 {lowest['average_satisfaction']}점"
-                if lowest
-                else "아직 데이터가 없어요"
+                if has_distinct_lowest
+                else "비교할 다른 구매 목적 데이터가 없어요"
             ),
         },
     ]

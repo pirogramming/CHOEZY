@@ -741,3 +741,44 @@ class FormatQuantityTests(TestCase):
     def test_1_미만이면_소수_첫째_자리까지_내림한다(self):
         self.assertEqual(format_quantity(Decimal("0.68")), "0.6")
         self.assertEqual(format_quantity(Decimal("0.09")), "0.0")
+
+
+class ChoezyReportViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="report_user",
+            email="report@example.com",
+            password="StrongPass!2468",
+            name="리포트 사용자",
+            birth_date=date(2000, 1, 1),
+            gender=User.Gender.OTHER,
+            spending_type=[User.SpendingType.VALUE],
+            value_criteria=[User.ValueCriterion.PRICE],
+            monthly_budget=User.MonthlyBudget.FROM_300K_TO_500K,
+        )
+        self.client.force_login(self.user)
+
+    @patch("products.views.build_spending_stats")
+    def test_구매_목적이_하나면_최고와_최저를_중복_표시하지_않는다(
+        self,
+        build_stats,
+    ):
+        only_purpose = {
+            "purpose": Consideration.Purpose.HOBBY,
+            "average_satisfaction": 5.0,
+        }
+        build_stats.return_value = {
+            "by_purpose": [only_purpose],
+            "highest_satisfaction_purpose": only_purpose,
+            "lowest_satisfaction_purpose": only_purpose,
+            "purchase_rate": 100,
+            "purchased_count": 1,
+        }
+
+        response = self.client.get(reverse("products:choezy_report"))
+
+        self.assertContains(response, "취미 만족도가 5.0점", count=1)
+        self.assertContains(
+            response,
+            "비교할 다른 구매 목적 데이터가 없어요",
+        )
