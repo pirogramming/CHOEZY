@@ -1,0 +1,146 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/contact.css' %}">
+
+<section class="contact-hero">
+
+    <span class="contact-eyebrow">CONTACT US</span>
+
+    <h1>
+        CHOEZY를 만드는<br>
+        사람들을 소개합니다.
+    </h1>
+
+    <p>
+        더 나은 소비 선택을 고민하는 사람들을 위해<br>
+        CHOEZY를 함께 만들어가고 있습니다.
+    </p>
+
+</section>
+
+
+<section class="contact-team">
+
+    <div class="contact-section-header">
+        <span class="contact-section-label">TEAM</span>
+
+        <h2>초이지를 만드는 사람들</h2>
+
+        <p>
+        </p>
+    </div>
+
+
+    <div class="team-grid">
+
+        <article class="team-card">
+            <div class="team-image">
+                <img
+                    src="{% static 'images/team_member_1.jpg' %}"
+                    alt="임현아"
+                >
+            </div>
+
+            <div class="team-info">
+                <h3>임현아</h3>
+                <span>PM · Frontend</span>
+                <p>
+                    CHOEZY의 서비스 기획과<br>
+                    프론트엔드 개발을 담당했습니다.
+                </p>
+            </div>
+        </article>
+
+
+        <article class="team-card">
+            <div class="team-image">
+                <img
+                    src="{% static 'images/team_member_2.jpg' %}"
+                    alt="팀원 2"
+                >
+            </div>
+
+            <div class="team-info">
+                <h3>문예지</h3>
+                <span>Frontend</span>
+                <p>
+                    CHOEZY의 프론트엔드<br>
+                    개발을 담당했습니다.
+                </p>
+            </div>
+        </article>
+
+
+        <article class="team-card">
+            <div class="team-image">
+                <img
+                    src="{% static 'images/team_member_3.jpg' %}"
+                    alt="팀원 3"
+                >
+            </div>
+
+            <div class="team-info">
+                <h3>김민서</h3>
+                <span>Backend</span>
+                <p>
+                    CHOEZY의 백엔드<br>
+                    개발을 담당했습니다.
+                </p>
+            </div>
+        </article>
+
+
+        <article class="team-card">
+            <div class="team-image">
+                <img
+                    src="{% static 'images/team_member_4.jpg' %}"
+                    alt="팀원 4"
+                >
+            </div>
+
+            <div class="team-info">
+                <h3>이지연</h3>
+                <span>Backend</span>
+                <p>
+                    CHOEZY의 백엔드<br>
+                    개발을 담당했습니다.
+                </p>
+            </div>
+        </article>
+
+    </div>
+
+</section>
+
+
+<section class="contact-inquiry">
+
+    <div class="contact-inquiry-inner">
+
+        <span class="contact-section-label">CONTACT</span>
+
+        <h2>
+            궁금한 점이나<br>
+            의견이 있으신가요?
+        </h2>
+
+        <p>
+            CHOEZY에 대한 문의 및 제안은<br>
+            아래 이메일을 통해 보내주세요.
+        </p>
+
+        <a
+            href="mailto:choezy@example.com"
+            class="contact-email"
+        >
+            choezy@example.com
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}
