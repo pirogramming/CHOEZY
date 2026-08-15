@@ -70,17 +70,67 @@ def consumption_log(request):
     return render(request, "products/consumption_log.html")
 
 
+def _percentages(counts):
+    total = sum(counts)
+    if not total:
+        return [0] * len(counts)
+    ratios = [round(c * 100 / total) for c in counts]
+    gap = 100 - sum(ratios)
+    if gap:
+        largest = max(range(len(ratios)), key=lambda i: counts[i])
+        ratios[largest] += gap
+    return ratios
+
+
+def _build_insight_message(stats, purpose_labels):
+    if not stats["total_count"]:
+        return "아직 소비 기록이 없어요. 첫 소비 기록을 남겨보세요!"
+
+    highest = stats["highest_satisfaction_purpose"]
+    lowest = stats["lowest_satisfaction_purpose"]
+
+    if highest and lowest and highest["purpose"] != lowest["purpose"]:
+        highest_label = purpose_labels.get(highest["purpose"], highest["purpose"] or "기타")
+        lowest_label = purpose_labels.get(lowest["purpose"], lowest["purpose"] or "기타")
+        return (
+            f"{highest_label} 목적의 소비 만족도가 가장 높고({highest['average_satisfaction']}점), "
+            f"{lowest_label} 목적의 소비는 다시 한 번 생각해보는 게 좋겠어요"
+            f"({lowest['average_satisfaction']}점)."
+        )
+
+    if highest:
+        highest_label = purpose_labels.get(highest["purpose"], highest["purpose"] or "기타")
+        return f"{highest_label} 목적의 소비 만족도가 {highest['average_satisfaction']}점으로 가장 높아요."
+
+    return "목적이 분명한 소비일수록 만족도가 높고, 신중하게 비교한 후 구매하는 경향이 있어요"
+
+
 DONUT_COLOR_PALETTE = ["#93B686", "#BFDCB4", "#C9C3BC", "#E3EEDD"]
 
 
 @login_required
 def choezy_report(request):
     stats = build_spending_stats(request.user)
+    purpose_labels = dict(Consideration.Purpose.choices)
 
-    slices = stats["donut_slices"]
+    purpose_rows = sorted(stats["by_purpose"], key=lambda p: -p["count"])
+    top_rows = purpose_rows[:3]
+    rest_rows = purpose_rows[3:]
+
+    names = [
+        purpose_labels.get(row["purpose"], row["purpose"] or "기타")
+        for row in top_rows
+    ]
+    counts = [row["count"] for row in top_rows]
+
+    if rest_rows:
+        names.append("기타")
+        counts.append(sum(row["count"] for row in rest_rows))
+
+    ratios = _percentages(counts)
     colored_slices = [
-        {**slice_data, "color": DONUT_COLOR_PALETTE[i % len(DONUT_COLOR_PALETTE)]}
-        for i, slice_data in enumerate(slices)
+        {"name": name, "ratio": ratio, "color": DONUT_COLOR_PALETTE[i % len(DONUT_COLOR_PALETTE)]}
+        for i, (name, ratio) in enumerate(zip(names, ratios))
     ]
 
     gradient_parts = []
@@ -95,18 +145,17 @@ def choezy_report(request):
         else "conic-gradient(#eee 0% 100%)"
     )
 
-    top_category = stats["top_category"]
+    top_purpose = colored_slices[0] if colored_slices else None
     highest = stats["highest_satisfaction_purpose"]
     lowest = stats["lowest_satisfaction_purpose"]
-    purpose_labels = dict(Consideration.Purpose.choices)
 
     stat_cards = [
         {
             "icon": "category",
             "label": "가장 많이 소비하는 분야",
             "value": (
-                f"{top_category['name']} 분야의 소비가 {top_category['ratio']}%"
-                if top_category
+                f"{top_purpose['name']} 목적의 소비가 {top_purpose['ratio']}%"
+                if top_purpose
                 else "아직 소비 기록이 없어요"
             ),
         },
@@ -138,10 +187,10 @@ def choezy_report(request):
     ]
 
     report_data = {
-        "total_count": stats["total_count"],
+        "total_count": stats["purchased_count"],
         "top3": colored_slices,
         "donut_gradient": donut_gradient,
-        "insight_message": "목적이 분명한 소비일수록 만족도가 높고, 신중하게 비교한 후 구매하는 경향이 있어요",
+        "insight_message": _build_insight_message(stats, purpose_labels),
         "stats": stat_cards,
     }
 
