@@ -2,7 +2,7 @@
   width: 92%;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 40px 0 60px;
+  padding: 10px 0 60px;
   font-family: 'Inter', sans-serif;
   position: relative;
 }
@@ -158,6 +158,38 @@
   width: 230px;
   height: auto;
   margin: -80px 5px 0 auto;
+}
+
+.mypage-logout {
+    display: flex;
+    justify-content: flex-end;
+    transform: translate( -5px, 38px);
+}
+
+.mypage-logout-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 40px;
+    padding: 0 18px;
+
+    border: 1px solid #d7d7d7;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #68757a;
+
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    transition: 0.2s ease;
+}
+
+.mypage-logout-button:hover {
+    border-color: #20cd8d;
+    color: #20cd8d;
 }
 
 @media (max-width: 900px) {
