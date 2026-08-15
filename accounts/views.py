@@ -72,7 +72,7 @@ def login_view(request):
             ):
                 return redirect(next_url)
 
-            return redirect("core:home")
+            return redirect("products:consideration_create")
 
         context["error"] = "이메일 또는 비밀번호가 올바르지 않습니다."
 

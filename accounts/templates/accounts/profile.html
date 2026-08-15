@@ -5,6 +5,14 @@
 <link rel="stylesheet" href="{% static 'css/mypage.css' %}">
 
 <div class="mypage-page">
+  <div class="mypage-logout">
+    <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="mypage-logout-button">
+            로그아웃
+        </button>
+    </form>
+  </div>
   <div class="mypage-grid">
 
     <div class="mypage-col">
