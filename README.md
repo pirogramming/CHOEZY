@@ -24,6 +24,11 @@
 ---
 ## 실행 방법
 
+### 사전 요구 사항
+
+* Python 3.12 이상
+* PostgreSQL
+
 ### 1. 프로젝트 클론
 
 ```bash
@@ -59,42 +64,60 @@ pip install -r requirements.txt
 프로젝트 루트에 `.env` 파일을 생성한 후 아래 내용을 입력합니다.
 
 ```env
-SECRET_KEY=your_secret_key
-
-DEBUG=True
+DJANGO_SECRET_KEY=your_secret_key
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+DJANGO_CSRF_TRUSTED_ORIGINS=
+DJANGO_USE_HTTPS=False
+DJANGO_HSTS_SECONDS=3600
+DJANGO_HSTS_PRELOAD=False
 
 DB_NAME=your_database
 DB_USER=your_username
 DB_PASSWORD=your_password
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_PORT=5432
+DB_CONN_MAX_AGE=60
+DB_SSLMODE=
 
 GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-2.5-flash-lite
 ```
 
 
 ### 5. 데이터베이스 마이그레이션
 
 ```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
 
-### 6. 개발 서버 실행
+### 6. 초기 대안 데이터 생성 (선택)
+
+카테고리별 기본 대안 데이터가 필요한 경우 아래 명령어를 실행합니다.
+
+```bash
+python manage.py seed_travel
+python manage.py seed_living_digital
+python manage.py seed_health_culture
+python manage.py seed_finance
+```
+
+
+### 7. 개발 서버 실행
 
 ```bash
 python manage.py runserver
 ```
 
 
-### 7. 브라우저 접속
+### 8. 브라우저 접속
 
 ```
 http://127.0.0.1:8000/
 ```
 
-### 8. 관리자 계정 생성 (선택)
+### 9. 관리자 계정 생성 (선택)
 
 ```bash
 python manage.py createsuperuser
@@ -177,4 +200,3 @@ CHOEZY/
 | Back-end  | 이지연 |
 
 ---
-
