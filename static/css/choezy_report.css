@@ -10,6 +10,7 @@
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 40px;
+  transform: translateY(20px);
 }
 
 .report-mascot {
@@ -19,15 +20,15 @@
 }
 
 .report-title {
-  font-size: 42px;
+  font-size: 38px;
   font-weight: 700;
-  color: #222;
-  margin: 0 0 12px;
+  color: #2D4048;
+  margin: 0 0 18px;
 }
 
 .report-subtitle {
   font-size: 20px;
-  color: #888;
+  color: #879298;
   margin: 0;
 }
 
