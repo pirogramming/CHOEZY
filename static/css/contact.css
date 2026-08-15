@@ -1,0 +1,297 @@
+/* =========================
+   CONTACT PAGE
+========================== */
+
+.contact-hero {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 80px 24px 70px;
+    text-align: center;
+}
+
+.contact-eyebrow,
+.contact-section-label {
+    display: inline-block;
+    color: #20CD8D;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.contact-hero h1 {
+    margin: 18px 0 20px;
+    color: #16241F;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: -1.5px;
+}
+
+.contact-hero p {
+    margin: 0;
+    color: #66736E;
+    font-size: 17px;
+    line-height: 1.7;
+}
+
+
+/* =========================
+   TEAM
+========================== */
+
+.contact-team {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 30px 24px 100px;
+}
+
+.contact-section-header {
+    margin-bottom: 40px;
+}
+
+.contact-section-header h2 {
+    margin: 10px 0;
+    color: #16241F;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.contact-section-header p {
+    margin: 0;
+    color: #71807A;
+    font-size: 16px;
+}
+
+
+/* =========================
+   TEAM CARD
+========================== */
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.team-card {
+    overflow: hidden;
+    background: #FFFFFF;
+    border: 1px solid #E8EFEB;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(22, 36, 31, 0.06);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 32px rgba(22, 36, 31, 0.10);
+}
+
+
+/* =========================
+   TEAM IMAGE
+========================== */
+
+.team-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #F0FAF5;
+}
+
+.team-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+/* =========================
+   TEAM INFO
+========================== */
+
+.team-info {
+    padding: 22px 20px 24px;
+}
+
+.team-info h3 {
+    margin: 0 0 6px;
+    color: #16241F;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.team-info > span {
+    display: block;
+    margin-bottom: 14px;
+    color: #20CD8D;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.team-info p {
+    margin: 0;
+    color: #71807A;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+
+/* =========================
+   CONTACT / 문의
+========================== */
+
+.contact-inquiry {
+    margin-top: 20px;
+    background: #F0FAF5;
+}
+
+.contact-inquiry-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 80px 24px 90px;
+    text-align: center;
+}
+
+.contact-inquiry h2 {
+    margin: 14px 0 18px;
+    color: #16241F;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -1px;
+}
+
+.contact-inquiry p {
+    margin: 0 0 28px;
+    color: #66736E;
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+
+/* =========================
+   EMAIL BUTTON
+========================== */
+
+.contact-email {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 52px;
+    padding: 0 28px;
+
+    border-radius: 999px;
+
+    background: #20CD8D;
+    color: #FFFFFF;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    box-shadow: 0 8px 20px rgba(32, 205, 141, 0.22);
+
+    transition:
+        transform 0.15s ease,
+        background 0.15s ease;
+}
+
+.contact-email:hover {
+    background: #0EA672;
+    transform: translateY(-2px);
+}
+
+
+/* =========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 1000px) {
+
+    .team-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 640px) {
+
+    .contact-hero {
+        padding: 60px 20px 50px;
+    }
+
+    .contact-hero h1 {
+        font-size: 32px;
+    }
+
+    .contact-hero p {
+        font-size: 15px;
+    }
+
+
+    .contact-team {
+        padding: 20px 20px 70px;
+    }
+
+    .contact-section-header h2 {
+        font-size: 25px;
+    }
+
+    .contact-section-header p {
+        font-size: 14px;
+    }
+
+
+    .team-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .team-card {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .team-image {
+        width: 38%;
+        min-width: 38%;
+        aspect-ratio: auto;
+    }
+
+    .team-info {
+        flex: 1;
+        padding: 18px;
+    }
+
+    .team-info h3 {
+        font-size: 18px;
+    }
+
+    .team-info p {
+        font-size: 13px;
+    }
+
+
+    .contact-inquiry-inner {
+        padding: 65px 20px 75px;
+    }
+
+    .contact-inquiry h2 {
+        font-size: 28px;
+    }
+
+    .contact-inquiry p {
+        font-size: 14px;
+    }
+
+    .contact-email {
+        width: 100%;
+    }
+
+}
