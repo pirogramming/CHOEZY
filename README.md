@@ -131,7 +131,13 @@ http://127.0.0.1:8000/admin/
 
 ### Deployment
 
-* AWS
+* AWS EC2 (Ubuntu)
+* Amazon RDS for PostgreSQL
+* Gunicorn / Nginx
+* Duck DNS / Let's Encrypt (HTTPS)
+* GitHub Actions (develop 브랜치 자동 배포)
+
+배포 주소: [https://choezy.duckdns.org](https://choezy.duckdns.org)
 
 
 
@@ -171,5 +177,4 @@ CHOEZY/
 | Back-end  | 이지연 |
 
 ---
-
 
