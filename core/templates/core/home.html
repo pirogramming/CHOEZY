@@ -106,12 +106,32 @@
                     </a>
 
 
-                    <a href="{% url 'accounts:login' %}" class="home-button home-button-secondary">
+                    {% if user.is_authenticated %}
 
-                        <span>로그인</span>
+                        <form
+                            action="{% url 'accounts:logout' %}"
+                            method="post"
+                            class="home-logout-form"
+                        >
+                            {% csrf_token %}
+                            <button
+                                type="submit"
+                                class="home-button home-button-secondary"
+                            >
+                                <span>로그아웃</span>
+                            </button>
+                        </form>
 
-                    </a>
+                    {% else %}
 
+                        <a
+                            href="{% url 'accounts:login' %}"
+                            class="home-button home-button-secondary"
+                        >
+                            <span>로그인</span>
+                        </a>
+
+                    {% endif %}
                 </div>
 
             </div>
