@@ -5,7 +5,7 @@
     width:100%;
     min-height:calc(100vh - 90px);
 
-    padding:60px 70px;
+    padding:43px 80px;
 
     box-sizing:border-box;
 
@@ -25,19 +25,23 @@
 
     justify-content:space-between;
 
-    margin-bottom:45px;
+    min-height: 150px;
+    padding: 0 16px;
+    margin-bottom: 22px;
 
 }
 
-
+.consideration-title {
+    padding-left: 12px;
+}
 
 .consideration-title h1 {
 
-    font-size:42px;
+    font-size:38px;
 
     font-weight:700;
-
-    margin:0 0 15px;
+    color: #2D4048;
+    margin:0 0 18px;
 
 }
 
@@ -45,11 +49,13 @@
 
 .consideration-title p {
 
-    font-size:22px;
+    font-size:20px;
 
-    color:#999;
+    color: #879298;
 
     margin:0;
+
+    transform: translateY(-5px);
 
 }
 

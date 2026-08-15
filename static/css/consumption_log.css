@@ -5,7 +5,7 @@
 .consumption-page {
     width: min(1240px, calc(100% - 48px));
     margin: 0 auto;
-    padding: 40px 0 80px;
+    padding: 34px 0 80px;
     box-sizing: border-box;
 }
 
@@ -20,29 +20,25 @@
     justify-content: space-between;
     min-height: 150px;
     padding: 0 16px;
-    margin-bottom: 26px;
+    margin-bottom: 20px;
 }
 
 .consumption-header-text {
-    padding-left: 0;
+    padding-left: 10px;
 }
 
 .consumption-header-text h1 {
     margin: 0 0 18px;
-    font-size: 35px;
-    line-height: 1.2;
-    font-weight: 800;
-    letter-spacing: -1.5px;
-    color: #111111;
+    font-size: 38px;
+    font-weight: 700;
+    color: #2D4048;
 }
 
 .consumption-header-text p {
     margin: 0;
     font-size: 20px;
-    line-height: 1.4;
-    font-weight: 600;
-    letter-spacing: -0.8px;
     color: #879298;
+    transform: translateY(-5px);
 }
 
 
