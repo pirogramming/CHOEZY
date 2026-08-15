@@ -113,6 +113,7 @@
 .alt-card {
   flex: 0 1 calc((100% - 64px) / 3);
   min-width: 300px;
+  box-sizing: border-box;
   background: #ffffff;
   border: 3px solid #7FE0BE;
   border-radius: 20px;
