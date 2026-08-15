@@ -255,6 +255,21 @@ class SpendingRecordWriteSerializer(serializers.Serializer):
         return attrs
 
 
+class SpendingRecordUpdateSerializer(SpendingRecordWriteSerializer):
+    """소비 기록 수정 입력 (§8.7).
+
+    생성과 달리 목적을 함께 받습니다. 소비로그 상세 팝업에서 잘못 고른
+    목적을 사용자가 직접 고칠 수 있어야 합니다. 생성용
+    `SpendingRecordWriteSerializer`는 그대로 둡니다 — 구매 결정 팝업은
+    목적을 묻지 않고 고민에서 그대로 복사합니다. (§8.5)
+    """
+
+    purpose = serializers.ChoiceField(
+        choices=Consideration.Purpose.choices,
+        required=False,
+    )
+
+
 class SpendingRecordFilterSerializer(serializers.Serializer):
     """소비로그 목록 필터 (§8.8)."""
 

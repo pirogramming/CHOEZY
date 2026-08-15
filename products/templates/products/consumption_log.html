@@ -5,6 +5,9 @@
 
 <link rel="stylesheet" href="{% static 'css/consumption_log.css' %}">
 
+{# 소비 기록 수정(PATCH)에 쓰는 토큰입니다. #}
+{% csrf_token %}
+
 <div class="consumption-page">
 
     <!-- ==============================
@@ -313,12 +316,23 @@
 
             <div class="modal-detail-item">
                 <span>구매 여부</span>
+
                 <strong
                     id="modal-status"
                     class="modal-status purchased"
                 >
                     구매함
                 </strong>
+
+                <select
+                    id="modal-status-select"
+                    class="modal-edit-field hidden"
+                    aria-label="구매 여부"
+                >
+                    <option value="PURCHASED">구매함</option>
+                    <option value="DEFERRED">구매 보류</option>
+                    <option value="NOT_PURCHASED">구매 안 함</option>
+                </select>
             </div>
 
             <div class="modal-detail-item">
@@ -330,9 +344,26 @@
 
             <div class="modal-detail-item">
                 <span>목적</span>
+
                 <strong id="modal-purpose">
-                    공부/자기계발
+                    자기계발
                 </strong>
+
+                <!-- products.Consideration.Purpose -->
+                <select
+                    id="modal-purpose-select"
+                    class="modal-edit-field hidden"
+                    aria-label="목적"
+                >
+                    <option value="SELF_DEVELOPMENT">자기계발</option>
+                    <option value="TRAVEL">여행</option>
+                    <option value="DESIGN">디자인</option>
+                    <option value="GIFT">선물</option>
+                    <option value="WORK">업무</option>
+                    <option value="HOBBY">취미·여가</option>
+                    <option value="CONVENIENCE">일상 편의</option>
+                    <option value="ETC">기타</option>
+                </select>
             </div>
 
         </div>
@@ -348,6 +379,20 @@
                 id="modal-satisfaction-stars"
             >
                 ★★★★★
+            </div>
+
+            <!-- 수정 모드 별점. 구매함일 때만 입력할 수 있습니다. -->
+            <div
+                class="satisfaction-stars-edit hidden"
+                id="modal-satisfaction-edit"
+                role="radiogroup"
+                aria-label="만족도"
+            >
+                <button type="button" class="star-button" data-score="1" aria-label="1점">★</button>
+                <button type="button" class="star-button" data-score="2" aria-label="2점">★</button>
+                <button type="button" class="star-button" data-score="3" aria-label="3점">★</button>
+                <button type="button" class="star-button" data-score="4" aria-label="4점">★</button>
+                <button type="button" class="star-button" data-score="5" aria-label="5점">★</button>
             </div>
 
         </div>
@@ -367,6 +412,21 @@
 
         </div>
         <div class="modal-edit">
+
+            <p
+                class="modal-edit-error hidden"
+                id="modal-edit-error"
+                role="alert"
+            ></p>
+
+            <button
+                type="button"
+                class="modal-edit-cancel hidden"
+                id="modal-edit-cancel"
+            >
+                취소
+            </button>
+
             <button
                 type="button"
                 class="modal-edit-button"
@@ -374,6 +434,7 @@
             >
                 수정
             </button>
+
         </div>
 
     </div>
