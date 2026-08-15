@@ -9,12 +9,12 @@
 
     min-height:calc(100vh - 90px);
 
-    padding:34px 80px;
+    padding:30px 70px;
 
     box-sizing:border-box;
 
-    background:#ffffff;
-
+    background:white;
+    overflow-x: hidden;
 }
 
 
@@ -26,16 +26,17 @@
 
 .comparison-header {
 
-
     display:flex;
 
-    align-items: center;
-
     justify-content:space-between;
-    
-    min-height: 150px;
-    padding: 0 16px;
-    margin-bottom: 20px;
+
+    align-items:center;
+
+    min-height:150px;
+
+    padding:0 16px;
+
+    margin-bottom:22px;
 
 }
 
@@ -43,9 +44,8 @@
 
 .comparison-title-area {
 
-    padding-left: 10px;
-    transform:translateX(17px);
-
+    padding-left:12px;
+    transform: translate(0px, 12px);
 
 }
 
@@ -53,7 +53,6 @@
 
 .comparison-title-area h1 {
 
-    margin: 0 0 18px;
 
     font-size:38px;
 
@@ -61,7 +60,7 @@
 
     color:#2D4048;
 
-    margin-bottom:12px;
+    margin:0 0 18px;
 
 
 }
@@ -73,70 +72,9 @@
 
     font-size:20px;
 
-    color: #879298;
+    color:#879298;
 
-    transform: translateY(-5px);
-}
-
-
-
-/* ===========================
-   오른쪽 영역
-=========================== */
-
-
-.comparison-header-right {
-
-
-    display:flex;
-
-    align-items:flex-start;
-
-    gap:5px;
-
-
-}
-
-
-
-/* 단계 버튼 위치 */
-
-
-.comparison-step-button-area {
-
-
-    display:flex;
-
-    gap:15px;
-
-    transform:translateX(-320px);
-
-    margin-top:80px;
-
-
-}
-
-
-
-/* 캐릭터 */
-
-
-.comparison-character {
-
-
-    line-height:0;
-
-
-}
-
-
-
-.comparison-character img {
-
-
-    width:240px;
-
-    transform:translate(-70px,50px);
+    margin:0;
 
 
 }
@@ -296,6 +234,37 @@
 }
 
 
+/* 단계 버튼 */
+
+
+.comparison-step-button-area {
+
+    display:flex;
+
+    gap:15px;
+
+}
+
+
+
+/* 캐릭터 */
+
+
+.comparison-character {
+
+    line-height:0;
+
+}
+
+
+
+.comparison-character img {
+
+    width:170px;
+    transform: translate(-200px, 0px);
+}
+
+
 
 
 
@@ -314,7 +283,7 @@
     margin-bottom:35px;
 
 
-    transform:translateX(17px);
+    transform:translateX(5px);
 
 
 }
@@ -347,7 +316,7 @@
 
     transition:.2s;
 
-
+    transform: translate(15px, 10px);
 }
 
 
@@ -356,7 +325,6 @@
 
     background:#E7F8F1;
 
-    transform:translateY(-2px);
 
 }
 
@@ -388,7 +356,7 @@
     width:100%;
 
 
-    max-width:1250px;
+    max-width:1400px;
 
 
     margin:0 auto;
@@ -407,7 +375,7 @@
 
     0 8px 25px rgba(0,0,0,0.08);
 
-
+    transform: translate(-20px,-20px);
 }
 
 
@@ -560,19 +528,6 @@
 
 
         gap:25px;
-
-
-    }
-
-
-
-    .comparison-header-right{
-
-
-        width:100%;
-
-
-        justify-content:center;
 
 
     }

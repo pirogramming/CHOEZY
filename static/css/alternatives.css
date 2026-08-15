@@ -9,31 +9,32 @@
 .alt-header-row {
   display: flex;
   align-items: center;
-  margin-bottom: 70px;
+  justify-content: space-between;
+  min-height: 150px;
+  padding: 0 16px;
+  margin-bottom: 22px;
 }
 
-.alt-header-left {
-  display: flex;
-  align-items: center;
-  gap: 48px;
-}
-
-.alt-header-right {
-  position: absolute;
-  top: -10px;
-  right: 0;
+.alt-header-title {
+  padding-left: 12px;
 }
 
 .alt-title {
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 700;
-  color: #222;
+  color: #2D4048;
   margin: 0;
+  transform: translate(10px, -20px);
+}
+
+.alt-header-character img {
+  width: 170px;
+  transform: translateX(-270px);
 }
 
 .alt-step-buttons {
   display: flex;
-  gap: 15px;
+  gap: 12px;
 }
 
 .alt-step-button {
