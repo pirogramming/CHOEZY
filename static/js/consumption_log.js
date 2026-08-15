@@ -27,14 +27,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusButtons =
         document.querySelectorAll(".status-button");
 
-    const categoryFilter =
-        document.getElementById("category-filter");
-
     const purposeFilter =
         document.getElementById("purpose-filter");
 
-    const dateFilter =
-        document.getElementById("date-filter");
+    const dateFromFilter =
+        document.getElementById("date-from");
+
+    const dateToFilter =
+        document.getElementById("date-to");
+
+    const dateFilterReset =
+        document.getElementById("date-filter-reset");
 
 
     /* Modal */
@@ -109,6 +112,22 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =========================================
     공통 함수
     ========================================= */
+
+    /* 필터가 바뀌면 누적된 목록을 버리고 1페이지부터 다시 불러옵니다. */
+
+    function reloadFromFirstPage() {
+
+        currentPage = 1;
+
+        consumptionData = [];
+
+
+        fetchSpendingRecords({
+            page: 1,
+            append: false,
+        });
+    }
+
 
     function formatPrice(price) {
         if (price === null || price === undefined) {
@@ -295,19 +314,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        /* 분야 */
-
-        if (
-            categoryFilter &&
-            categoryFilter.value !== "all"
-        ) {
-            params.set(
-                "category",
-                categoryFilter.value
-            );
-        }
-
-
         /* 목적 */
 
         if (
@@ -321,20 +327,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        /* 날짜 */
+        /* 기간 — 한쪽만 골라도 그 방향으로만 걸립니다. */
 
         if (
-            dateFilter &&
-            dateFilter.value
+            dateFromFilter &&
+            dateFromFilter.value
         ) {
             params.set(
                 "date_from",
-                dateFilter.value
+                dateFromFilter.value
             );
+        }
 
+
+        if (
+            dateToFilter &&
+            dateToFilter.value
+        ) {
             params.set(
                 "date_to",
-                dateFilter.value
+                dateToFilter.value
             );
         }
 
@@ -829,42 +841,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     button.dataset.status;
 
 
-                currentPage = 1;
-
-                consumptionData = [];
-
-
-                fetchSpendingRecords({
-                    page: 1,
-                    append: false,
-                });
+                reloadFromFirstPage();
             }
         );
     });
-
-
-    /* =========================================
-    분야 필터
-    ========================================= */
-
-    if (categoryFilter) {
-
-        categoryFilter.addEventListener(
-            "change",
-            () => {
-
-                currentPage = 1;
-
-                consumptionData = [];
-
-
-                fetchSpendingRecords({
-                    page: 1,
-                    append: false,
-                });
-            }
-        );
-    }
 
 
     /* =========================================
@@ -877,39 +857,109 @@ document.addEventListener("DOMContentLoaded", () => {
             "change",
             () => {
 
-                currentPage = 1;
-
-                consumptionData = [];
-
-
-                fetchSpendingRecords({
-                    page: 1,
-                    append: false,
-                });
+                reloadFromFirstPage();
             }
         );
     }
 
 
     /* =========================================
-    날짜 필터
+    기간 필터
     ========================================= */
 
-    if (dateFilter) {
+    /* 달력에서 애초에 뒤집힌 기간을 못 고르도록 서로의 한계를 걸어둡니다. */
 
-        dateFilter.addEventListener(
+    function syncDateBounds() {
+
+        if (!dateFromFilter || !dateToFilter) {
+            return;
+        }
+
+
+        dateFromFilter.max =
+            dateToFilter.value || "";
+
+        dateToFilter.min =
+            dateFromFilter.value || "";
+
+
+        if (dateFilterReset) {
+
+            const hasValue =
+                Boolean(
+                    dateFromFilter.value ||
+                    dateToFilter.value
+                );
+
+
+            dateFilterReset.classList.toggle(
+                "hidden",
+                !hasValue
+            );
+        }
+    }
+
+
+    if (dateFromFilter && dateToFilter) {
+
+        dateFromFilter.addEventListener(
             "change",
             () => {
 
-                currentPage = 1;
+                /* 시작일을 종료일보다 뒤로 옮기면 하루짜리 기간으로
+                   맞춥니다. 빈 목록을 내려주는 것보다 낫습니다. */
 
-                consumptionData = [];
+                if (
+                    dateToFilter.value &&
+                    dateFromFilter.value > dateToFilter.value
+                ) {
+                    dateToFilter.value =
+                        dateFromFilter.value;
+                }
 
 
-                fetchSpendingRecords({
-                    page: 1,
-                    append: false,
-                });
+                syncDateBounds();
+
+                reloadFromFirstPage();
+            }
+        );
+
+
+        dateToFilter.addEventListener(
+            "change",
+            () => {
+
+                if (
+                    dateFromFilter.value &&
+                    dateToFilter.value < dateFromFilter.value
+                ) {
+                    dateFromFilter.value =
+                        dateToFilter.value;
+                }
+
+
+                syncDateBounds();
+
+                reloadFromFirstPage();
+            }
+        );
+    }
+
+
+    if (dateFilterReset) {
+
+        dateFilterReset.addEventListener(
+            "click",
+            () => {
+
+                dateFromFilter.value = "";
+
+                dateToFilter.value = "";
+
+
+                syncDateBounds();
+
+                reloadFromFirstPage();
             }
         );
     }
@@ -939,6 +989,12 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =========================================
     초기 실행
     ========================================= */
+
+    /* 새로고침 때 브라우저가 날짜 입력값을 복원하는 경우가 있어
+       초기 상태를 화면과 한 번 맞춰둡니다. */
+
+    syncDateBounds();
+
 
     fetchSpendingStats();
 
