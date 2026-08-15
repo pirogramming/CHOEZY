@@ -775,6 +775,37 @@
     line-height: 1.7;
 }
 
+/* 수정 버튼*/
+.modal-edit {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.modal-edit-button {
+    min-width: 80px;
+    height: 40px;
+    padding: 0 20px;
+
+    border: 1px solid #20cd8d;
+    border-radius: 10px;
+
+    background: #20cd8d;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.modal-edit-button:hover {
+    background: #19b97d;
+    border-color: #19b97d;
+}
+
 
 /* =========================================
    반응형
