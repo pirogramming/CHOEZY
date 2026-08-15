@@ -697,14 +697,23 @@ class OpportunityCostViewTests(TestCase):
 
         self.assertContains(response, 'data-count="12.22"')
 
-    def test_다음_단계는_AI_의사결정_페이지로_간다(self):
+    def test_다음_단계는_AI_의사결정을_생성하고_결과로_이동한다(self):
         self.login()
 
         response = self.client.get(self.url)
 
+        self.assertContains(response, 'id="opportunity-decision-btn"')
         self.assertContains(
             response,
-            reverse("analyses:decision", args=[self.consideration.pk]),
+            f'data-consideration-id="{self.consideration.pk}"',
+        )
+        self.assertContains(
+            response,
+            (
+                'data-decision-url="'
+                + reverse("analyses:decision", args=[self.consideration.pk])
+                + '"'
+            ),
         )
 
     def test_이전_단계는_비교표_페이지로_간다(self):

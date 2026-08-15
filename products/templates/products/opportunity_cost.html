@@ -31,11 +31,10 @@
 
 
 
+            <div class="opportunity-step-area">
+
             <div class="opportunity-step-buttons">
 
-
-                {# 단계 이동은 페이지 전환이라 button이 아니라 a입니다. #}
-                {# 새 탭으로 열기·뒤로 가기가 그대로 동작합니다. #}
 
                 <a class="opportunity-prev-btn"
                    href="{% url 'products:comparison_table' consideration_id %}">
@@ -55,8 +54,12 @@
 
 
 
-                <a class="opportunity-next-btn"
-                   href="{% url 'analyses:decision' consideration_id %}">
+                {% csrf_token %}
+                <button type="button"
+                        id="opportunity-decision-btn"
+                        class="opportunity-next-btn"
+                        data-consideration-id="{{ consideration_id }}"
+                        data-decision-url="{% url 'analyses:decision' consideration_id %}">
 
                 <span>
                     다음 단계 4/4
@@ -69,8 +72,15 @@
                     <path d="m9 18 6-6-6-6" />
 
                 </svg>
-                </a>
+                </button>
 
+
+            </div>
+
+            <p id="opportunity-decision-error"
+               class="opportunity-decision-error"
+               role="alert"
+               hidden></p>
 
             </div>
 
