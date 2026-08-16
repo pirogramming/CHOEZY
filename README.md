@@ -193,7 +193,7 @@ CHOEZY/
 | --------- | --- |
 | PM/Front-end  | 임현아 |
 | Front-end | 문예지 |
-| Back-end  | 김민서 |
+| Back-end/Deployment | 김민서 |
 | Back-end  | 이지연 |
 
 ---
