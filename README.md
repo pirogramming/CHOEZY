@@ -81,7 +81,7 @@ DB_CONN_MAX_AGE=60
 DB_SSLMODE=
 
 GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 
