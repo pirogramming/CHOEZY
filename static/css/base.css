@@ -81,11 +81,142 @@ body {
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .navbar__right {
-    display: none;
+/* =========================================================
+   RESPONSIVE
+   Common Breakpoints
+   1200 / 960 / 640px
+========================================================= */
+
+
+/* =========================================================
+   <= 1200px
+   좁은 PC
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .navbar__inner {
+    padding: 0 28px;
   }
+
+  .navbar__logo img {
+    width: 145px;
+  }
+
+  .navbar__right {
+    gap: 30px;
+    margin-right: 25px;
+  }
+
+  .navbar__menu {
+    gap: 30px;
+  }
+}
+
+
+/* =========================================================
+   <= 960px
+   Tablet
+========================================================= */
+
+@media (max-width: 960px) {
+
+  .navbar__inner {
+    padding: 0 24px;
+  }
+
+  .navbar__logo img {
+    width: 135px;
+  }
+
+  .navbar__right {
+    gap: 24px;
+    margin-right: 0;
+  }
+
+  .navbar__menu {
+    gap: 24px;
+  }
+
+  .navbar__link {
+    font-size: 13px;
+  }
+
+  .navbar__user {
+    gap: 10px;
+  }
+
+  .navbar__username {
+    font-size: 13px;
+  }
+}
+
+
+/* =========================================================
+   <= 640px
+   Mobile
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .navbar {
+    height: 68px;
+  }
+
   .navbar__inner {
     padding: 0 16px;
+  }
+
+  .navbar__logo img {
+    width: 125px;
+  }
+
+}
+
+/* =========================================================
+   <= 480px
+   Small Mobile
+   별도 breakpoint로 레이아웃을 바꾸지 않고
+   모바일 요소만 추가 축소
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .navbar {
+    height: 60px;
+  }
+
+  .navbar__inner {
+    padding: 0 12px;
+  }
+
+  .navbar__logo img {
+    width: 90px;
+  }
+
+  .navbar__right {
+    gap: 8px;
+  }
+
+  .navbar__menu {
+    gap: 8px;
+  }
+
+  .navbar__link {
+    font-size: 10px;
+  }
+
+  .navbar__user {
+    gap: 3px;
+  }
+
+  .navbar__bell {
+    width: 20px;
+    height: 20px;
+  }
+
+  .navbar__username {
+    font-size: 10px;
+    max-width: 48px;
   }
 }
