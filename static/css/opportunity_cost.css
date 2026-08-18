@@ -43,7 +43,7 @@ Header
 
     gap:35px;
 
-    margin-left: 30px;
+    margin-left: 60px;
 
 }
 
@@ -107,8 +107,6 @@ Buttons
 .opportunity-prev-btn,
 .opportunity-next-btn {
 
-    width:150px;
-
     height:52px;
 
     padding:0 18px;
@@ -135,6 +133,20 @@ Buttons
 
     /* 단계 이동 버튼은 a라서 기본 밑줄을 지웁니다. */
     text-decoration:none;
+
+}
+
+
+.opportunity-prev-btn {
+
+    width:118px;
+
+}
+
+
+.opportunity-next-btn {
+
+    width:150px;
 
 }
 
@@ -233,7 +245,7 @@ Guide
 
     white-space:nowrap;
 
-    transform: translateX(110px)
+    transform: translateX(60px);
 
 }
 
@@ -426,15 +438,13 @@ Count
 
     height:35px;
 
-    padding-top:20px;
-
-    margin-bottom:0;
+    margin-bottom:20px;
 
     font-size:24px;
 
     font-weight:700;
 
-    box-sizing:content-box;
+    transform:translateY(12px);
 
 }
 
@@ -476,8 +486,6 @@ Fixed Bar
     width:90px;
 
     height:450px;
-
-    transform:translateY(-5px);
 
     flex-shrink:0;
 
