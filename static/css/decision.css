@@ -56,3 +56,147 @@
   font-size: 14px;
   color: #E24B4A;
 }
+
+/* =========================================================
+   RESPONSIVE
+   Common Breakpoints
+   1200 / 960 / 640px
+========================================================= */
+
+
+/* =========================================================
+   <= 1200px
+   좁은 PC
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .decision-empty {
+    padding: 55px 24px 70px;
+  }
+
+  .decision-empty__mascot {
+    width: 130px;
+  }
+
+  .decision-empty__product {
+    font-size: 19px;
+  }
+}
+
+
+/* =========================================================
+   <= 960px
+   Tablet
+========================================================= */
+
+@media (max-width: 960px) {
+
+  .decision-empty {
+    padding: 50px 24px 65px;
+    gap: 13px;
+  }
+
+  .decision-empty__mascot {
+    width: 120px;
+  }
+
+  .decision-empty__product {
+    font-size: 18px;
+  }
+
+  .decision-empty__text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .decision-empty__btn {
+    padding: 13px 30px;
+    font-size: 15px;
+  }
+
+  .decision-empty__error {
+    font-size: 13px;
+  }
+}
+
+
+/* =========================================================
+   <= 640px
+   Mobile
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .decision-empty {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 40px 16px 55px;
+    gap: 11px;
+  }
+
+  .decision-empty__mascot {
+    width: 105px;
+  }
+
+  .decision-empty__product {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  .decision-empty__text {
+    max-width: 300px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .decision-empty__btn {
+    width: 100%;
+    max-width: 280px;
+    min-height: 48px;
+    margin-top: 6px;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .decision-empty__error {
+    max-width: 300px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+
+/* =========================================================
+   <= 480px
+   Small Mobile
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .decision-empty {
+    padding: 34px 14px 48px;
+  }
+
+  .decision-empty__mascot {
+    width: 90px;
+  }
+
+  .decision-empty__product {
+    font-size: 16px;
+  }
+
+  .decision-empty__text {
+    font-size: 13px;
+  }
+
+  .decision-empty__btn {
+    max-width: 100%;
+    min-height: 46px;
+    font-size: 14px;
+  }
+
+  .decision-empty__error {
+    font-size: 12px;
+  }
+}
