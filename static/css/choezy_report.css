@@ -257,8 +257,350 @@
   text-align: right;
 }
 
-@media (max-width: 900px) {
+/* =========================================================
+   RESPONSIVE
+   Common Breakpoints
+   1200 / 960 / 640px
+========================================================= */
+
+
+/* =========================================================
+   <= 1200px
+   좁은 PC
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .report-page {
+    width: calc(100% - 48px);
+    padding: 34px 0 56px;
+  }
+
+  .report-header {
+    margin-bottom: 34px;
+  }
+
+  .report-mascot {
+    width: 145px;
+  }
+
+  .report-title {
+    font-size: 35px;
+  }
+
+  .report-subtitle {
+    font-size: 19px;
+  }
+
+  .report-grid {
+    gap: 20px;
+  }
+
+  .report-card {
+    padding: 36px;
+  }
+
+  .report-card__title {
+    font-size: 22px;
+    margin-bottom: 32px;
+  }
+
+  .report-donut-wrap {
+    gap: 28px;
+  }
+
+  .report-donut {
+    width: 240px;
+    height: 240px;
+  }
+
+  .report-donut__hole {
+    width: 155px;
+    height: 155px;
+  }
+
+  .report-donut__value {
+    font-size: 26px;
+  }
+
+  .report-legend li {
+    font-size: 17px;
+  }
+
+  .report-insight {
+    padding: 26px 28px;
+  }
+
+  .report-insight__text {
+    font-size: 18px;
+  }
+
+  .report-stat-row {
+    padding: 18px 22px;
+  }
+
+  .report-stat-label,
+  .report-stat-value {
+    font-size: 18px;
+  }
+}
+
+
+/* =========================================================
+   <= 960px
+   Tablet
+========================================================= */
+
+@media (max-width: 960px) {
+
+  .report-page {
+    width: calc(100% - 40px);
+    padding: 30px 0 48px;
+  }
+
+  .report-header {
+    margin-bottom: 30px;
+    transform: translateY(10px);
+  }
+
+  .report-mascot {
+    width: 125px;
+  }
+
+  .report-title {
+    font-size: 32px;
+    margin-bottom: 14px;
+  }
+
+  .report-subtitle {
+    font-size: 18px;
+  }
+
+  /*
+    태블릿에서는 좌우 2열보다
+    세로 1열 구조로 전환
+  */
   .report-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .report-card {
+    padding: 30px;
+  }
+
+  .report-card__title {
+    font-size: 22px;
+    margin-bottom: 28px;
+  }
+
+  .report-donut-wrap {
+    gap: 36px;
+  }
+
+  .report-donut {
+    width: 230px;
+    height: 230px;
+  }
+
+  .report-donut__hole {
+    width: 150px;
+    height: 150px;
+  }
+
+  .report-legend {
+    gap: 14px;
+  }
+
+  .report-legend li {
+    font-size: 17px;
+  }
+
+  .report-card__footlink {
+    margin-top: 36px;
+  }
+
+  .report-side {
+    gap: 16px;
+  }
+
+  .report-insight {
+    padding: 24px 26px;
+  }
+
+  .report-insight__text {
+    font-size: 17px;
+  }
+
+  .report-stat-row {
+    padding: 18px 22px;
+  }
+
+  .report-stat-label,
+  .report-stat-value {
+    font-size: 18px;
+  }
+}
+
+
+/* =========================================================
+   <= 640px
+   Mobile
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .report-page {
+    width: calc(100% - 32px);
+    padding: 24px 0 40px;
+  }
+
+  /*
+    모바일 헤더
+  */
+  .report-header {
+    align-items: center;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 28px;
+    transform: none;
+    text-align: center;
+  }
+
+  .report-mascot {
+    width: 110px;
+    order: -1;
+  }
+
+  .report-title {
+    font-size: 28px;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .report-subtitle {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /*
+    카드
+  */
+  .report-grid {
+    gap: 16px;
+  }
+
+  .report-card {
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .report-card__title {
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+
+  .report-donut-wrap {
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  .report-donut {
+    width: 210px;
+    height: 210px;
+    margin-top: 0;
+  }
+
+  .report-donut__hole {
+    width: 138px;
+    height: 138px;
+  }
+
+  .report-donut__label {
+    font-size: 14px;
+  }
+
+  .report-donut__value {
+    font-size: 24px;
+    margin-top: 4px;
+  }
+
+  .report-legend {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .report-legend li {
+    font-size: 16px;
+  }
+
+  .report-legend__dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .report-card__footlink {
+    margin-top: 28px;
+  }
+
+  .report-card__footlink-img {
+    height: 42px;
+    max-width: 100%;
+  }
+
+  /*
+    인사이트
+  */
+  .report-side {
+    gap: 14px;
+  }
+
+  .report-insight {
+    gap: 12px;
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .report-insight__icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .report-insight__text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /*
+    통계
+  */
+  .report-stats {
+    gap: 12px;
+  }
+
+  .report-stat-row {
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .report-stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .report-stat-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .report-stat-label {
+    font-size: 16px;
+  }
+
+  .report-stat-value {
+    font-size: 16px;
+    white-space: nowrap;
   }
 }

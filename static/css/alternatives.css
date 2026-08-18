@@ -206,8 +206,283 @@
   margin-top: 6px;
 }
 
-@media (max-width: 900px) {
+/* =========================================================
+   RESPONSIVE
+   1200 / 960 / 640px
+========================================================= */
+
+
+/* =========================================================
+   <= 1200px
+   좁은 PC
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .alt-page {
+    width: calc(100% - 48px);
+    padding: 34px 0 48px;
+  }
+
+  .alt-header-row {
+    padding: 0 8px;
+  }
+
+  .alt-title {
+    font-size: 35px;
+  }
+
+  .alt-header-character img {
+    width: 150px;
+    transform: translateX(-160px);
+  }
+
+  .alt-step-button {
+    width: 140px;
+    height: 50px;
+    font-size: 15px;
+  }
+
+  .alt-cards {
+    gap: 24px;
+  }
+
   .alt-card {
+    flex-basis: calc((100% - 48px) / 3);
+    min-width: 280px;
+    padding: 32px;
+  }
+
+  .alt-card__title {
+    font-size: 24px;
+  }
+
+  .alt-item {
+    padding: 22px;
+  }
+}
+
+
+/* =========================================================
+   <= 960px
+   Tablet
+========================================================= */
+
+@media (max-width: 960px) {
+
+  .alt-page {
+    width: calc(100% - 40px);
+    padding: 30px 0 40px;
+  }
+
+  .alt-header-row {
+    min-height: 125px;
+    padding: 0;
+    margin-bottom: 18px;
+  }
+
+  .alt-header-title {
+    padding-left: 0;
+  }
+
+  .alt-title {
+    font-size: 32px;
+    transform: translate(0, -10px);
+  }
+
+  .alt-header-character img {
+    width: 125px;
+    transform: translateX(-30px);
+  }
+
+  .alt-step-buttons {
+    gap: 8px;
+  }
+
+  .alt-step-button {
+    width: 125px;
+    height: 46px;
+    padding: 0 12px;
+    font-size: 14px;
+    border-radius: 13px;
+  }
+
+  .alt-step-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .alt-cards {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .alt-card {
+    width: 100%;
+    min-width: 0;
     flex: 1 1 100%;
+    padding: 28px;
+  }
+
+  .alt-card__header {
+    gap: 14px;
+    padding-bottom: 20px;
+    margin-bottom: 22px;
+  }
+
+  .alt-card__icon-wrap {
+    width: 54px;
+    height: 54px;
+  }
+
+  .alt-card__title {
+    font-size: 22px;
+  }
+
+  .alt-item {
+    gap: 14px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .alt-item__name {
+    font-size: 18px;
+  }
+
+  .alt-item__price {
+    font-size: 15px;
+  }
+
+  .regen-btn {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+}
+
+
+/* =========================================================
+   <= 640px
+   Mobile
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .alt-page {
+    width: calc(100% - 32px);
+    padding: 24px 0 36px;
+  }
+
+  /*
+    모바일에서는 헤더를 세로 구조로 전환
+  */
+  .alt-header-row {
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+
+  .alt-header-title {
+    padding-left: 0;
+  }
+
+  .alt-title {
+    font-size: 28px;
+    line-height: 1.3;
+    transform: none;
+  }
+
+  .alt-header-character {
+    display: flex;
+    justify-content: center;
+  }
+
+  .alt-header-character img {
+    width: 110px;
+    transform: none;
+  }
+
+  .alt-step-buttons {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .alt-step-button {
+    flex: 1;
+    width: auto;
+    height: 46px;
+    padding: 0 10px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+
+  .alt-step-button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .alt-cards {
+    gap: 18px;
+  }
+
+  .alt-card {
+    padding: 20px;
+    border-width: 2px;
+    border-radius: 18px;
+  }
+
+  .alt-card__header {
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+
+  .alt-card__icon-wrap {
+    width: 48px;
+    height: 48px;
+  }
+
+  .icon-category {
+    width: 23px;
+    height: 23px;
+  }
+
+  .alt-card__title {
+    font-size: 20px;
+  }
+
+  .alt-item {
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+  }
+
+  .alt-item__info {
+    min-width: 0;
+  }
+
+  .alt-item__name {
+    font-size: 16px;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+
+  .alt-item__price {
+    font-size: 14px;
+    gap: 4px;
+  }
+
+  .regen-btn {
+    font-size: 12px;
+    padding: 7px 11px;
+    border-radius: 11px;
+  }
+
+  .alt-loading {
+    font-size: 14px;
+    padding: 40px 0;
   }
 }
