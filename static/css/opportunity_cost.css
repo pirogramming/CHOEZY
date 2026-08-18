@@ -14,12 +14,6 @@
 }
 
 
-
-/* =========================
-Header
-========================= */
-
-
 .opportunity-header {
 
     display:flex;
@@ -79,13 +73,6 @@ Header
 }
 
 
-
-
-
-/* =========================
-Buttons
-========================= */
-
 .opportunity-step-area {
 
     display:flex;
@@ -131,7 +118,6 @@ Buttons
 
     white-space:nowrap;
 
-    /* 단계 이동 버튼은 a라서 기본 밑줄을 지웁니다. */
     text-decoration:none;
 
 }
@@ -139,7 +125,7 @@ Buttons
 
 .opportunity-prev-btn {
 
-    width:118px;
+    width:115px;
 
 }
 
@@ -223,14 +209,6 @@ Buttons
 }
 
 
-
-
-
-/* =========================
-Guide
-========================= */
-
-
 .opportunity-guide {
 
     background:#E7F8F2;
@@ -250,11 +228,6 @@ Guide
 }
 
 
-
-
-/* Character */
-
-
 .opportunity-character {
 
     line-height:0;
@@ -267,16 +240,6 @@ Guide
     width:170px;
 
 }
-
-
-
-
-
-
-
-/* =========================
-Chart
-========================= */
 
 
 .opportunity-chart-wrapper {
@@ -292,15 +255,6 @@ Chart
     position:relative;
 
 }
-
-
-
-
-
-
-/* =========================
-Y Axis
-========================= */
 
 
 .opportunity-y-axis {
@@ -363,16 +317,6 @@ Y Axis
 }
 
 
-
-
-
-
-
-/* =========================
-Bars Container
-========================= */
-
-
 .opportunity-bars-container {
 
     flex:1;
@@ -397,16 +341,6 @@ Bars Container
 }
 
 
-
-
-
-
-
-/* =========================
-Bar Item
-========================= */
-
-
 .opportunity-bar-item {
 
     width:90px;
@@ -424,14 +358,6 @@ Bar Item
     transform: translateY(-27px);
 
 }
-
-
-
-
-
-/* =========================
-Count
-========================= */
 
 
 .opportunity-count {
@@ -471,16 +397,6 @@ Count
 }
 
 
-
-
-
-
-
-/* =========================
-Fixed Bar
-========================= */
-
-
 .opportunity-bar {
 
     width:90px;
@@ -502,15 +418,6 @@ Fixed Bar
 }
 
 
-
-
-
-
-/* =========================
-Block
-========================= */
-
-
 .opportunity-block {
 
     width:100%;
@@ -529,16 +436,6 @@ Block
     border-bottom:none;
 
 }
-
-
-
-
-
-
-
-/* =========================
-Colors
-========================= */
 
 
 .opportunity-bar.pink .opportunity-block {
@@ -572,16 +469,6 @@ Colors
 }
 
 
-
-
-
-
-
-/* =========================
-Name
-========================= */
-
-
 .opportunity-name {
 
     margin-top:20px;
@@ -600,26 +487,6 @@ Name
 
 }
 
-
-
-
-
-@media(max-width:1200px){
-
-
-    .opportunity-page {
-
-        padding:50px 40px 120px;
-
-    }
-
-
-}
-
-
-/* =========================
-Financial Alternatives
-========================= */
 
 .opportunity-financial{
 
@@ -703,4 +570,270 @@ Financial Alternatives
 
     color:#999;
 
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   1200 / 960 / 640px
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .opportunity-page {
+        padding: 15px 40px 100px;
+    }
+
+    .opportunity-title-area {
+        margin-left: 30px;
+        gap: 24px;
+    }
+
+    .opportunity-title h1 {
+        font-size: 34px;
+    }
+
+    .opportunity-guide {
+        font-size: 16px;
+        padding: 12px 20px;
+        transform: translateX(30px);
+    }
+
+    .opportunity-character img {
+        width: 150px;
+    }
+
+    .opportunity-prev-btn {
+        width: 105px;
+        height: 48px;
+        font-size: 15px;
+    }
+
+    .opportunity-next-btn {
+        width: 135px;
+        height: 48px;
+        font-size: 15px;
+    }
+
+    .opportunity-bars-container {
+        gap: 26px;
+    }
+
+    .opportunity-financial-title {
+        font-size: 22px;
+    }
+}
+
+
+@media (max-width: 960px) {
+
+    .opportunity-page {
+        padding: 15px 24px 80px;
+    }
+
+    .opportunity-title-area {
+        margin-left: 0;
+        gap: 18px;
+    }
+
+    .opportunity-title h1 {
+        font-size: 28px;
+    }
+
+    .opportunity-guide {
+        font-size: 14px;
+        padding: 10px 16px;
+        transform: translateX(10px);
+    }
+
+    .opportunity-character img {
+        width: 110px;
+    }
+
+    .opportunity-step-buttons {
+        gap: 8px;
+    }
+
+    .opportunity-prev-btn {
+        width: 90px;
+        height: 44px;
+        font-size: 13px;
+    }
+
+    .opportunity-next-btn {
+        width: 115px;
+        height: 44px;
+        font-size: 13px;
+    }
+
+    .opportunity-bars-container {
+        gap: 24px;
+        padding-left: 16px;
+        padding-top: 60px;
+    }
+
+    .opportunity-bar,
+    .opportunity-bar-item {
+        width: 70px;
+    }
+
+    .opportunity-count {
+        font-size: 20px;
+    }
+
+    .opportunity-name {
+        width: 90px;
+        font-size: 13px;
+    }
+
+    .opportunity-financial {
+        margin-top: 40px;
+        padding: 22px 20px;
+    }
+
+    .opportunity-financial-item {
+        padding: 14px 18px;
+    }
+
+    .opportunity-financial-name {
+        font-size: 17px;
+    }
+
+    .opportunity-financial-effect {
+        font-size: 16px;
+    }
+}
+
+
+@media (max-width: 640px) {
+
+    .opportunity-page {
+        padding: 20px 16px 60px;
+    }
+
+    .opportunity-header {
+        flex-direction: column;
+        align-items: stretch;
+        min-height: auto;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .opportunity-title-area {
+        margin-left: 0;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .opportunity-title h1 {
+        font-size: 24px;
+    }
+
+    .opportunity-step-buttons {
+        width: 100%;
+    }
+
+    .opportunity-prev-btn,
+    .opportunity-next-btn {
+        flex: 1;
+        width: auto;
+        height: 44px;
+        font-size: 13px;
+        padding: 0 10px;
+    }
+
+    .opportunity-guide {
+        transform: none;
+        white-space: normal;
+        text-align: center;
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+
+    .opportunity-character {
+        display: flex;
+        justify-content: center;
+    }
+
+    .opportunity-character img {
+        width: 90px;
+    }
+
+    .opportunity-chart-wrapper {
+        height: auto;
+    }
+
+    .opportunity-y-axis {
+        width: 60px;
+        height: 400px;
+    }
+
+    .opportunity-price {
+        font-size: 16px;
+        left: -10px;
+    }
+
+    .opportunity-axis-line {
+        height: 400px;
+    }
+
+    .opportunity-bars-container {
+        height: 400px;
+        gap: 16px;
+        padding-left: 8px;
+        padding-top: 40px;
+    }
+
+    .opportunity-bar-item {
+        width: 60px;
+        height: 460px;
+    }
+
+    .opportunity-bar {
+        width: 60px;
+        height: 320px;
+    }
+
+    .opportunity-count {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .opportunity-name {
+        width: 70px;
+        font-size: 12px;
+        margin-top: 12px;
+    }
+
+    .opportunity-financial {
+        margin-top: 32px;
+        padding: 18px 16px;
+        border-radius: 14px;
+    }
+
+    .opportunity-financial-title {
+        font-size: 19px;
+        margin-bottom: 16px;
+    }
+
+    .opportunity-financial-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 14px 16px;
+    }
+
+    .opportunity-financial-name {
+        font-size: 15px;
+    }
+
+    .opportunity-financial-effect {
+        font-size: 14px;
+        text-align: left;
+    }
+
+    .opportunity-empty {
+        font-size: 15px;
+        padding: 30px 0;
+    }
 }
