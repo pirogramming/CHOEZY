@@ -1204,69 +1204,211 @@
 }
 
 
-
-/* =========================
-   반응형
-========================= */
-
-
-@media(max-width:1000px){
+/* =========================================================
+   RESPONSIVE
+   1200 / 960 / 640px
+========================================================= */
 
 
-    .profile-option-grid,
-    .profile-money-grid {
+/* =========================================================
+   <= 1200px
+   좁은 PC
+========================================================= */
 
+@media (max-width: 1200px) {
 
-        grid-template-columns:repeat(2,220px);
-
-
+    .login-section {
+        padding: 40px 50px;
     }
 
+    .login-box {
+        width: 480px;
+        margin-left: 40px;
+    }
 
+    .feature-item {
+        width: 340px;
+    }
+
+    .signup-top,
+    .signup-form {
+        width: calc(100% - 80px);
+    }
+
+    .signup-next-btn {
+        margin: 50px 60px 0 auto;
+    }
+
+    .profile-form-container {
+        gap: 20px;
+    }
 }
 
 
+/* =========================================================
+   <= 960px
+   Tablet / 구조 전환
+========================================================= */
 
-@media(max-width:700px){
+@media (max-width: 960px) {
 
-
-    .signup-page {
-
-
-        padding:30px;
-
-
+    /* 로그인: 좌우 2단 -> 위아래 */
+    .login-page {
+        flex-direction: column;
     }
 
+    .login-section,
+    .intro-section {
+        width: 100%;
+    }
 
+    .login-box {
+        width: 100%;
+        max-width: 480px;
+        margin: 40px auto 0;
+    }
+
+    .intro-section {
+        padding: 40px 20px;
+    }
+
+    .feature-item {
+        width: 100%;
+        max-width: 400px;
+        transform: none;
+    }
+
+    /* 회원가입 STEP1 */
     .signup-top {
-
-
-        flex-direction:column;
-
-
-        align-items:flex-start;
-
-
+        grid-template-columns: 1fr;
+        width: calc(100% - 40px);
+        gap: 20px;
     }
 
+    .signup-top-right {
+        justify-content: flex-start;
+    }
+
+    .signup-form {
+        flex-direction: column;
+        width: calc(100% - 40px);
+        gap: 0;
+    }
+
+    .signup-form-left,
+    .signup-form-right {
+        width: 100%;
+    }
+
+    .signup-next-btn {
+        width: 100%;
+        margin: 40px 0 0;
+    }
+
+    .step-line {
+        width: 100px;
+    }
+
+    /* 회원가입 STEP2 */
+    .profile-form-container {
+        flex-direction: column;
+    }
 
     .profile-option-grid,
     .profile-money-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
 
-        grid-template-columns:1fr;
+/* =========================================================
+   <= 640px
+   Mobile
+========================================================= */
 
+@media (max-width: 640px) {
 
+    .login-section {
+        padding: 30px 24px;
     }
 
+    .login-logo {
+        font-size: 26px;
+    }
+
+    .login-box {
+        margin-top: 30px;
+    }
+
+    .login-box h1 {
+        font-size: 28px;
+    }
+
+    .login-subtitle {
+        font-size: 16px;
+        margin-bottom: 28px;
+    }
+
+    .input-box {
+        height: 48px;
+    }
+
+    .login-btn {
+        height: 48px;
+        font-size: 17px;
+    }
+
+    .intro-logo {
+        font-size: 32px;
+        margin: 24px;
+    }
+
+    .login-character {
+        width: 160px;
+    }
+
+    .feature-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .feature-item h3 {
+        font-size: 18px;
+    }
+
+    .signup-page {
+        padding: 24px 16px;
+    }
+
+    .signup-logo {
+        font-size: 28px;
+    }
+
+    .signup-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .signup-character {
+        width: 110px;
+    }
+
+    .signup-check-btn {
+        width: 90px;
+        font-size: 13px;
+    }
+
+    .signup-gender {
+        gap: 20px;
+    }
+
+    .profile-option-grid,
+    .profile-money-grid {
+        grid-template-columns: 1fr;
+    }
 
     .profile-submit {
-
-
-        width:100%;
-
+        width: 100%;
     }
-
-
 }

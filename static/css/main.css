@@ -384,20 +384,49 @@ NAVIGATION
     white-space: nowrap;
 }
 
-/* =========================
+/* =========================================================
    RESPONSIVE
-========================== */
-@media (max-width: 1080px) {
+   1200 / 960 / 640px
+========================================================= */
+
+
+/* =========================================================
+   <= 1200px
+   좁은 PC
+========================================================= */
+
+@media (max-width: 1200px) {
+
     .home-process {
-        right: 40px;
+        right: 60px;
+        gap: 56px;
+    }
+
+    .home-process-text {
+        font-size: 14px;
     }
 
     .home-title {
-        font-size: 52px;
+        font-size: 54px;
+    }
+
+    .home-hero {
+        padding: 60px 56px;
+    }
+
+    .home-hero-content {
+        transform: translateX(20px);
     }
 }
 
-@media (max-width: 860px) {
+
+/* =========================================================
+   <= 960px
+   Tablet / Mobile 구조 전환
+========================================================= */
+
+@media (max-width: 960px) {
+
     .home-nav-menu {
         display: none;
     }
@@ -411,9 +440,12 @@ NAVIGATION
     }
 
     .home-hero {
-        padding: 56px 28px;
+        padding: 56px 32px 80px;
         min-height: auto;
-        padding-bottom: 80px;
+    }
+
+    .home-hero-content {
+        transform: none;
     }
 
     .home-title {
@@ -429,13 +461,32 @@ NAVIGATION
     }
 }
 
-@media (max-width: 480px) {
+
+/* =========================================================
+   <= 640px
+   Mobile
+========================================================= */
+
+@media (max-width: 640px) {
+
     .home-nav-inner {
         padding: 0 16px;
     }
 
+    .home-logo {
+        transform: translateX(-40px);
+    }
+
+    .home-hero {
+        padding: 44px 20px 60px;
+    }
+
     .home-title {
-        font-size: 34px;
+        font-size: 32px;
+    }
+
+    .home-description {
+        font-size: 15px;
     }
 
     .home-button {
@@ -444,6 +495,7 @@ NAVIGATION
         font-size: 15px;
     }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
 

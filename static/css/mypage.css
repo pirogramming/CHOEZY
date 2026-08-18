@@ -74,6 +74,16 @@
   font-family: 'Inter', sans-serif;
 }
 
+.info-row select {
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 16px;
+  color: #333;
+  background: #F7F7F5;
+  font-family: 'Inter', sans-serif;
+}
+
 .mypage-edit-row {
   display: flex;
   justify-content: flex-end;
@@ -139,9 +149,13 @@
   font-weight: 500;
   padding: 10px 12px;
   border-radius: 12px;
-  cursor: pointer;
+  cursor: default;
   text-align: center;
   font-family: 'Inter', sans-serif;
+}
+
+.chip-grid--editing .chip {
+  cursor: pointer;
 }
 
 .chip--active {
@@ -192,32 +206,121 @@
     color: #20cd8d;
 }
 
-@media (max-width: 900px) {
+
+/* =========================================================
+   RESPONSIVE
+   1200 / 960 / 640px
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .mypage-page {
+    width: calc(100% - 48px);
+    padding: 10px 0 50px;
+  }
+
+  .mypage-grid {
+    gap: 20px;
+  }
+
+  .mypage-card {
+    padding: 26px;
+  }
+
+  .mypage-card__title {
+    font-size: 20px;
+  }
+
+  .profile-subsection-row {
+    gap: 24px;
+  }
+
+  .mypage-badge {
+    width: 190px;
+  }
+}
+
+
+@media (max-width: 960px) {
+
+  .mypage-page {
+    padding: 10px 0 40px;
+  }
+
   .mypage-grid {
     grid-template-columns: 1fr;
   }
+
+  .mypage-card {
+    padding: 24px;
+  }
+
   .profile-subsection-row {
     grid-template-columns: 1fr;
   }
+
   .chip-grid--wide {
     grid-template-columns: 1fr 1fr;
   }
+
+  .mypage-badge {
+    position: static;
+    width: 150px;
+    margin: 16px auto 0;
+  }
+
+  .mypage-logout {
+    transform: none;
+    margin-top: 16px;
+  }
 }
 
-.info-row select {
-  border: 1px solid #E0E0E0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 16px;
-  color: #333;
-  background: #F7F7F5;
-  font-family: 'Inter', sans-serif;
-}
 
-.chip {
-  cursor: default;
-}
+@media (max-width: 640px) {
 
-.chip-grid--editing .chip {
-  cursor: pointer;
+  .mypage-page {
+    width: calc(100% - 24px);
+    padding: 16px 0 40px;
+  }
+
+  .mypage-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .mypage-card__title {
+    font-size: 18px;
+  }
+
+  .info-row input,
+  .info-row select {
+    font-size: 15px;
+    padding: 9px 10px;
+  }
+
+  .chip-grid,
+  .chip-grid--wide {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .chip {
+    font-size: 14px;
+    padding: 9px 10px;
+  }
+
+  .edit-btn {
+    font-size: 14px;
+    padding: 8px 18px;
+  }
+
+  .mypage-badge {
+    width: 110px;
+  }
+
+  .mypage-logout-button {
+    height: 36px;
+    font-size: 13px;
+    padding: 0 14px;
+  }
 }
