@@ -70,6 +70,58 @@ SEED_ITEMS = {
                 "?bbsNo=199&key=911&nttNo=6263"
             ),
         },
+        {
+            "name": "서울자전거 따릉이 일일권 1시간권",
+            "unit_label": "일",
+            "average_price": 1000,
+            "spec_note": "일일권 1시간권 기준, 기본 대여시간 초과 시 추가요금 별도",
+            "source_name": "서울자전거 따릉이",
+            "source_url": (
+                "https://www.bikeseoul.com/info/"
+                "infoReg.do?useInfo=bike_tab-1"
+            ),
+        },
+        {
+            "name": "컵라면 1개",
+            "unit_label": "개",
+            "average_price": 1379,
+            "spec_note": "2026년 7월 서울시 시장·마트 평균가격 기준",
+            "source_name": "서울시 물가정보",
+            "source_url": (
+                "https://sftc.seoul.go.kr/seoul/mulga/pricesCmpr/"
+                "prdlstFlcts/list.do?menuNo=200008"
+            ),
+        },
+        {
+            "name": "공차 블랙 밀크티 + 펄 Large",
+            "unit_label": "잔",
+            "average_price": 5100,
+            "spec_note": "Large 사이즈 기준, 매장별 가격이 다를 수 있음",
+            "source_name": "공차",
+            "source_url": (
+                "https://www.gong-cha.co.kr/brand/menu/product_detail"
+                "?category=001002&no=2"
+            ),
+        },
+        {
+            "name": "서울 중형택시 주간 기본요금",
+            "unit_label": "회",
+            "average_price": 4800,
+            "spec_note": "주간 중형택시 1.6km까지 기본요금 기준",
+            "source_name": "서울특별시",
+            "source_url": (
+                "https://news.seoul.go.kr/traffic/archives/1659"
+                "?listPage=1"
+            ),
+        },
+        {
+            "name": "배스킨라빈스 싱글레귤러",
+            "unit_label": "개",
+            "average_price": 3900,
+            "spec_note": "1가지 맛, 중량 115g 기준",
+            "source_name": "배스킨라빈스",
+            "source_url": "https://www.baskinrobbins.co.kr/menu/view.php?seq=27",
+        },
     ],
     Category.Code.DIGITAL: [
         {
@@ -127,6 +179,25 @@ SEED_ITEMS = {
                 "https://www.microsoft.com/ko-kr/microsoft-365/"
                 "buy/compare-all-microsoft-365-products"
             ),
+        },
+        {
+            "name": "Samsung Galaxy S26 256GB",
+            "unit_label": "대",
+            "average_price": 1254000,
+            "spec_note": "자급제 기본 모델 256GB, 삼성닷컴 기준가 기준",
+            "source_name": "Samsung 대한민국",
+            "source_url": (
+                "https://www.samsung.com/sec/smartphones/galaxy-s26/buy/"
+                "?modelCode=SM-S942NZVEKOO"
+            ),
+        },
+        {
+            "name": "Nintendo Switch 2",
+            "unit_label": "대",
+            "average_price": 648000,
+            "spec_note": "Nintendo Switch 2 본체 희망소비자가격 기준",
+            "source_name": "한국닌텐도",
+            "source_url": "https://www.nintendo.com/kr/hardware/switch2/lineup/",
         },
     ],
 }
