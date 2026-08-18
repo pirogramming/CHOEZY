@@ -37,5 +37,10 @@ urlpatterns = [
         views.choezy_report,
         name="choezy_report",
     ),
+    path(
+        "guideline/",
+        views.guideline,
+        name="guideline",
+    ),
 
 ]
