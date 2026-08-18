@@ -228,3 +228,7 @@ def choezy_report(request):
         "products/choezy_report.html",
         {"report_data": report_data},
     )
+
+@login_required
+def guideline(request):
+    return render(request, "products/guideline.html")
