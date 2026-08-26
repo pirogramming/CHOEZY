@@ -1,3 +1,5 @@
+<img width="828" height="312" alt="image" src="https://github.com/user-attachments/assets/fc8b8974-ddb1-49b9-b212-3e76eea639df" />
+
 # CHOEZY
 
 > **사용자의 소비 가치관과 구매 목적을 반영하여, 구매 선택으로 인해 포기하는 대안을 비교하고 더 나은 소비 결정을 돕는 서비스**
