@@ -1,4 +1,4 @@
-<img width="828" height="312" alt="image" src="https://github.com/user-attachments/assets/fc8b8974-ddb1-49b9-b212-3e76eea639df" />
+<img width="552" height="208" alt="image" src="https://github.com/user-attachments/assets/fc8b8974-ddb1-49b9-b212-3e76eea639df" />
 
 # CHOEZY
 
